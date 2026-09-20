@@ -1,0 +1,782 @@
+=== PAGE 1 ===
+ 
+S1 - Sistem Informasi  
+RENCANA PEMBELAJARAN SEMESTER 
+Versi/Revisi 3/0   
+ 
+1.IDENTITAS MATA KULIAH 
+Nama Mata Kuliah Perencanaan Strategis Sistem Informasi 
+Fakultas Fakultas Sains dan Teknologi Program Studi S1 Sistem Informasi 
+Kode Mata Kuliah SIF604 Bobot sks 1 sks (*Teori/ Praktikum) 
+Kelas I-23 
+  
+Sifat Pengambilan *Wajib/ Pilihan 
+Semester Ke 6 Ketersediaan *Universitas/Fakultas/Program Studi 
+Bentuk 
+Pembelajaran 
+Kuliah/ Responsi/ Tutorial/ Seminar, 
+atau yang setara/ Praktikum/ Praktik 
+Studio/Praktek Lapangan/ Penelitian/ 
+Pengabdian Kepada Masyarakat 
+Media Pembelajaran *Audio/Visual/Audiovisual 
+Kelompok 
+Keilmuan 
+Sistem Informasi Mata Kuliah 
+Prasyarat 
+- 
+Dosen Pengampu 1. Rony Kriswibowo, M.Kom (PJMK) Semester/ 
+Tahun Akademik 
+Genap 2025/2026 
+*) Pilih sesuai kebutuhan 
+2a. CAPAIAN PEMBELAJARAN LULUSAN (CPL) 
+Kode CPL Rumusan CPL 
+CPL04 Mampu merancang dan menggunakan database, serta mengolah dan menganalisa data dengan alat dan 
+teknik pengolahan data. 
+  
+ 
+Rumusan CPMK Kode Sub-
+CPMK 
+Sub-CPMK 
+
+
+=== PAGE 2 ===
+Mampu mengolah data dengan alat dan teknik 
+pengolahan data (C3, A3, P3) 
+SUB-CPMK 01 Mahasiswa Memahami Konsep Dasar Perencanaan 
+Strategis Sistem Informasi  (C3, A3, P2) 
+ SUB-CPMK 02 Mahasiswa mampu melakukan analisis lingkungan 
+internal dan eksternal organisasi misalnya SWOT untuk 
+mengidentifikasi kebutuhan sistem informasi. (C3, A3, 
+P4) 
+Mampu menganalisa data dengan alat dan teknik 
+pengolahan data (C3, A3, P3) 
+SUB-CPMK 03 Mahasiswa mampu merumuskan visi dan misi sistem 
+informasi yang selaras dengan strategi organisasi. 
+(C3, A3, P4) 
+ SUB-CPMK 04 Mahasiswa mampu menyusun arsitektur sistem 
+informasi yang mendukung kebutuhan organisasi, 
+termasuk infrastruktur teknologi dan aplikasi. 
+(C3, A3, P4) 
+ SUB-CPMK 05 Mahasiswa mampu menyusun rencana strategis sistem 
+informasi yang mencakup roadmap implementasi dan 
+prioritas proyek. (C4,A3,P4) 
+ SUB-CPMK 06 Mahasiswa mampu mengidentifikasi, menganalisis, dan 
+mengelola risiko yang terkait dengan implementasi 
+strategi sistem informasi. (C3, A3, P4) 
+ SUB-CPMK 07 Mahasiswa mampu mengukur kinerja sistem informasi 
+melalui indikator kinerja kunci (KPI) dan mengevaluasi 
+keselarasan dengan tujuan strategis organisasi. (C3, A3, 
+P4) 
+ 
+  
+
+=== PAGE 3 ===
+2b. HUBUNGAN CPL DAN SUB-CPMK  
+Kode 
+SUB-CPMK 
+Kode CPL/Bobot Jumlah Bobot 
+(%) CPL 01 CPL 02 CPL 03 CPL 04 CPL 05 
+SUB-CPMK 01    4%  4% 
+SUB-CPMK 02    9%  9% 
+SUB-CPMK 03    9%  9% 
+SUB-CPMK 04    9%  9% 
+SUB-CPMK 05    9%  9% 
+SUB-CPMK 06    26%  26% 
+SUB-CPMK 07    35%  35% 
+Jumlah      100% 
+ 
+2c. INDIKATOR PENILAIAN 
+Kode 
+CPL 
+Kode Sub-
+CPMK Rumusan Indikator Pengalaman Pembelajaran Asesmen/penilaian Bobot 
+CPL 04 SUB-CPMK 
+01 
+1. Mahasiswa dapat mendefinisikan 
+perencanaan strategis sistem informasi 
+dengan tepat. 
+2. Mahasiswa dapat menjelaskan minimal tiga 
+tujuan utama perencanaan strategis SI. 
+3. Mahasiswa dapat menguraikan hubungan 
+antara strategi SI dan strategi bisnis dengan 
+contoh nyata. 
+4. Mahasiswa dapat menyebutkan minimal dua 
+kerangka kerja perencanaan strategis SI 
+(misalnya Ward & Peppard, TOGAF). 
+Ceramah, Presentasi, 
+Tugas, Video, Diskusi kasus 
+Pretes dan postes 4% 
+CPL 04 SUB-CPMK 
+02 
+1. Mahasiswa dapat melakukan analisis SWOT 
+dengan mengidentifikasi minimal dua 
+kekuatan, kelemahan, peluang, dan 
+ancaman terkait SI. 
+2. Mahasiswa dapat menerapkan analisis 
+PESTEL untuk mengidentifikasi faktor 
+eksternal yang memengaruhi kebutuhan SI. 
+Ceramah, Presentasi, 
+Tugas, Video, Diskusi kasus 
+Pretes dan postes 9% 
+
+=== PAGE 4 ===
+3. Mahasiswa dapat memetakan kebutuhan 
+bisnis organisasi berdasarkan hasil analisis 
+lingkungan. 
+4. Mahasiswa dapat menyusun laporan 
+analisis lingkungan dengan struktur yang 
+jelas dan logis. 
+ 
+CPL 04 SUB-CPMK 
+03 
+1. Mahasiswa dapat merumuskan visi SI 
+yang jelas, singkat, dan selaras dengan 
+visi organisasi. 
+2. Mahasiswa dapat menyusun misi SI yang 
+mencakup tujuan teknologi dan 
+dukungan terhadap bisnis. 
+3. Mahasiswa dapat menunjukkan 
+keselarasan antara visi/misi SI dengan 
+strategi organisasi melalui studi kasus. 
+4. Mahasiswa dapat mengevaluasi visi dan 
+misi SI organisasi lain dengan kriteria 
+yang relevan 
+Ceramah, Presentasi, 
+Tugas, Video, Diskusi kasus 
+Pretes dan postes 9% 
+CPL 04 SUB-CPMK 
+04 
+1. Mahasiswa dapat mendesain diagram 
+arsitektur SI yang mencakup 
+infrastruktur dan aplikasi utama. 
+2. Mahasiswa dapat menjelaskan 
+komponen utama arsitektur SI 
+berdasarkan model seperti TOGAF. 
+3. Mahasiswa dapat mengidentifikasi 
+kebutuhan teknologi yang sesuai dengan 
+portofolio aplikasi organisasi. 
+4. Mahasiswa dapat menyusun rencana 
+pengembangan arsitektur SI dengan 
+Ceramah, Presentasi, 
+Tugas, Video, Diskusi kasus 
+Pretes dan postes 9% 
+
+=== PAGE 5 ===
+mempertimbangkan skalabilitas dan 
+fleksibilitas. 
+CPL 04 SUB-CPMK 
+05 
+1. Mahasiswa dapat menyusun  roadmap 
+implementasi SI dengan timeline yang 
+realistis. 
+2. Mahasiswa dapat menentukan prioritas 
+proyek SI berdasarkan kriteria seperti 
+dampak bisnis dan urgensi. 
+3. Mahasiswa dapat mengidentifikasi 
+sumber daya yang diperlukan untuk 
+implementasi rencana strategis SI. 
+4. Mahasiswa dapat menyusun dokumen 
+rencana strategis SI yang terstruktur dan 
+komprehensif. 
+Ceramah, Presentasi, 
+Tugas, Video, Diskusi kasus 
+Pretes dan postes 9% 
+CPL 04 SUB-CPMK 
+06 
+1. Mahasiswa dapat mengidentifikasi 
+minimal tiga risiko utama dalam 
+implementasi strategi SI. 
+2. Mahasiswa dapat menganalisis risiko 
+menggunakan metode kualitatif atau 
+kuantitatif (misalnya matriks risiko). 
+3. Mahasiswa dapat mengusulkan strategi 
+mitigasi risiko yang relevan dan efektif. 
+4. Mahasiswa dapat menyusun rencana 
+manajemen risiko untuk proyek SI 
+dengan langkah-langkah yang jelas. 
+Ceramah, Presentasi, 
+Tugas, Video, Diskusi kasus 
+Pretes dan postes 26% 
+CPL 04 SUB-CPMK 
+07 
+1. Mahasiswa dapat merumuskan minimal 
+tiga KPI yang relevan untuk mengukur 
+kinerja SI. 
+Ceramah, Presentasi, 
+Tugas, Video, Diskusi kasus 
+Pretes dan postes 35% 
+
+=== PAGE 6 ===
+2. Mahasiswa dapat mengevaluasi 
+keberhasilan implementasi SI 
+berdasarkan KPI yang telah ditetapkan. 
+3. Mahasiswa dapat menganalisis 
+keselarasan hasil implementasi SI 
+dengan tujuan strategis organisasi. 
+4. Mahasiswa dapat mengusulkan 
+penyesuaian strategi SI berdasarkan 
+hasil evaluasi kinerja. 
+TOTAL 100% 
+  
+
+=== PAGE 7 ===
+3. PETA ANALISIS CAPAIAN PEMBELAJARAN 
+Mahasiswa mampu melakukan analisis lingkungan internal dan 
+eksternal organisasi misalnya SWOT untuk mengidentifikasi 
+kebutuhan sistem informasi (C3, A3, P4)
+Mahasiswa mampu menyusun arsitektur sistem informasi yang mendukung 
+kebutuhan organisasi, termasuk infrastruktur teknologi dan aplikasi (C3, A3, P4)
+Mahasiswa mampu mengidentifikasi, menganalisis, dan mengelola 
+risiko yang terkait dengan implementasi strategi sistem informasi (C3, 
+A3, P4)
+Mahasiswa mampu menyusun rencana strategis sistem 
+informasi yang mencakup roadmap implementasi dan 
+prioritas proyek. (C4,A3,P4)
+Capaian Pembelajaran Mata Kuliah (CPMK)
+Mahasiswa mampu mengukur kinerja sistem informasi melalui indikator kinerja kunci 
+(KPI) dan mengevaluasi keselarasan dengan tujuan strategis organisasi.. (C3, A3, P4)
+Mahasiswa mampu merumuskan visi dan misi sistem 
+informasi yang selaras dengan strategi organisasi. 
+(C3, A3, P4)
+Mahasiswa mampu menjelaskan definisi, tujuan, dan pentingnya perencanaan strategis sistem 
+informasi dalam mendukung visi dan misi organisasi (C3, A3, P2)
+ 
+ 
+4. REFERENSI 
+1. Ward, J., & Peppard, J. (2016). Strategic Planning for Information Systems (4th ed.). Wiley. 
+2. Pearlson, K. E., Saunders, C. S., & Galletta, D. F. (2020). Managing and Using Information Systems: A Strategic 
+Approach (7th ed.). Wiley. 
+3. O'Brien, J. A., & Marakas, G. M. (2017). Management Information Systems (10th ed.). McGraw-Hill Education. 
+4. TOGAF Standard, Version 9.2. (2018). The Open Group. 
+5. Laudon, K. C., & Laudon, J. P. (2020). Management Information Systems: Managing the Digital Firm (16th ed.). 
+Pearson. 
+6. Andrew, J. (2011). TOGAF Version 9.1 A Pocket Guide. Berkshire: Van Haren Publishing.  
+7. Dietz, J. L., & Hoogervorst, J. A. (2013). An Enterprise Engineering Based 
+8. Examination of TOGAF. Lecturer Notes on Bussiness Information Processing (LNBIP), 79. 
+
+=== PAGE 8 ===
+9. Fitriani, L. (2016). Perencanaan Arsitektur Enterprise Sistem Informasi dengan Menggunakan TOGAF ADM (Studi 
+Kasus Dinas Perhubungan Kab.Garut). Jurnal STT-Garut, 443-450. 
+5. RINCIAN AKTIVITAS PEMBELAJARAN 
+Sesi 
+dan 
+Tanggal 
+Kode 
+Sub-CPMK 
+Bahan 
+Kajian/Topik Rancangan Aktivitas dan Durasi Mode 
+Media 
+Pembelajaran/ 
+Referensi 
+1 SUB-CPMK 
+01 
+Kontrak 
+Perkuliahan  
+Dan 
+Pengenalan 
+Konsep Dasar 
+(RK) 
+Flipped learning: 
+• Dosen memberikan penjelasan tentang 
+kontrak perkuliahan dan RPS (durasi 1x20 
+menit) 
+• Mahasiswa mempelajari materi yang 
+dibagikan oleh dosen (durasi 1x30 menit)  
+• Mahasiswa mengerjakan tugas mandiri  
+(durasi 1x60 menit) 
+• Penugasan (1x60 menit) 
+ASM 
+dan 
+TM 
+WAG, Zoom Meetings, 
+Youtube 
+[1], [2], [3] 
+2 SUB-CPMK 
+01 
+Hubungan 
+Strategis SI 
+dengan 
+Strategis Bisnis 
+(RK) 
+Flipped learning: 
+• Dosen memberikan materi dan menjelaskan 
+ke mahasiswa Hubungan Strategis SI 
+dengan Strategis Bisnis (1x50 menit) 
+• Mahasiswa melakukan praktikum (durasi 
+1x60 menit) 
+• Penugasan (1x60 menit) 
+ASM 
+dan 
+TM 
+WAG, Zoom Meetings, 
+Youtube 
+[1], [2], [3] 
+3 SUB-CPMK 
+02 
+Teknik Analisis 
+Lingkungan 
+(RK) 
+Flipped learning: 
+• Dosen memberikan materi dan menjelaskan 
+ke mahasiswa Teknik Analisis Lingkungan  
+(1x50 menit) 
+• Mahasiswa melakukan praktikum (durasi 
+1x60 menit) 
+• Penugasan (1x60 menit) 
+ASM 
+dan 
+TM 
+WAG, Zoom Meetings, 
+Youtube 
+[1], [2], [3] 
+4 SUB-CPMK 
+02 
+Identifikasi 
+peluang dan 
+ancaman 
+teknologi (RK) 
+Flipped learning: 
+• Dosen memberikan materi dan menjelaskan 
+ke mahasiswa Identifikasi peluang dan 
+ancaman teknologi (1x50 menit) 
+ASM 
+dan 
+TM 
+WAG, Zoom Meetings, 
+Youtube 
+[1], [2], [3] 
+
+=== PAGE 9 ===
+• Mahasiswa melakukan praktikum (durasi 
+1x60 menit) 
+• Penugasan (1x60 menit) 
+5 SUB-CPMK 
+03 
+Penyusunan 
+Visi dan Misi 
+(RK) 
+Flipped learning: 
+• Dosen memberikan materi dan menjelaskan 
+ke mahasiswa Penyusunan Visi dan Misi 
+(2x60 menit) 
+• Mahasiswa melakukan praktikum (durasi 
+2x240 menit) 
+• Penugasan (2x40 menit) 
+ASM 
+dan 
+TM 
+WAG, Zoom Meetings, 
+Youtube 
+[1], [2], [3] 
+6 SUB-CPMK 
+03 
+Penyelarasan 
+dengan tujuan 
+bisnis (RK) 
+Flipped learning: 
+• Dosen memberikan materi dan menjelaskan 
+ke mahasiswa Penyelarasan dengan tujuan 
+bisnis (2x60 menit) 
+• Mahasiswa melakukan praktikum (durasi 
+2x240 menit) 
+• Penugasan (2x40 menit) 
+ASM 
+dan 
+TM 
+WAG, Zoom Meetings, 
+Youtube 
+[1], [2], [3] 
+7 SUB-CPMK 
+03 
+Pengenalan 
+arsitektur SI 
+(RK) 
+Flipped learning: 
+• Dosen memberikan materi dan menjelaskan 
+ke mahasiswa Pengenalan arsitektur SI  
+(2x60 menit) 
+• Mahasiswa melakukan praktikum (durasi 
+2x240 menit) 
+• Penugasan (2x40 menit) 
+ASM 
+dan 
+TM 
+WAG, Zoom Meetings, 
+Youtube 
+[1], [2], [3] 
+8 SUB-CPMK 
+04 UTS Computer Based Test CBT (60 menit) TM Materi 1-7 
+9 SUB-CPMK 
+04 
+Pengenalan 
+Model seperti 
+TOGAF dan 
+perencanaan 
+portofolio 
+aplikasi (RK) 
+Flipped learning: 
+• Dosen memberikan materi dan menjelaskan 
+ke mahasiswa Pengenalan Model seperti 
+TOGAF dan perencanaan portofolio aplikasi 
+(2x60 menit) 
+• Mahasiswa melakukan praktikum (durasi 
+2x240 menit) 
+ASM 
+dan 
+TM 
+WAG, Zoom Meetings, 
+Youtube 
+[1], [2], [3] 
+
+=== PAGE 10 ===
+• Penugasan (2x40 menit) 
+10 SUB-CPMK 
+05 
+Penyusunan 
+roadmap SI, 
+penentuan 
+prioritas 
+proyek 
+(RK) 
+Flipped learning: 
+• Dosen memberikan materi dan menjelaskan 
+ke mahasiswa  Penyusunan roadmap SI, 
+penentuan prioritas proyek (2x60 menit) 
+• Mahasiswa melakukan praktikum (durasi 
+2x240 menit) 
+• Penugasan (2x40 menit) 
+ASM 
+dan 
+TM 
+WAG, Zoom Meetings, 
+Youtube 
+[1], [2], [3] 
+11 SUB-CPMK 
+05 
+Pengelolaan 
+Sumber Daya 
+(RK) 
+Flipped learning: 
+• Dosen memberikan materi dan menjelaskan 
+ke mahasiswa Pengelolaan Sumber Daya  
+(2x60 menit) 
+• Mahasiswa melakukan praktikum (durasi  
+2x240 menit) 
+• Penugasan (2x40 menit) 
+ASM 
+dan 
+TM 
+WAG, Zoom Meetings, 
+Youtube 
+[1], [2], [3] 
+12 SUB-CPMK 
+06 
+Manajemen 
+Risiko (RK) 
+Flipped learning: 
+• Dosen memberikan materi dan menjelaskan 
+ke mahasiswa Manajemen Risiko  (2x60 
+menit) 
+• Mahasiswa melakukan praktikum (durasi 
+2x240 menit) 
+• Penugasan (2x40 menit) 
+ASM 
+dan 
+TM 
+WAG, Zoom Meetings, 
+Youtube 
+[1], [2], [3] 
+13 SUB-CPMK 
+06 
+Evaluasi 
+Kelayakan 
+Proyek SI (RK) 
+Flipped learning: 
+• Dosen memberikan materi dan menjelaskan 
+ke mahasiswa Evaluasi Kelayakan Proyek  
+(2x60 menit) 
+• Mahasiswa melakukan praktikum (durasi 
+2x240 menit) 
+• Penugasan (2x40 menit) 
+ASM 
+dan 
+TM 
+WAG, Zoom Meetings, 
+Youtube 
+[1], [2], [3] 
+14-15 SUB-CPMK 
+07 
+Pengenalan KPI 
+untuk SI dan 
+Proyek Akhir 
+(RK) 
+Flipped learning: 
+• Dosen memberikan materi dan menjelaskan 
+ke mahasiswa Proyek Akhir (2x60 menit) 
+ASM 
+dan 
+TM 
+WAG, Zoom Meetings, 
+Youtube 
+[1], [2], [3] 
+
+=== PAGE 11 ===
+• Mahasiswa melakukan praktikum (durasi 
+2x240 menit) 
+• Penugasan (2x40 menit) 
+16 SUB-CPMK 
+01-07 UAS Computer Based Test CBT (60 menit) TM Materi 8-15 
+Keterangan: 
+Untuk mode diisikan salah satu dari kode berikut 
+• TM = Tatap Muka= aktivitas yang memerlukan tatap muka langsung di kelas; 
+• TMD = Tatap Muka Daring= aktivitas yang memerlukan tatap muka secara daring (tatap maya); 
+• ASM = aktivitas daring asinkron mandiri;  
+• ASK = aktivitas daring asinkron kolaborasi; 
+Media pembelajaran/referensi dapat berupa (1) hasil produksi sendiri, (2) hasil kurasi: media yang bersumber dari internet atau 
+sumber lainnya yang dipilihkan oleh dosen, dan/atau (3) hasil eksplorasi mahasiswa sendiri 
+ 
+6. SISTEM PENILAIAN DAN EVALUASI 
+Sistem Penilaian Sistem penilaian dilakukan pada CPMK masing-masing sesuai dengan rubrik yang dibuat.  
+Penilaian Teori  
+Keaktifan (5%) 
+Tugas (15%) 
+Kuis/Pretes/ Postes (20%) 
+UTS (30%) 
+UAS (30%) 
+Sistem Evaluasi Setiap mahasiswa harus meraih nilai/ predikat 60/C untuk masing-masing CPMK. Jika belum 
+memenuhi maka mahasiswa wajib melakukan asesmen perbaikan maksimal sebanyak dua kali.  
+ 
+
+=== PAGE 12 ===
+ 
+ 
+S1 Sistem Informasi  
+Rencana Evaluasi Penilaian Mahasiswa 
+Versi/Revisi 3/0   
+ 
+INDIKATOR PENILAIAN 
+Kode 
+CPL 
+Kode 
+Sub-
+CPMK 
+Bobot 
+(%) Rumusan Indikator Keaktifan 
+(5%) 
+Tugas 
+(15%) 
+Kuis/Pret
+es /Postes 
+(20%) 
+UTS 
+(30%) 
+UAS 
+(30%) 
+CPL 01 SUB-
+CPMK 
+01 
+6% 1. Mahasiswa dapat 
+mendefinisikan perencanaan 
+strategis sistem informasi 
+dengan tepat. 
+2. Mahasiswa dapat menjelaskan 
+minimal tiga tujuan utama 
+perencanaan strategis SI. 
+3. Mahasiswa dapat menguraikan 
+hubungan antara  strategi SI 
+dan strategi bisnis dengan 
+contoh nyata. 
+4. Mahasiswa dapat menyebutkan 
+minimal dua kerangka kerja 
+perencanaan strategis SI 
+(misalnya Ward & Peppard, 
+TOGAF). 
+ Bentuk 
+tugas: 
+Mengerjakan 
+soal terkait 
+Kerangka 
+Kerja 
+Strategis SI 
+ 5 Soal  5 Soal  
+CPL 01 SUB-
+CPMK 
+02 
+6% 5. Mahasiswa dapat melakukan 
+analisis SWOT dengan 
+mengidentifikasi minimal dua 
+kekuatan, kelemahan, peluang, 
+dan ancaman terkait SI. 
+6. Mahasiswa dapat menerapkan 
+analisis PESTEL untuk 
+mengidentifikasi faktor 
+  Bentuk 
+Kuis: 
+Mahasiswa 
+mengerjaka
+n 25 Soal 
+terkait 
+Metode 
+Proyek 
+5 Soal  5 Soal  
+
+
+=== PAGE 13 ===
+eksternal yang memengaruhi 
+kebutuhan SI. 
+7. Mahasiswa dapat memetakan 
+kebutuhan bisnis organisasi 
+berdasarkan hasil analisis 
+lingkungan. 
+8. Mahasiswa dapat menyusun 
+laporan analisis lingkungan 
+dengan struktur yang jelas dan 
+logis. 
+CPL 01 SUB-
+CPMK 
+03 
+6% 9. Mahasiswa dapat merumuskan 
+visi SI yang jelas, singkat, dan 
+selaras dengan visi organisasi. 
+10.Mahasiswa dapat menyusun 
+misi SI yang mencakup tujuan 
+teknologi dan dukungan 
+terhadap bisnis. 
+11.Mahasiswa dapat menunjukkan 
+keselarasan antara visi/misi SI 
+dengan strategi organisasi 
+melalui studi kasus. 
+12.Mahasiswa dapat mengevaluasi 
+visi dan misi SI organisasi lain 
+dengan kriteria yang relevan 
+   5 Soal  5 Soal  
+CPL 01 SUB-
+CPMK 
+04 
+6% 13. Mahasiswa dapat mendesain 
+diagram arsitektur SI yang 
+mencakup infrastruktur dan 
+aplikasi utama. 
+14. Mahasiswa dapat menjelaskan 
+komponen utama arsitektur SI 
+berdasarkan model seperti 
+TOGAF. 
+15. Mahasiswa dapat 
+mengidentifikasi kebutuhan 
+teknologi yang sesuai dengan 
+portofolio aplikasi organisasi. 
+16. Mahasiswa dapat menyusun 
+rencana pengembangan 
+   5 Soal  5 Soal  
+
+=== PAGE 14 ===
+arsitektur SI dengan 
+mempertimbangkan skalabilitas 
+dan fleksibilitas. 
+CPL 01 SUB-
+CPMK 
+05 
+13% 17. Mahasiswa dapat menyusun 
+roadmap implementasi SI 
+dengan timeline yang realistis. 
+18. Mahasiswa dapat menentukan 
+prioritas proyek SI berdasarkan 
+kriteria seperti dampak bisnis 
+dan urgensi. 
+19. Mahasiswa dapat 
+mengidentifikasi sumber daya 
+yang diperlukan untuk 
+implementasi rencana strategis 
+SI. 
+20. Mahasiswa dapat menyusun 
+dokumen rencana strategis SI 
+yang terstruktur dan 
+komprehensif. 
+ Bentuk 
+tugas: 
+Mengerjakan 
+soal terkait 
+roadmap 
+implementasi 
+SI 
+ 5 Soal  5 Soal  
+CPL 01 SUB-
+CPMK 
+06 
+13% 21. Mahasiswa dapat 
+mengidentifikasi minimal tiga 
+risiko utama dalam 
+implementasi strategi SI. 
+22. Mahasiswa dapat menganalisis 
+risiko menggunakan metode 
+kualitatif atau kuantitatif 
+(misalnya matriks risiko). 
+23. Mahasiswa dapat mengusulkan 
+strategi mitigasi risiko yang 
+relevan dan efektif. 
+24. Mahasiswa dapat menyusun 
+rencana manajemen risiko 
+untuk proyek SI dengan 
+langkah-langkah yang jelas. 
+   5 Soal  5 Soal  
+
+=== PAGE 15 ===
+CPL 01 SUB-
+CPMK 
+07 
+13% 25. Mahasiswa dapat merumuskan 
+minimal tiga KPI yang relevan 
+untuk mengukur kinerja SI. 
+26. Mahasiswa dapat mengevaluasi 
+keberhasilan implementasi SI 
+berdasarkan KPI yang telah 
+ditetapkan. 
+27. Mahasiswa dapat menganalisis 
+keselarasan hasil implementasi 
+SI dengan tujuan strategis 
+organisasi. 
+28. Mahasiswa dapat mengusulkan 
+penyesuaian strategi SI 
+berdasarkan hasil evaluasi 
+kinerja. 
+   5 Soal  5 Soal  
+Rubrik Penilaian Holistik 
+Kriteria Indikator Penilaian Skor 
+Kemampuan 
+Penyelesaian 
+Tugas Kerangka 
+Kerja Strategis 
+Sistem 
+Informasi 
+ 
+1. Rancangan yang disajikan tidak teratur dan tidak menyelesaikan permasalahan 
+2. Rancangan yang disajikan teratur namun kurang menyelesaikan permasalahan 
+3. Rancangan yang disajikan tersistematis, menyelesaikan masalah, namun kurang dapat 
+diimplementasikan 
+4. Rancangan yang disajikan sistematis, menyelesaikan masalah, dapat diimplementasikan, kurang 
+inovatif 
+5. Rancangan yang disajikan sistematis, menyelesaikan masalah, dapat diimplementasikan, kurang 
+inovatif 
+<20 
+21-40 
+41-60 
+ 
+61 – 80 
+ 
+>81 
+Nilai Ketepatan Penyelesaian Kasus (80%) 80%x skor 
+Ketepatan 
+waktu 
+1. Tepat waktu 
+2. Terlambat < 1 minggu 
+3. Terlambat > 1 minggu 
+4. Tidak mengumpulkan 
+100 
+80 
+70 
+0 
+Nilai Kerjasama Kelompok  (20%) 20%x skor 
+Nilai Total Keseluruahn 100 
+ 
+ 
+

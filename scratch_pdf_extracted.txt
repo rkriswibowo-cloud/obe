@@ -1,0 +1,852 @@
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+1.
+ 
+Mahasiswa dapat merumuskan visi SI 
+yang jelas, singkat, dan selaras dengan 
+visi organisasi.
+ 
+2.
+ 
+Mahasiswa dapat menyusun misi SI yang 
+mencakup tujuan teknologi dan 
+dukungan terhadap bisnis.
+ 
+3.
+ 
+Mahasiswa dapat menunjukkan 
+keselarasan antara visi/misi SI dengan 
+strategi organisasi melalui studi kasus.
+ 
+4.
+ 
+Mahasiswa dapat mengevaluasi visi dan 
+misi SI organisasi lain dengan kriteria 
+yang relevan
+ 
+ 
+ 
+ 
+ 
+ 
+1.
+ 
+Mahasiswa dapat 
+mendesain diagram 
+arsitektur SI yang mencakup 
+infrastruktur dan aplikasi utama.
+ 
+2.
+ 
+Mahasiswa dapat menjelaskan 
+komponen utama arsitektur SI 
+berdasarkan model seperti TOGAF.
+ 
+3.
+ 
+Mahasiswa dapat mengidentifikasi 
+kebutuhan teknologi yang sesuai dengan 
+portofolio aplikasi organisasi.
+ 
+4.
+ 
+Mahasiswa dapat menyusun rencana 
+pengembangan arsitektur SI dengan 
+ 
+ 
+ 
+mempertimbangkan skalabilitas dan 
+fleksibilitas.
+ 
+ 
+ 
+1.
+ 
+Mahasiswa dapat menyusun
+ 
+roadmap 
+implementasi SI dengan timeline yang 
+realistis.
+ 
+2.
+ 
+Mahasiswa dapat menentukan prioritas 
+proyek SI berdasarkan kriteria seperti 
+dampak bisnis dan urgensi.
+ 
+3.
+ 
+Mahasiswa dapat mengidentifikasi 
+sumber daya yang diperlukan untuk 
+implementasi rencana strategis SI.
+ 
+4.
+ 
+Mahasiswa dapat menyusun dokumen 
+rencana strategis SI yang terstruktur dan 
+komprehensif.
+ 
+ 
+ 
+ 
+ 
+ 
+1.
+ 
+Mahasiswa dapat mengidentifikasi 
+minimal tiga risiko utama dalam 
+implementasi strategi SI.
+ 
+2.
+ 
+Mahasiswa dapat menganalisis risiko 
+menggunakan metode kualitatif atau 
+kuantitatif \(misalnya matriks risiko\
+ 
+3.
+ 
+Mahasiswa dapat mengusulkan strategi 
+mitigasi risiko yang relevan dan efektif.
+ 
+4.
+ 
+Mahasiswa dapat menyusun rencana 
+manajemen risiko untuk proyek SI 
+dengan langkah
+-
+langkah yang jelas.
+ 
+ 
+ 
+ 
+ 
+ 
+1.
+ 
+Mahasiswa dapat merumuskan minimal 
+tiga KPI yang relevan untuk mengukur 
+kinerja SI.
+ 
+ 
+ 
+ 
+2.
+ 
+Mahasiswa dapat 
+mengevaluasi 
+keberhasilan implementasi SI 
+berdasarkan KPI yang telah ditetapkan.
+ 
+3.
+ 
+Mahasiswa dapat menganalisis 
+keselarasan hasil implementasi SI 
+dengan tujuan strategis organisasi.
+ 
+4.
+ 
+Mahasiswa dapat mengusulkan 
+penyesuaian strategi SI berdasarkan 
+hasil 
+evaluasi kinerja.
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Mahasiswa mampu melakukan analisis lingkungan internal dan 
+eksternal organisasi misalnya SWOT untuk mengidentifikasi 
+kebutuhan sistem informasi \(C3, A3, P4\
+Mahasiswa mampu menyusun arsitektur sistem informasi yang mendukung 
+kebutuhan organisasi, termasuk infrastruktur teknologi dan aplikasi \(C3, A3, P4\
+Mahasiswa mampu mengidentifikasi, menganalisis, dan mengelola 
+risiko yang terkait dengan implementasi strategi sistem informasi \(C3, 
+A3, P4\
+Mahasiswa mampu menyusun rencana strategis sistem 
+informasi yang mencakup roadmap implementasi dan 
+prioritas proyek. \(C4,A3,P4\
+Capaian Pembelajaran Mata Kuliah \(CPMK\
+Mahasiswa mampu mengukur kinerja sistem informasi melalui indikator kinerja kunci 
+\(KPI\ dan mengevaluasi keselarasan dengan tujuan strategis organisasi.. \(C3, A3, P4\
+Mahasiswa mampu merumuskan visi dan misi sistem 
+informasi yang selaras dengan strategi organisasi. 
+\(C3, A3, P4\
+Mahasiswa mampu menjelaskan definisi, tujuan, dan pentingnya perencanaan strategis sistem 
+informasi dalam mendukung visi dan 
+misi organisasi \(C3, A3, P2\
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+9.
+ 
+Mahasiswa dapat merumuskan 
+visi SI yang jelas, singkat, dan 
+selaras dengan visi organisasi.
+ 
+10.
+Mahasiswa dapat menyusun 
+misi SI yang mencakup tujuan 
+teknologi dan dukungan 
+terhadap bisnis.
+ 
+11.
+Mahasiswa dapat menunjukkan 
+keselarasan antara visi/misi SI 
+dengan strategi organisasi 
+melalui studi kasus.
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+13.
+ 
+Mahasiswa dapat mendesain 
+diagram arsitektur SI yang 
+mencakup infrastruktur dan 
+aplikasi utama.
+ 
+14.
+ 
+Mahasiswa dapat menjelaskan 
+komponen utama arsitektur SI 
+berdasarkan model seperti 
+TOGAF.
+ 
+15.
+ 
+Mahasiswa dapat 
+mengidentifikasi kebutuhan 
+teknologi yang sesuai 
+dengan 
+portofolio aplikasi organisasi.
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+17.
+ 
+Mahasiswa dapat menyusun 
+roadmap implementasi SI 
+dengan timeline yang realistis.
+ 
+18.
+ 
+Mahasiswa dapat menentukan 
+prioritas proyek SI berdasarkan 
+kriteria seperti dampak bisnis 
+dan urgensi.
+ 
+19.
+ 
+Mahasiswa dapat 
+mengidentifikasi sumber daya 
+yang diperlukan untuk 
+implementasi rencana strategis 
+SI.
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+21.
+ 
+Mahasiswa dapat 
+mengidentifikasi minimal tiga 
+risiko utama dalam 
+implementasi strategi SI.
+ 
+22.
+ 
+Mahasiswa dapat menganalisis 
+risiko menggunakan metode 
+kualitatif atau kuantitatif 
+\(misalnya matriks risiko\
+ 
+23.
+ 
+Mahasiswa dapat mengusulkan 
+strategi mitigasi risiko yang 
+relevan dan efektif.
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+25.
+ 
+Mahasiswa dapat merumuskan 
+minimal tiga KPI yang relevan 
+untuk mengukur kinerja SI.
+ 
+26.
+ 
+Mahasiswa dapat mengevaluasi 
+keberhasilan 
+implementasi SI 
+berdasarkan KPI yang telah 
+ditetapkan.
+ 
+27.
+ 
+Mahasiswa dapat menganalisis 
+keselarasan hasil implementasi 
+SI dengan tujuan strategis 
+organisasi.
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
