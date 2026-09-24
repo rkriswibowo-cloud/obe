@@ -4,14 +4,23 @@ $config = require_once __DIR__ . '/../config/app.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../app/Controllers/AuthController.php';
 
-// Sangat sederhana routing untuk MVP
-$request_uri = $_SERVER['REQUEST_URI'];
-$base_path = '/obe/public';
-$path = str_replace($base_path, '', parse_url($request_uri, PHP_URL_PATH));
+// Routing fleksibel: mendukung akses via http://localhost/obe maupun http://localhost/obe/public
+$request_uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/';
 
-if ($path == '' || $path == '/') {
+$path = $request_uri;
+if (strpos($path, '/obe/public') === 0) {
+    $path = substr($path, strlen('/obe/public'));
+} elseif (strpos($path, '/obe') === 0) {
+    $path = substr($path, strlen('/obe'));
+}
+
+// Normalisasi path
+$path = '/' . trim($path, '/');
+if ($path === '' || $path === '/') {
     $path = '/dashboard';
 }
+
+$base_path = '/obe/public';
 
 $authController = new AuthController();
 
@@ -468,6 +477,18 @@ switch ($path) {
         require_once __DIR__ . '/../app/Controllers/MahasiswaController.php';
         $m = new MahasiswaController();
         $m->delete();
+        break;
+
+    // KHS & Tracking CPL Mahasiswa Routes
+    case '/khs':
+        require_once __DIR__ . '/../app/Controllers/KhsController.php';
+        $khsCtrl = new KhsController();
+        $khsCtrl->index();
+        break;
+    case '/khs/cetak':
+        require_once __DIR__ . '/../app/Controllers/KhsController.php';
+        $khsCtrl = new KhsController();
+        $khsCtrl->cetak();
         break;
     
     default:

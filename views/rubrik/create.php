@@ -145,7 +145,7 @@ $baseUrl = $GLOBALS['config']['base_url'] ?? '/obe/public';
 
     <!-- Submit Button -->
     <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px;">
-        <a href="<?= $baseUrl ?>/rubrik" class="btn btn-secondary" style="padding: 10px 24px;">Batal</a>
+        <a href="<?= $baseUrl ?>/rubrik" class="btn btn-secondary" style="padding: 10px 24px;"><i class="fa-solid fa-xmark" style="margin-right: 6px;"></i> Batal</a>
         <button type="submit" class="btn btn-primary" style="padding: 10px 28px; font-size: 0.95rem;">
             <i class="fa-solid fa-floppy-disk" style="margin-right: 6px;"></i> Simpan Rubrik Penilaian
         </button>

@@ -611,12 +611,12 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
                                 <i class="fa-solid fa-wand-magic-sparkles" style="color: var(--warning);"></i> Tambah Cepat Metode Pembelajaran:
                             </div>
                             <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-                                <button type="button" class="preset-pill" onclick="appendBentuk('Kuliah/ Responsi/ Tutorial')">+ Kuliah/Tutorial</button>
-                                <button type="button" class="preset-pill" onclick="appendBentuk('Praktikum/ Praktik Studio')">+ Praktikum Lab</button>
-                                <button type="button" class="preset-pill" onclick="appendBentuk('Problem Based Learning (PBL)')">+ PBL</button>
-                                <button type="button" class="preset-pill" onclick="appendBentuk('Project Based Learning (PjBL)')">+ PjBL</button>
-                                <button type="button" class="preset-pill" onclick="appendBentuk('Seminar & Diskusi Kelompok')">+ Diskusi/Seminar</button>
-                                <button type="button" class="preset-pill" onclick="appendBentuk('Praktik Lapangan / Magang')">+ Praktik Lapangan</button>
+                                <button type="button" class="preset-pill" onclick="appendBentuk('Kuliah/ Responsi/ Tutorial')"><i class="fa-solid fa-plus"></i> Kuliah/Tutorial</button>
+                                <button type="button" class="preset-pill" onclick="appendBentuk('Praktikum/ Praktik Studio')"><i class="fa-solid fa-plus"></i> Praktikum Lab</button>
+                                <button type="button" class="preset-pill" onclick="appendBentuk('Problem Based Learning (PBL)')"><i class="fa-solid fa-plus"></i> PBL</button>
+                                <button type="button" class="preset-pill" onclick="appendBentuk('Project Based Learning (PjBL)')"><i class="fa-solid fa-plus"></i> PjBL</button>
+                                <button type="button" class="preset-pill" onclick="appendBentuk('Seminar & Diskusi Kelompok')"><i class="fa-solid fa-plus"></i> Diskusi/Seminar</button>
+                                <button type="button" class="preset-pill" onclick="appendBentuk('Praktik Lapangan / Magang')"><i class="fa-solid fa-plus"></i> Praktik Lapangan</button>
                                 <button type="button" class="preset-pill-clear" onclick="clearBentuk()"><i class="fa-solid fa-trash-can"></i> Kosongkan</button>
                             </div>
                         </div>
@@ -641,12 +641,12 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
                                 <i class="fa-solid fa-wand-magic-sparkles" style="color: var(--warning);"></i> Tambah Cepat Media & Sarana:
                             </div>
                             <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-                                <button type="button" class="preset-pill" onclick="appendMedia('*Audio/Visual/Audiovisual')">+ Audio/Visual</button>
-                                <button type="button" class="preset-pill" onclick="appendMedia('LCD Proyektor & Whiteboard')">+ LCD Proyektor</button>
-                                <button type="button" class="preset-pill" onclick="appendMedia('LMS / Google Classroom')">+ LMS Classroom</button>
-                                <button type="button" class="preset-pill" onclick="appendMedia('Laboratorium Komputer')">+ Lab Komputer</button>
-                                <button type="button" class="preset-pill" onclick="appendMedia('Zoom / Google Meet')">+ Zoom/GMeet</button>
-                                <button type="button" class="preset-pill" onclick="appendMedia('Modul Praktikum & E-Book')">+ Modul & E-Book</button>
+                                <button type="button" class="preset-pill" onclick="appendMedia('*Audio/Visual/Audiovisual')"><i class="fa-solid fa-plus"></i> Audio/Visual</button>
+                                <button type="button" class="preset-pill" onclick="appendMedia('LCD Proyektor & Whiteboard')"><i class="fa-solid fa-plus"></i> LCD Proyektor</button>
+                                <button type="button" class="preset-pill" onclick="appendMedia('LMS / Google Classroom')"><i class="fa-solid fa-plus"></i> LMS Classroom</button>
+                                <button type="button" class="preset-pill" onclick="appendMedia('Laboratorium Komputer')"><i class="fa-solid fa-plus"></i> Lab Komputer</button>
+                                <button type="button" class="preset-pill" onclick="appendMedia('Zoom / Google Meet')"><i class="fa-solid fa-plus"></i> Zoom/GMeet</button>
+                                <button type="button" class="preset-pill" onclick="appendMedia('Modul Praktikum & E-Book')"><i class="fa-solid fa-plus"></i> Modul & E-Book</button>
                                 <button type="button" class="preset-pill-clear" onclick="clearMedia()"><i class="fa-solid fa-trash-can"></i> Kosongkan</button>
                             </div>
                         </div>
@@ -1557,7 +1557,7 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
         <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); width: 100%; max-width: 650px; padding: 24px; max-height: 90vh; overflow-y: auto;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                 <h3 id="modalTitle" style="margin: 0; font-size: 1.2rem;">Form Sesi Pertemuan RPS</h3>
-                <button type="button" onclick="closeModal()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+                <button type="button" onclick="closeModal()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
             <form id="formPertemuan" action="<?= $baseUrl ?>/rps/pertemuan/store" method="POST">
@@ -1614,8 +1614,8 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
                 </div>
 
                 <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border); padding-top: 14px;">
-                    <button type="button" onclick="closeModal()" class="btn btn-secondary">Batal</button>
-                    <button type="submit" class="btn btn-primary" style="font-weight: 600;">Simpan Sesi</button>
+                    <button type="button" onclick="closeModal()" class="btn btn-secondary"><i class="fa-solid fa-xmark"></i> Batal</button>
+                    <button type="submit" class="btn btn-primary" style="font-weight: 600;"><i class="fa-solid fa-floppy-disk"></i> Simpan Sesi</button>
                 </div>
             </form>
         </div>

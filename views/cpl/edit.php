@@ -54,7 +54,7 @@ ob_start();
         
         <div style="display: flex; gap: 10px;">
             <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Perbarui</button>
-            <a href="<?= $config['base_url'] ?? '/obe/public' ?>/cpl" class="btn btn-secondary">Batal</a>
+            <a href="<?= $config['base_url'] ?? '/obe/public' ?>/cpl" class="btn btn-secondary"><i class="fa-solid fa-xmark"></i> Batal</a>
         </div>
     </form>
 </div>

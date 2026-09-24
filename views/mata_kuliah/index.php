@@ -103,7 +103,7 @@ ob_start();
         
         <?php if ($page > 1): ?>
             <?php $queryParams['page'] = $page - 1; ?>
-            <a href="?<?= http_build_query($queryParams) ?>" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.9rem;">&laquo; Prev</a>
+            <a href="?<?= http_build_query($queryParams) ?>" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.9rem;"><i class="fa-solid fa-chevron-left"></i> Prev</a>
         <?php endif; ?>
 
         <?php for($i = 1; $i <= $totalPages; $i++): ?>
@@ -117,7 +117,7 @@ ob_start();
 
         <?php if ($page < $totalPages): ?>
             <?php $queryParams['page'] = $page + 1; ?>
-            <a href="?<?= http_build_query($queryParams) ?>" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.9rem;">Next &raquo;</a>
+            <a href="?<?= http_build_query($queryParams) ?>" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.9rem;">Next <i class="fa-solid fa-chevron-right"></i></a>
         <?php endif; ?>
     </div>
 </div>

@@ -3,7 +3,7 @@
 <div class="content-header">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h2>Kelola Peserta Kelas: <?= htmlspecialchars($kelas['nama_kelas']) ?> (<?= htmlspecialchars($kelas['mata_kuliah_kode']) ?>)</h2>
-        <a href="/obe/public/kelas" class="btn" style="background: var(--bg-hover); color: var(--text-primary);">Kembali</a>
+        <a href="/obe/public/kelas" class="btn" style="background: var(--bg-hover); color: var(--text-primary);"><i class="fa-solid fa-arrow-left"></i> Kembali</a>
     </div>
 </div>
 
@@ -32,7 +32,7 @@
             </div>
             
             <button type="submit" class="btn" style="background: var(--primary); color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;" <?= empty($mahasiswa_belum) ? 'disabled' : '' ?>>
-                + Tambahkan ke Kelas
+                <i class="fa-solid fa-user-plus"></i> Tambahkan ke Kelas
             </button>
         </form>
     </div>
@@ -55,7 +55,7 @@
                         <td style="padding: 10px; font-family: monospace;"><?= htmlspecialchars($p['username']) ?></td>
                         <td style="padding: 10px;"><?= htmlspecialchars($p['nama_lengkap']) ?></td>
                         <td style="padding: 10px; text-align: right;">
-                            <a href="/obe/public/kelas/peserta/remove?kelas_id=<?= $kelas['id'] ?>&mahasiswa_id=<?= $p['id'] ?>" class="btn" style="padding: 4px 8px; font-size: 0.85em; background: var(--danger); color: white;" onclick="return confirm('Keluarkan mahasiswa ini dari kelas?');">Keluarkan</a>
+                            <a href="/obe/public/kelas/peserta/remove?kelas_id=<?= $kelas['id'] ?>&mahasiswa_id=<?= $p['id'] ?>" class="btn" style="padding: 4px 8px; font-size: 0.85em; background: var(--danger); color: white;" onclick="return confirm('Keluarkan mahasiswa ini dari kelas?');"><i class="fa-solid fa-user-minus"></i> Keluarkan</a>
                         </td>
                     </tr>
                 <?php endforeach; ?>

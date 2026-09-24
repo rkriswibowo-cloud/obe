@@ -21,7 +21,7 @@
             </select>
         </div>
         <button type="submit" class="btn" style="background: var(--primary); color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">
-            Tampilkan Form Nilai
+            <i class="fa-solid fa-table-list"></i> Tampilkan Form Nilai
         </button>
     </form>
 </div>
@@ -51,7 +51,7 @@
                 <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
                     <h3 style="margin: 0; color: var(--text-primary);">Matriks Penilaian Sub-CPMK</h3>
                     <button type="submit" class="btn" style="background: var(--success); color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">
-                        💾 Simpan Semua Nilai
+                        <i class="fa-solid fa-floppy-disk"></i> Simpan Semua Nilai
                     </button>
                 </div>
 

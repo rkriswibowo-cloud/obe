@@ -20,6 +20,16 @@ $logoSrc = file_exists($logoFile)
     <!-- FontAwesome for UI buttons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Script Anti-FOUC untuk Dokumen RPS -->
+    <script>
+        (function() {
+            try {
+                const savedTheme = localStorage.getItem('theme') || 'dark';
+                document.documentElement.classList.add(savedTheme);
+            } catch(e) {}
+        })();
+    </script>
+
     <style>
         /* ==========================================================================
            1. SCREEN & ACTION TOOLBAR STYLES
@@ -35,6 +45,13 @@ $logoSrc = file_exists($logoFile)
             color: #000000;
             line-height: 1.35;
             -webkit-font-smoothing: antialiased;
+            transition: background-color 0.2s ease;
+        }
+        body.theme-dark {
+            background-color: #1e293b;
+        }
+        body.theme-light {
+            background-color: #cbd5e1;
         }
 
         .no-print-toolbar {
@@ -99,6 +116,25 @@ $logoSrc = file_exists($logoFile)
         .btn-tb-mode {
             background: #334155;
             color: #e2e8f0;
+        }
+        .btn-tb-mode:hover {
+            background: #475569;
+            color: #ffffff;
+        }
+        body.theme-light .no-print-toolbar {
+            background: #ffffff;
+            color: #0f172a;
+            border-bottom: 1px solid #cbd5e1;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        body.theme-light .btn-tb-mode {
+            background: #f1f5f9;
+            color: #0f172a;
+            border: 1px solid #cbd5e1;
+        }
+        body.theme-light .btn-tb-mode:hover {
+            background: #e2e8f0;
+            color: #000000;
         }
 
         /* ==========================================================================
@@ -349,6 +385,9 @@ $logoSrc = file_exists($logoFile)
             <span style="font-size: 0.8rem; color: #94a3b8;">(Revisi <?= htmlspecialchars($rps['versi'] ?? '3/0') ?>)</span>
         </div>
         <div class="toolbar-actions">
+            <button type="button" onclick="toggleDocTheme()" class="btn-tb btn-tb-mode" id="btnDocTheme" title="Ganti Mode Latar (Dark / Light)">
+                <i class="fa-solid fa-moon" id="docThemeIcon"></i> <span id="docThemeText">Dark</span>
+            </button>
             <a href="<?= $baseUrl ?>/rps?mk_id=<?= $mk['id'] ?>" class="btn-tb btn-tb-back">
                 <i class="fa-solid fa-arrow-left"></i> Kembali ke Builder
             </a>
@@ -1167,6 +1206,40 @@ $logoSrc = file_exists($logoFile)
             });
         </script>
     <?php endif; ?>
+
+    <!-- Script Pengaturan Tema Dokumen (Dark / Light Preview) -->
+    <script>
+        function applyDocTheme(theme) {
+            document.body.classList.remove('theme-dark', 'theme-light');
+            document.body.classList.add(theme === 'light' ? 'theme-light' : 'theme-dark');
+            localStorage.setItem('theme', theme);
+
+            const icon = document.getElementById('docThemeIcon');
+            const text = document.getElementById('docThemeText');
+            const btn = document.getElementById('btnDocTheme');
+            if (icon && text) {
+                if (theme === 'light') {
+                    icon.className = 'fa-solid fa-sun';
+                    text.textContent = 'Light';
+                    if (btn) btn.setAttribute('title', 'Ganti ke Latar Gelap (Dark Mode)');
+                } else {
+                    icon.className = 'fa-solid fa-moon';
+                    text.textContent = 'Dark';
+                    if (btn) btn.setAttribute('title', 'Ganti ke Latar Terang (Light Mode)');
+                }
+            }
+        }
+
+        function toggleDocTheme() {
+            const isLight = document.body.classList.contains('theme-light');
+            applyDocTheme(isLight ? 'dark' : 'light');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            applyDocTheme(savedTheme);
+        });
+    </script>
 
 </body>
 </html>

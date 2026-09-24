@@ -3,7 +3,7 @@
 <div class="content-header">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h2>Master Mahasiswa</h2>
-        <a href="/obe/public/mahasiswa/create" class="btn" style="background: var(--primary); color: white;">+ Tambah Mahasiswa</a>
+        <a href="/obe/public/mahasiswa/create" class="btn" style="background: var(--primary); color: white;"><i class="fa-solid fa-plus"></i> Tambah Mahasiswa</a>
     </div>
 </div>
 
@@ -22,8 +22,9 @@
                     <td style="padding: 12px; font-weight: bold;"><?= htmlspecialchars($m['nama_lengkap']) ?></td>
                     <td style="padding: 12px;"><?= htmlspecialchars($m['username']) ?></td>
                     <td style="padding: 12px; text-align: right;">
-                        <a href="/obe/public/mahasiswa/edit?id=<?= $m['id'] ?>" class="btn" style="background: var(--warning); color: #fff; padding: 6px 12px; border-radius: 4px; font-size: 0.9em; margin-right: 5px;">Edit</a>
-                        <a href="/obe/public/mahasiswa/delete?id=<?= $m['id'] ?>" onclick="return confirm('Yakin ingin menghapus mahasiswa ini?');" class="btn" style="background: var(--danger); color: white; padding: 6px 12px; border-radius: 4px; font-size: 0.9em;">Hapus</a>
+                        <a href="/obe/public/khs?id=<?= $m['id'] ?>" class="btn" style="background: var(--primary); color: white; padding: 6px 12px; border-radius: 4px; font-size: 0.9em; margin-right: 5px;" title="Lihat KHS, IPK & Tracking CPL"><i class="fa-solid fa-graduation-cap"></i> KHS & CPL</a>
+                        <a href="/obe/public/mahasiswa/edit?id=<?= $m['id'] ?>" class="btn" style="background: var(--warning); color: #fff; padding: 6px 12px; border-radius: 4px; font-size: 0.9em; margin-right: 5px;"><i class="fa-solid fa-pen-to-square"></i> Edit</a>
+                        <a href="/obe/public/mahasiswa/delete?id=<?= $m['id'] ?>" onclick="return confirm('Yakin ingin menghapus mahasiswa ini?');" class="btn" style="background: var(--danger); color: white; padding: 6px 12px; border-radius: 4px; font-size: 0.9em;"><i class="fa-solid fa-trash"></i> Hapus</a>
                     </td>
                 </tr>
             <?php endforeach; ?>

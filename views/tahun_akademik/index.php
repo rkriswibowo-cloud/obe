@@ -3,7 +3,7 @@
 <div class="content-header">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h2>Master Tahun Akademik</h2>
-        <a href="/obe/public/tahun-akademik/create" class="btn" style="background: var(--primary); color: white;">+ Tambah Tahun Akademik</a>
+        <a href="/obe/public/tahun-akademik/create" class="btn" style="background: var(--primary); color: white;"><i class="fa-solid fa-plus"></i> Tambah Tahun Akademik</a>
     </div>
 </div>
 
@@ -28,8 +28,8 @@
                         <?php endif; ?>
                     </td>
                     <td style="padding: 12px; text-align: right;">
-                        <a href="/obe/public/tahun-akademik/edit?id=<?= $ta['id'] ?>" class="btn" style="background: var(--warning); color: #fff; padding: 6px 12px; border-radius: 4px; font-size: 0.9em; margin-right: 5px;">Edit</a>
-                        <a href="/obe/public/tahun-akademik/delete?id=<?= $ta['id'] ?>" onclick="return confirm('Yakin ingin menghapus?');" class="btn" style="background: var(--danger); color: white; padding: 6px 12px; border-radius: 4px; font-size: 0.9em;">Hapus</a>
+                        <a href="/obe/public/tahun-akademik/edit?id=<?= $ta['id'] ?>" class="btn" style="background: var(--warning); color: #fff; padding: 6px 12px; border-radius: 4px; font-size: 0.9em; margin-right: 5px;"><i class="fa-solid fa-pen-to-square"></i> Edit</a>
+                        <a href="/obe/public/tahun-akademik/delete?id=<?= $ta['id'] ?>" onclick="return confirm('Yakin ingin menghapus?');" class="btn" style="background: var(--danger); color: white; padding: 6px 12px; border-radius: 4px; font-size: 0.9em;"><i class="fa-solid fa-trash"></i> Hapus</a>
                     </td>
                 </tr>
             <?php endforeach; ?>

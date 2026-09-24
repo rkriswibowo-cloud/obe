@@ -91,7 +91,7 @@ $baseUrl = $GLOBALS['config']['base_url'] ?? '/obe/public';
             </div>
 
             <div style="border-top: 1px solid var(--border); margin-top: 30px; padding-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
-                <a href="<?= $baseUrl ?>/rps?mk_id=<?= $mk['id'] ?>" class="btn btn-secondary">Batal</a>
+                <a href="<?= $baseUrl ?>/rps?mk_id=<?= $mk['id'] ?>" class="btn btn-secondary"><i class="fa-solid fa-xmark"></i> Batal</a>
                 <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Simpan Data</button>
             </div>
         </form>

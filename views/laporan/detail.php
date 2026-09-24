@@ -284,10 +284,25 @@ $baseUrl = $GLOBALS['config']['base_url'] ?? '/obe/public';
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const radarData = <?= json_encode($radarData) ?>;
-
     const ctx = document.getElementById('cplRadarChart').getContext('2d');
     
-    new Chart(ctx, {
+    function getThemeChartConfig(theme) {
+        const isLight = theme === 'light';
+        return {
+            lineColor: isLight ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)',
+            labelColor: isLight ? '#0f172a' : '#f8fafc',
+            tickColor: isLight ? '#64748b' : '#94a3b8',
+            tooltipBg: isLight ? 'rgba(255, 255, 255, 0.96)' : 'rgba(15, 17, 26, 0.95)',
+            tooltipTitle: isLight ? '#0f172a' : '#f8fafc',
+            tooltipBody: isLight ? '#334155' : '#e2e8f0',
+            tooltipBorder: isLight ? '#cbd5e1' : '#2e334a'
+        };
+    }
+
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    let themeConfig = getThemeChartConfig(currentTheme);
+
+    const radarChart = new Chart(ctx, {
         type: 'radar',
         data: {
             labels: radarData.labels,
@@ -325,13 +340,13 @@ document.addEventListener('DOMContentLoaded', () => {
             scales: {
                 r: {
                     angleLines: {
-                        color: 'rgba(255, 255, 255, 0.1)'
+                        color: themeConfig.lineColor
                     },
                     grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
+                        color: themeConfig.lineColor
                     },
                     pointLabels: {
-                        color: '#f8fafc',
+                        color: themeConfig.labelColor,
                         font: {
                             family: "'Inter', sans-serif",
                             size: 11,
@@ -339,7 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     },
                     ticks: {
-                        color: '#94a3b8',
+                        color: themeConfig.tickColor,
                         backdropColor: 'transparent',
                         stepSize: 20,
                         font: {
@@ -355,10 +370,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     display: false
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(15, 17, 26, 0.95)',
-                    titleColor: '#f8fafc',
-                    bodyColor: '#e2e8f0',
-                    borderColor: '#2e334a',
+                    backgroundColor: themeConfig.tooltipBg,
+                    titleColor: themeConfig.tooltipTitle,
+                    bodyColor: themeConfig.tooltipBody,
+                    borderColor: themeConfig.tooltipBorder,
                     borderWidth: 1,
                     padding: 10,
                     callbacks: {
@@ -378,6 +393,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         }
+    });
+
+    window.addEventListener('themeChanged', (e) => {
+        const newTheme = e.detail?.theme || 'dark';
+        const cfg = getThemeChartConfig(newTheme);
+        radarChart.options.scales.r.angleLines.color = cfg.lineColor;
+        radarChart.options.scales.r.grid.color = cfg.lineColor;
+        radarChart.options.scales.r.pointLabels.color = cfg.labelColor;
+        radarChart.options.scales.r.ticks.color = cfg.tickColor;
+        radarChart.options.plugins.tooltip.backgroundColor = cfg.tooltipBg;
+        radarChart.options.plugins.tooltip.titleColor = cfg.tooltipTitle;
+        radarChart.options.plugins.tooltip.bodyColor = cfg.tooltipBody;
+        radarChart.options.plugins.tooltip.borderColor = cfg.tooltipBorder;
+        radarChart.update();
     });
 });
 </script>

@@ -3,7 +3,7 @@
 <div class="content-header">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h2>Master Dosen</h2>
-        <a href="/obe/public/dosen/create" class="btn" style="background: var(--primary); color: white;">+ Tambah Dosen</a>
+        <a href="/obe/public/dosen/create" class="btn" style="background: var(--primary); color: white;"><i class="fa-solid fa-plus"></i> Tambah Dosen</a>
     </div>
 </div>
 
@@ -22,8 +22,8 @@
                     <td style="padding: 12px; font-weight: bold;"><?= htmlspecialchars($d['nama_lengkap']) ?></td>
                     <td style="padding: 12px;"><?= htmlspecialchars($d['username']) ?></td>
                     <td style="padding: 12px; text-align: right;">
-                        <a href="/obe/public/dosen/edit?id=<?= $d['id'] ?>" class="btn" style="background: var(--warning); color: #fff; padding: 6px 12px; border-radius: 4px; font-size: 0.9em; margin-right: 5px;">Edit</a>
-                        <a href="/obe/public/dosen/delete?id=<?= $d['id'] ?>" onclick="return confirm('Yakin ingin menghapus dosen ini?');" class="btn" style="background: var(--danger); color: white; padding: 6px 12px; border-radius: 4px; font-size: 0.9em;">Hapus</a>
+                        <a href="/obe/public/dosen/edit?id=<?= $d['id'] ?>" class="btn" style="background: var(--warning); color: #fff; padding: 6px 12px; border-radius: 4px; font-size: 0.9em; margin-right: 5px;"><i class="fa-solid fa-pen-to-square"></i> Edit</a>
+                        <a href="/obe/public/dosen/delete?id=<?= $d['id'] ?>" onclick="return confirm('Yakin ingin menghapus dosen ini?');" class="btn" style="background: var(--danger); color: white; padding: 6px 12px; border-radius: 4px; font-size: 0.9em;"><i class="fa-solid fa-trash"></i> Hapus</a>
                     </td>
                 </tr>
             <?php endforeach; ?>

@@ -305,7 +305,7 @@ $baseUrl = $GLOBALS['config']['base_url'] ?? '/obe/public';
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border); padding-top: 14px;">
-                <button type="button" onclick="document.getElementById('modalStatusCqi').style.display='none'" class="btn btn-secondary">Batal</button>
+                <button type="button" onclick="document.getElementById('modalStatusCqi').style.display='none'" class="btn btn-secondary"><i class="fa-solid fa-xmark"></i> Batal</button>
                 <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Simpan Status</button>
             </div>
         </form>

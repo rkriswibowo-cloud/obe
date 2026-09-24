@@ -75,7 +75,7 @@ ob_start();
         
         <div style="display: flex; gap: 10px;">
             <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Simpan</button>
-            <a href="<?= $config['base_url'] ?? '/obe/public' ?>/mata-kuliah" class="btn btn-secondary">Batal</a>
+            <a href="<?= $config['base_url'] ?? '/obe/public' ?>/mata-kuliah" class="btn btn-secondary"><i class="fa-solid fa-xmark"></i> Batal</a>
         </div>
     </form>
 </div>

@@ -176,7 +176,7 @@ $baseUrl = $GLOBALS['config']['base_url'] ?? '/obe/public';
 
             <!-- Buttons -->
             <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border); padding-top: 18px;">
-                <a href="<?= $baseUrl ?>/cqi" class="btn btn-secondary">Batal</a>
+                <a href="<?= $baseUrl ?>/cqi" class="btn btn-secondary"><i class="fa-solid fa-xmark"></i> Batal</a>
                 <button type="submit" class="btn btn-primary">
                     <i class="fa-solid fa-save"></i> <?= $isEdit ? 'Perbarui Rekam CQI' : 'Simpan Rencana CQI' ?>
                 </button>

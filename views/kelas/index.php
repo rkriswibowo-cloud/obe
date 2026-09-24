@@ -3,7 +3,7 @@
 <div class="content-header">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h2>Manajemen Kelas</h2>
-        <a href="/obe/public/kelas/create" class="btn" style="background: var(--primary); color: white;">+ Tambah Kelas</a>
+        <a href="/obe/public/kelas/create" class="btn" style="background: var(--primary); color: white;"><i class="fa-solid fa-plus"></i> Tambah Kelas</a>
     </div>
 </div>
 
@@ -35,9 +35,9 @@
                         </span>
                     </td>
                     <td style="padding: 12px; text-align: right;">
-                        <a href="/obe/public/kelas/peserta?id=<?= $k['id'] ?>" class="btn" style="padding: 4px 8px; font-size: 0.9em; background: var(--success); color: white; margin-right: 4px;">👤 Peserta</a>
-                        <a href="/obe/public/kelas/edit?id=<?= $k['id'] ?>" class="btn" style="padding: 4px 8px; font-size: 0.9em; background: var(--bg-hover); color: var(--text-primary); margin-right: 4px;">✏️ Edit</a>
-                        <a href="/obe/public/kelas/delete?id=<?= $k['id'] ?>" class="btn" style="padding: 4px 8px; font-size: 0.9em; background: var(--danger); color: white;" onclick="return confirm('Hapus kelas ini?');">🗑️ Hapus</a>
+                        <a href="/obe/public/kelas/peserta?id=<?= $k['id'] ?>" class="btn" style="padding: 4px 8px; font-size: 0.9em; background: var(--success); color: white; margin-right: 4px;"><i class="fa-solid fa-users"></i> Peserta</a>
+                        <a href="/obe/public/kelas/edit?id=<?= $k['id'] ?>" class="btn" style="padding: 4px 8px; font-size: 0.9em; background: var(--bg-hover); color: var(--text-primary); margin-right: 4px;"><i class="fa-solid fa-pen-to-square"></i> Edit</a>
+                        <a href="/obe/public/kelas/delete?id=<?= $k['id'] ?>" class="btn" style="padding: 4px 8px; font-size: 0.9em; background: var(--danger); color: white;" onclick="return confirm('Hapus kelas ini?');"><i class="fa-solid fa-trash"></i> Hapus</a>
                     </td>
                 </tr>
             <?php endforeach; ?>

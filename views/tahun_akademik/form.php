@@ -6,7 +6,7 @@ $action = $isEdit ? '/obe/public/tahun-akademik/update' : '/obe/public/tahun-aka
 <div class="content-header">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h2><?= $isEdit ? 'Edit Tahun Akademik' : 'Tambah Tahun Akademik' ?></h2>
-        <a href="/obe/public/tahun-akademik" class="btn" style="background: var(--bg-hover); color: var(--text-primary);">Kembali</a>
+        <a href="/obe/public/tahun-akademik" class="btn" style="background: var(--surface-hover); color: var(--text-main); border: 1px solid var(--border);"><i class="fa-solid fa-arrow-left"></i> Kembali</a>
     </div>
 </div>
 
@@ -30,7 +30,7 @@ $action = $isEdit ? '/obe/public/tahun-akademik/update' : '/obe/public/tahun-aka
         </div>
 
         <button type="submit" class="btn" style="background: var(--primary); color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">
-            <?= $isEdit ? 'Update' : 'Simpan' ?>
+            <i class="fa-solid fa-floppy-disk"></i> <?= $isEdit ? 'Update' : 'Simpan' ?>
         </button>
     </form>
 </div>
