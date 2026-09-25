@@ -63,7 +63,7 @@ $baseUrl = $config['base_url'] ?? '/obe/public';
                 <th style="padding: 14px 18px; font-weight: 600; font-size: 0.82rem; color: var(--text-muted); width: 90px; text-align: center;">TAHUN</th>
                 <th style="padding: 14px 18px; font-weight: 600; font-size: 0.82rem; color: var(--text-muted); width: 90px; text-align: center;">VERSI</th>
                 <th style="padding: 14px 18px; font-weight: 600; font-size: 0.82rem; color: var(--text-muted); width: 110px; text-align: center;">STATUS</th>
-                <th style="padding: 14px 18px; font-weight: 600; font-size: 0.82rem; color: var(--text-muted); text-align: right; width: 110px;">AKSI</th>
+                <th style="padding: 14px 18px; font-weight: 600; font-size: 0.82rem; color: var(--text-muted); text-align: right; min-width: 220px;">AKSI</th>
             </tr>
         </thead>
         <tbody>
@@ -113,8 +113,17 @@ $baseUrl = $config['base_url'] ?? '/obe/public';
                             <?= htmlspecialchars($k['status']) ?>
                         </span>
                     </td>
-                    <td style="padding: 14px 18px; text-align: right;">
-                        <div style="display: flex; gap: 6px; justify-content: flex-end;">
+                    <td style="padding: 14px 18px; text-align: right; white-space: nowrap;">
+                        <div style="display: flex; gap: 6px; justify-content: flex-end; align-items: center;">
+                            <a href="<?= $baseUrl ?>/mata-kuliah?kurikulum_id=<?= $k['id'] ?>" class="btn btn-sm" style="background: rgba(59, 130, 246, 0.12); color: var(--primary); border: 1px solid rgba(59, 130, 246, 0.25);" title="Lihat Mata Kuliah Kurikulum Ini">
+                                <i class="fa-solid fa-book-open"></i> MK
+                            </a>
+                            <a href="<?= $baseUrl ?>/cpl?kurikulum_id=<?= $k['id'] ?>" class="btn btn-sm" style="background: rgba(16, 185, 129, 0.12); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.25);" title="Lihat CPL Kurikulum Ini">
+                                <i class="fa-solid fa-bullseye"></i> CPL
+                            </a>
+                            <a href="<?= $baseUrl ?>/pemetaan-mk-cpl?kurikulum_id=<?= $k['id'] ?>" class="btn btn-sm" style="background: rgba(245, 158, 11, 0.12); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.25);" title="Pemetaan MK-CPL">
+                                <i class="fa-solid fa-link"></i>
+                            </a>
                             <a href="<?= $baseUrl ?>/kurikulum/edit?id=<?= $k['id'] ?>" class="btn btn-sm btn-secondary" title="Edit Kurikulum">
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </a>
