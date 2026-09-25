@@ -513,8 +513,9 @@ $logoSrc = file_exists($logoFile)
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
-                        <td class="text-center text-bold">CPL04</td>
-                        <td>Mampu merancang dan menggunakan database, serta mengolah dan menganalisa data dengan alat dan teknik pengolahan data.</td>
+                        <td colspan="2" class="text-center" style="font-style: italic; color: #64748b;">
+                            Belum ada CPL yang dipetakan untuk mata kuliah ini di menu Pemetaan MK ke CPL.
+                        </td>
                     </tr>
                 <?php endif; ?>
             </tbody>
@@ -579,7 +580,7 @@ $logoSrc = file_exists($logoFile)
         <div class="keep-together">
             <div class="section-title">2b. HUBUNGAN CPL DAN SUB-CPMK</div>
             <?php 
-            $matrixCpls = !empty($kurikulumCpls) ? $kurikulumCpls : (!empty($cpls) ? $cpls : []);
+            $matrixCpls = !empty($cpls) ? $cpls : (!empty($kurikulumCpls) ? $kurikulumCpls : []);
             $cplColsCount = count($matrixCpls);
             ?>
             <?php if ($cplColsCount === 0): ?>

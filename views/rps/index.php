@@ -927,7 +927,7 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
                                     <?= htmlspecialchars($cpmk['kode']) ?>
                                 </span>
                                 <span style="font-size: 0.85rem; color: var(--text-muted);">
-                                    Terkait CPL: <strong><?= !empty($cpmk['cpls']) ? implode(', ', array_column($cpmk['cpls'], 'kode')) : 'CPL04' ?></strong>
+                                    Terkait CPL: <strong><?= !empty($cpmk['cpls']) ? implode(', ', array_column($cpmk['cpls'], 'kode')) : '<em>(Belum dipilih)</em>' ?></strong>
                                 </span>
                             </div>
                             <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-main); line-height: 1.4;">
@@ -1029,18 +1029,44 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
     <div style="display: flex; flex-direction: column; gap: 24px;">
         <!-- Matriks 2b: Hubungan CPL dan Sub-CPMK -->
         <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 24px;">
-            <div style="margin-bottom: 16px;">
-                <h3 style="margin: 0 0 6px 0; font-size: 1.25rem;">2b. Matriks Hubungan CPL dan Sub-CPMK</h3>
-                <p style="color: var(--text-muted); margin: 0; font-size: 0.9rem;">
-                    Pemetaan bobot kontribusi setiap Sub-CPMK terhadap Capaian Pembelajaran Lulusan (CPL). Total seluruh bobot harus mencapai 100%.
-                </p>
+            <?php 
+            // Prioritaskan CPL yang dibebankan pada mata kuliah ini berdasarkan Pemetaan MK-CPL ($cpls)
+            $hasMappedCpl = !empty($cpls);
+            $matrixCpls = $hasMappedCpl ? $cpls : (!empty($kurikulumCpls) ? $kurikulumCpls : []);
+            $cplColsCount = count($matrixCpls);
+            ?>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+                <div>
+                    <h3 style="margin: 0 0 6px 0; font-size: 1.25rem;">2b. Matriks Hubungan CPL dan Sub-CPMK</h3>
+                    <p style="color: var(--text-muted); margin: 0; font-size: 0.9rem;">
+                        Pemetaan bobot kontribusi setiap Sub-CPMK terhadap Capaian Pembelajaran Lulusan (CPL) yang dibebankan pada mata kuliah ini. Total seluruh bobot harus mencapai 100%.
+                    </p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <?php if ($hasMappedCpl): ?>
+                        <span style="background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid var(--success); padding: 5px 12px; border-radius: 999px; font-size: 0.82rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-circle-check"></i> Sinkron: <?= count($matrixCpls) ?> CPL Terpetakan
+                        </span>
+                    <?php endif; ?>
+                    <a href="<?= $baseUrl ?>/pemetaan-mk-cpl?kurikulum_id=<?= $mk['kurikulum_id'] ?>" class="btn btn-sm btn-secondary" style="display: inline-flex; align-items: center; gap: 6px;" title="Atur Pemetaan MK ke CPL">
+                        <i class="fa-solid fa-sliders"></i> Atur Pemetaan MK-CPL
+                    </a>
+                </div>
             </div>
 
+            <?php if (!$hasMappedCpl): ?>
+                <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid var(--warning); color: var(--warning); padding: 12px 18px; border-radius: var(--radius-sm); margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div style="font-size: 0.9rem;">
+                        <i class="fa-solid fa-triangle-exclamation"></i> <strong>Mata kuliah ini belum dipetakan ke CPL</strong> di menu Pemetaan MK ke CPL. Kolom di bawah menampilkan seluruh CPL kurikulum sebagai acuan sementara.
+                    </div>
+                    <a href="<?= $baseUrl ?>/pemetaan-mk-cpl?kurikulum_id=<?= $mk['kurikulum_id'] ?>" class="btn btn-sm btn-warning">
+                        <i class="fa-solid fa-link"></i> Petakan Sekarang
+                    </a>
+                </div>
+            <?php endif; ?>
+
             <div style="overflow-x: auto;">
-                <?php 
-                $matrixCpls = !empty($kurikulumCpls) ? $kurikulumCpls : (!empty($cpls) ? $cpls : []);
-                $cplColsCount = count($matrixCpls);
-                ?>
                 <?php if ($cplColsCount === 0): ?>
                     <div style="padding: 24px; text-align: center; color: var(--text-muted);">
                         <i class="fa-solid fa-circle-info" style="font-size: 1.5rem; margin-bottom: 8px; display: block; opacity: 0.6;"></i>
@@ -1114,111 +1140,96 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
             <div style="margin-bottom: 20px;">
                 <h3 style="margin: 0 0 6px 0; font-size: 1.25rem;">3. Peta Analisis Capaian Pembelajaran (Roadmap & Prasyarat)</h3>
                 <p style="color: var(--text-muted); margin: 0; font-size: 0.9rem;">
-                    Visualisasi keterkaitan hierarkis, alur kompetensi, dan tahapan pencapaian CPMK dari Sub-CPMK 01 hingga Sub-CPMK 07.
+                    Visualisasi keterkaitan hierarkis, alur kompetensi, dan tahapan pencapaian CPMK dari Sub-CPMK tingkat dasar hingga tingkat lanjut untuk mata kuliah <strong><?= htmlspecialchars($mk['nama']) ?></strong>.
                 </p>
             </div>
 
             <!-- Flowchart Container -->
-            <div style="background: #0f172a; border: 1px solid #334155; border-radius: var(--radius-md); padding: 24px; color: #f8fafc;">
-                <div style="display: flex; flex-direction: column; align-items: center; gap: 16px;">
-                    <!-- CPMK Master Node -->
-                    <div style="background: #1e293b; border: 2px solid #38bdf8; border-radius: 8px; padding: 14px 20px; text-align: center; max-width: 600px; box-shadow: 0 4px 16px rgba(56, 189, 248, 0.2);">
-                        <span style="color: #38bdf8; font-size: 0.75rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">
-                            Capaian Pembelajaran Mata Kuliah (CPMK)
-                        </span>
-                        <div style="font-size: 0.95rem; font-weight: 600; margin-top: 4px;">
-                            Mampu merancang perencanaan strategis sistem informasi, menyusun arsitektur enterprise, memitigasi risiko, dan mengevaluasi kinerja KPI organisasi.
-                        </div>
+            <div style="background: var(--surface-hover); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 24px; color: var(--text-main);">
+                <?php if (empty($cpmkList) || empty($allSubCpmks)): ?>
+                    <div style="text-align: center; padding: 30px; color: var(--text-muted);">
+                        <i class="fa-solid fa-diagram-project" style="font-size: 2.5rem; opacity: 0.5; margin-bottom: 12px; display: block;"></i>
+                        <h4 style="margin: 0 0 6px 0;">Belum ada Data CPMK & Sub-CPMK</h4>
+                        <p style="margin: 0 0 16px 0; font-size: 0.9rem;">Tambahkan rumusan CPMK dan Sub-CPMK pada tab CPMK agar roadmap analisis pembelajaran dapat divisualisasikan secara otomatis.</p>
+                        <a href="<?= $baseUrl ?>/rps?mk_id=<?= $mk['id'] ?>&tab=cpmk" class="btn btn-primary btn-sm">
+                            <i class="fa-solid fa-plus"></i> Kelola CPMK & Sub-CPMK
+                        </a>
                     </div>
-
-                    <div style="color: #38bdf8; font-size: 1.2rem;"><i class="fa-solid fa-arrow-up"></i></div>
-
-                    <!-- Sub-CPMK 07 Final Assessment -->
-                    <div style="background: #064e3b; border: 1.5px solid #10b981; border-radius: 8px; padding: 12px 18px; width: 100%; max-width: 700px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                            <strong style="color: #34d399; font-size: 0.85rem;">[SUB-CPMK 07] Evaluasi Kinerja & KPI SI</strong>
-                            <span style="background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 1px 6px; border-radius: 4px; font-size: 0.75rem;">(C3, A3, P4) &bull; Bobot 35%</span>
+                <?php else: ?>
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 16px;">
+                        <!-- CPMK Master Node -->
+                        <div style="background: var(--surface); border: 2px solid var(--primary); border-radius: 8px; padding: 16px 22px; text-align: center; width: 100%; max-width: 720px; box-shadow: var(--shadow-sm);">
+                            <span style="color: var(--primary); font-size: 0.78rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">
+                                Capaian Pembelajaran Mata Kuliah (CPMK) &bull; <?= htmlspecialchars($mk['kode']) ?>
+                            </span>
+                            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+                                <?php foreach ($cpmkList as $cpmk): ?>
+                                    <div style="font-size: 0.92rem; text-align: left; background: var(--surface-hover); padding: 8px 12px; border-radius: 6px; border-left: 3px solid var(--primary);">
+                                        <strong style="color: var(--primary);"><?= htmlspecialchars($cpmk['kode']) ?>:</strong> <?= htmlspecialchars($cpmk['rumusan']) ?>
+                                        <?php if (!empty($cpmk['cpls'])): ?>
+                                            <span style="font-size: 0.75rem; color: var(--text-muted); margin-left: 6px;">[<?= implode(', ', array_column($cpmk['cpls'], 'kode')) ?>]</span>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
                         </div>
-                        <div style="font-size: 0.85rem; color: #e2e8f0;">
-                            Mahasiswa mampu mengukur kinerja sistem informasi melalui KPI dan mengevaluasi keselarasan dengan tujuan strategis organisasi.
-                        </div>
+
+                        <div style="color: var(--primary); font-size: 1.3rem;"><i class="fa-solid fa-arrow-up"></i></div>
+
+                        <?php 
+                        // Reverse urutan Sub-CPMK agar urutan evaluasi akhir di atas, dan pondasi di bawah
+                        $reversedSubs = array_reverse($allSubCpmks);
+                        $totalSubs = count($reversedSubs);
+                        $colorPalettes = [
+                            ['border' => '#10b981', 'badge' => 'rgba(16, 185, 129, 0.25)', 'text' => '#10b981'],
+                            ['border' => '#f59e0b', 'badge' => 'rgba(245, 158, 11, 0.25)', 'text' => '#f59e0b'],
+                            ['border' => '#3b82f6', 'badge' => 'rgba(59, 130, 246, 0.25)', 'text' => '#3b82f6'],
+                            ['border' => '#8b5cf6', 'badge' => 'rgba(139, 92, 246, 0.25)', 'text' => '#8b5cf6'],
+                            ['border' => '#06b6d4', 'badge' => 'rgba(6, 182, 212, 0.25)', 'text' => '#06b6d4'],
+                        ];
+                        
+                        $tiers = [];
+                        $first = true;
+                        $temp = [];
+                        foreach ($reversedSubs as $idx => $s) {
+                            if ($first) {
+                                $tiers[] = [$s];
+                                $first = false;
+                            } else {
+                                $temp[] = $s;
+                                if (count($temp) === 2 || $idx === $totalSubs - 1) {
+                                    $tiers[] = $temp;
+                                    $temp = [];
+                                }
+                            }
+                        }
+
+                        foreach ($tiers as $tIdx => $tierItems):
+                            $cIdx = $tIdx % count($colorPalettes);
+                            $cp = $colorPalettes[$cIdx];
+                        ?>
+                            <?php if ($tIdx > 0): ?>
+                                <div style="color: <?= $cp['border'] ?>; font-size: 1.1rem;"><i class="fa-solid fa-arrow-up"></i></div>
+                            <?php endif; ?>
+
+                            <div style="display: grid; grid-template-columns: <?= count($tierItems) > 1 ? '1fr 1fr' : '1fr' ?>; gap: 14px; width: 100%; max-width: 720px;">
+                                <?php foreach ($tierItems as $sub): ?>
+                                    <div style="background: var(--surface); border: 1.5px solid <?= $cp['border'] ?>; border-radius: 8px; padding: 12px 16px; box-shadow: var(--shadow-sm);">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
+                                            <strong style="color: <?= $cp['text'] ?>; font-size: 0.88rem;">[<?= htmlspecialchars($sub['kode']) ?>]</strong>
+                                            <span style="background: <?= $cp['badge'] ?>; color: <?= $cp['text'] ?>; padding: 1px 7px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">
+                                                <?= !empty($sub['level_taksonomi']) ? htmlspecialchars($sub['level_taksonomi']) . ' &bull; ' : '' ?>Bobot <?= floatval($sub['bobot']) ?>%
+                                            </span>
+                                        </div>
+                                        <div style="font-size: 0.84rem; color: var(--text-main); line-height: 1.4;">
+                                            <?= htmlspecialchars($sub['rumusan']) ?>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
-
-                    <div style="color: #10b981; font-size: 1.2rem;"><i class="fa-solid fa-arrow-up"></i></div>
-
-                    <!-- Tier 3: Sub-CPMK 06 & 05 -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; max-width: 700px;">
-                        <div style="background: #1e293b; border: 1.5px solid #f59e0b; border-radius: 8px; padding: 12px 16px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                <strong style="color: #fbbf24; font-size: 0.85rem;">[SUB-CPMK 06] Manajemen Risiko</strong>
-                                <span style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; padding: 1px 6px; border-radius: 4px; font-size: 0.75rem;">(C3, A3, P4) &bull; 26%</span>
-                            </div>
-                            <div style="font-size: 0.8rem; color: #cbd5e1;">
-                                Mengidentifikasi, menganalisis, dan mengelola risiko implementasi strategi SI.
-                            </div>
-                        </div>
-
-                        <div style="background: #1e293b; border: 1.5px solid #3b82f6; border-radius: 8px; padding: 12px 16px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                <strong style="color: #60a5fa; font-size: 0.85rem;">[SUB-CPMK 05] Roadmap & Prioritas</strong>
-                                <span style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; padding: 1px 6px; border-radius: 4px; font-size: 0.75rem;">(C4, A3, P4) &bull; 9%</span>
-                            </div>
-                            <div style="font-size: 0.8rem; color: #cbd5e1;">
-                                Menyusun rencana strategis mencakup roadmap implementasi dan prioritas proyek.
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style="color: #3b82f6; font-size: 1.2rem;"><i class="fa-solid fa-arrow-up"></i></div>
-
-                    <!-- Tier 2: Sub-CPMK 04 & 03 -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; max-width: 700px;">
-                        <div style="background: #1e293b; border: 1.5px solid #a855f7; border-radius: 8px; padding: 12px 16px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                <strong style="color: #c084fc; font-size: 0.85rem;">[SUB-CPMK 04] Arsitektur SI / TOGAF</strong>
-                                <span style="background: rgba(168, 85, 247, 0.2); color: #c084fc; padding: 1px 6px; border-radius: 4px; font-size: 0.75rem;">(C3, A3, P4) &bull; 9%</span>
-                            </div>
-                            <div style="font-size: 0.8rem; color: #cbd5e1;">
-                                Menyusun arsitektur sistem informasi pendukung organisasi (infrastruktur & aplikasi).
-                            </div>
-                        </div>
-
-                        <div style="background: #1e293b; border: 1.5px solid #ec4899; border-radius: 8px; padding: 12px 16px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                <strong style="color: #f472b6; font-size: 0.85rem;">[SUB-CPMK 03] Visi & Misi SI</strong>
-                                <span style="background: rgba(236, 72, 153, 0.2); color: #f472b6; padding: 1px 6px; border-radius: 4px; font-size: 0.75rem;">(C3, A3, P4) &bull; 9%</span>
-                            </div>
-                            <div style="font-size: 0.8rem; color: #cbd5e1;">
-                                Merumuskan visi dan misi sistem informasi yang selaras dengan strategi bisnis.
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style="color: #a855f7; font-size: 1.2rem;"><i class="fa-solid fa-arrow-up"></i></div>
-
-                    <!-- Tier 1: Sub-CPMK 02 & 01 (Foundation) -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; max-width: 700px;">
-                        <div style="background: #1e293b; border: 1.5px solid #06b6d4; border-radius: 8px; padding: 12px 16px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                <strong style="color: #22d3ee; font-size: 0.85rem;">[SUB-CPMK 02] Analisis Lingkungan SWOT</strong>
-                                <span style="background: rgba(6, 182, 212, 0.2); color: #22d3ee; padding: 1px 6px; border-radius: 4px; font-size: 0.75rem;">(C3, A3, P4) &bull; 9%</span>
-                            </div>
-                            <div style="font-size: 0.8rem; color: #cbd5e1;">
-                                Analisis SWOT & PESTEL internal/eksternal untuk identifikasi kebutuhan SI.
-                            </div>
-                        </div>
-
-                        <div style="background: #1e293b; border: 1.5px solid #64748b; border-radius: 8px; padding: 12px 16px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                                <strong style="color: #94a3b8; font-size: 0.85rem;">[SUB-CPMK 01] Konsep Dasar PSSI</strong>
-                                <span style="background: rgba(100, 116, 139, 0.2); color: #94a3b8; padding: 1px 6px; border-radius: 4px; font-size: 0.75rem;">(C3, A3, P2) &bull; 4%</span>
-                            </div>
-                            <div style="font-size: 0.8rem; color: #cbd5e1;">
-                                Memahami konsep dasar, definisi, tujuan, dan kerangka kerja perencanaan strategis SI.
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>

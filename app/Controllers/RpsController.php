@@ -80,6 +80,9 @@ class RpsController {
         }
 
         $mk = $this->mkModel->getById($mkId);
+        $fullRps = $this->rpsModel->getFullRpsData($mkId);
+        $mappedCpls = $fullRps['cpls'] ?? [];
+        $mappedCplIds = array_column($mappedCpls, 'id');
         $cplList = $this->cplModel->getAll(['kurikulum_id' => $mk['kurikulum_id']]);
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -111,6 +114,9 @@ class RpsController {
 
         $mkId = $cpmk['mk_id'];
         $mk = $this->mkModel->getById($mkId);
+        $fullRps = $this->rpsModel->getFullRpsData($mkId);
+        $mappedCpls = $fullRps['cpls'] ?? [];
+        $mappedCplIds = array_column($mappedCpls, 'id');
         $cplList = $this->cplModel->getAll(['kurikulum_id' => $mk['kurikulum_id']]);
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {

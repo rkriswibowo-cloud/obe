@@ -74,9 +74,16 @@ ob_start();
             <tbody>
                 <?php foreach($mkList as $mk): ?>
                 <tr style="border-bottom: 1px solid var(--border);">
-                    <td style="padding: 15px 20px; text-align: left; position: sticky; left: 0; background: var(--surface); border-right: 1px solid var(--border);">
-                        <div style="font-weight: 600;"><?= htmlspecialchars($mk['kode']) ?></div>
-                        <div style="font-size: 0.85rem; color: var(--text-muted);"><?= htmlspecialchars($mk['nama']) ?></div>
+                    <td style="padding: 12px 16px; text-align: left; position: sticky; left: 0; background: var(--surface); border-right: 1px solid var(--border);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                            <div>
+                                <div style="font-weight: 600;"><?= htmlspecialchars($mk['kode']) ?></div>
+                                <div style="font-size: 0.85rem; color: var(--text-muted);"><?= htmlspecialchars($mk['nama']) ?></div>
+                            </div>
+                            <a href="<?= $config['base_url'] ?? '/obe/public' ?>/rps?mk_id=<?= $mk['id'] ?>&tab=matriks" target="_blank" class="btn btn-sm btn-secondary" style="padding: 3px 8px; font-size: 0.75rem; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px;" title="Lihat Matriks RPS untuk <?= htmlspecialchars($mk['kode']) ?>">
+                                <i class="fa-solid fa-table-cells"></i> RPS
+                            </a>
+                        </div>
                     </td>
                     
                     <?php foreach($cplList as $cpl): ?>

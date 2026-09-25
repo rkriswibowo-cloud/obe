@@ -49,19 +49,39 @@ $baseUrl = $GLOBALS['config']['base_url'] ?? '/obe/public';
                     <?php else: ?>
                         <?php 
                         $selectedCplIds = $isEdit ? ($cpmk['cpl_ids'] ?? []) : [];
+                        $mappedIds = $mappedCplIds ?? [];
+                        // Urutkan CPL yang dipetakan pada MK ini ke atas
+                        usort($cplList, function($a, $b) use ($mappedIds) {
+                            $aIn = in_array($a['id'], $mappedIds);
+                            $bIn = in_array($b['id'], $mappedIds);
+                            if ($aIn === $bIn) {
+                                return strcmp($a['kode'], $b['kode']);
+                            }
+                            return $aIn ? -1 : 1;
+                        });
+
                         foreach ($cplList as $cpl): 
+                            $isMappedToMk = in_array($cpl['id'], $mappedIds);
                         ?>
-                            <div style="display: flex; align-items: flex-start; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--border);">
+                            <div style="display: flex; align-items: flex-start; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--border); <?= $isMappedToMk ? 'background: rgba(16, 185, 129, 0.04); padding: 10px; border-radius: 6px;' : '' ?>">
                                 <input type="checkbox" name="cpl_ids[]" value="<?= $cpl['id'] ?>" id="cpl_<?= $cpl['id'] ?>" <?= in_array($cpl['id'], $selectedCplIds) ? 'checked' : '' ?> style="margin-top: 5px; margin-right: 15px; transform: scale(1.2);">
-                                <label for="cpl_<?= $cpl['id'] ?>" style="cursor: pointer; display: block;">
-                                    <span style="background: var(--surface-hover); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; display: inline-block; margin-bottom: 5px;"><?= htmlspecialchars($cpl['kode']) ?></span><br>
+                                <label for="cpl_<?= $cpl['id'] ?>" style="cursor: pointer; display: block; flex: 1;">
+                                    <span style="background: var(--surface-hover); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; display: inline-block; margin-bottom: 5px;"><?= htmlspecialchars($cpl['kode']) ?></span>
+                                    <?php if ($isMappedToMk): ?>
+                                        <span style="background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid var(--success); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; display: inline-block; margin-left: 6px;">
+                                            <i class="fa-solid fa-check"></i> Dibebankan pada MK ini
+                                        </span>
+                                    <?php endif; ?>
+                                    <br>
                                     <span style="color: var(--text-main); line-height: 1.4;"><?= htmlspecialchars($cpl['rumusan']) ?></span>
                                 </label>
                             </div>
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </div>
-                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">Centang CPL yang relevan dan dibebankan pada CPMK ini.</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">
+                    Centang CPL yang relevan dan dibebankan pada CPMK ini. (CPL yang telah dipetakan pada MK ini ditandai hijau).
+                </div>
             </div>
 
             <div style="border-top: 1px solid var(--border); margin-top: 30px; padding-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
