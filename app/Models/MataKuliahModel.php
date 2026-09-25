@@ -10,12 +10,29 @@ class MataKuliahModel {
 
     public function getAll($filters = [], $limit = null, $offset = null) {
         $sql = "
-            SELECT m.*, k.nama as kurikulum_nama 
+            SELECT m.*, 
+                   k.nama as kurikulum_nama, 
+                   k.kode as kurikulum_kode, 
+                   k.prodi_id,
+                   p.nama as prodi_nama, 
+                   p.jenjang as prodi_jenjang, 
+                   p.kode as prodi_kode
             FROM mata_kuliah m 
             JOIN kurikulum k ON m.kurikulum_id = k.id 
+            JOIN program_studi p ON k.prodi_id = p.id
             WHERE 1=1
         ";
         $params = [];
+
+        if (!empty($filters['prodi_id'])) {
+            $sql .= " AND k.prodi_id = :prodi_id";
+            $params['prodi_id'] = (int)$filters['prodi_id'];
+        }
+
+        if (!empty($filters['kurikulum_id'])) {
+            $sql .= " AND m.kurikulum_id = :kurikulum_id";
+            $params['kurikulum_id'] = (int)$filters['kurikulum_id'];
+        }
 
         if (!empty($filters['semester'])) {
             $sql .= " AND m.semester = :semester";
@@ -28,7 +45,7 @@ class MataKuliahModel {
             $params['search_kode'] = '%' . $filters['search'] . '%';
         }
 
-        $sql .= " ORDER BY m.semester ASC, m.kode ASC";
+        $sql .= " ORDER BY p.nama ASC, m.semester ASC, m.kode ASC";
 
         if ($limit !== null) {
             $sql .= " LIMIT " . (int)$limit;
@@ -39,7 +56,7 @@ class MataKuliahModel {
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
-        return $stmt->fetchAll();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function countAll($filters = []) {
@@ -47,9 +64,20 @@ class MataKuliahModel {
             SELECT COUNT(*) 
             FROM mata_kuliah m 
             JOIN kurikulum k ON m.kurikulum_id = k.id 
+            JOIN program_studi p ON k.prodi_id = p.id
             WHERE 1=1
         ";
         $params = [];
+
+        if (!empty($filters['prodi_id'])) {
+            $sql .= " AND k.prodi_id = :prodi_id";
+            $params['prodi_id'] = (int)$filters['prodi_id'];
+        }
+
+        if (!empty($filters['kurikulum_id'])) {
+            $sql .= " AND m.kurikulum_id = :kurikulum_id";
+            $params['kurikulum_id'] = (int)$filters['kurikulum_id'];
+        }
 
         if (!empty($filters['semester'])) {
             $sql .= " AND m.semester = :semester";
@@ -68,9 +96,20 @@ class MataKuliahModel {
     }
 
     public function getById($id) {
-        $stmt = $this->db->prepare("SELECT * FROM mata_kuliah WHERE id = :id");
+        $stmt = $this->db->prepare("
+            SELECT m.*, 
+                   k.nama as kurikulum_nama, 
+                   k.prodi_id, 
+                   p.nama as prodi_nama, 
+                   p.jenjang as prodi_jenjang,
+                   p.kode as prodi_kode
+            FROM mata_kuliah m 
+            JOIN kurikulum k ON m.kurikulum_id = k.id 
+            JOIN program_studi p ON k.prodi_id = p.id
+            WHERE m.id = :id
+        ");
         $stmt->execute(['id' => $id]);
-        return $stmt->fetch();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     public function create($data) {
