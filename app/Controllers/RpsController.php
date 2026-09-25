@@ -63,8 +63,9 @@ class RpsController {
         $detectedKelasTimTeaching = $fullData['detectedKelasTimTeaching'] ?? [];
         $allDosen = $fullData['allDosen'] ?? [];
 
-        // Ambil semua CPL kurikulum untuk matriks CPL vs Sub-CPMK
-        $allCpls = $this->cplModel->getAll();
+        // Ambil CPL kurikulum untuk mata kuliah ini
+        $kurikulumCpls = $fullData['kurikulumCpls'] ?? $this->cplModel->getAll(['kurikulum_id' => $mk['kurikulum_id']]);
+        $allCpls = $kurikulumCpls;
 
         $activeTab = $_GET['tab'] ?? 'identitas';
 
@@ -79,7 +80,7 @@ class RpsController {
         }
 
         $mk = $this->mkModel->getById($mkId);
-        $cplList = $this->cplModel->getAll();
+        $cplList = $this->cplModel->getAll(['kurikulum_id' => $mk['kurikulum_id']]);
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $data = [
@@ -110,7 +111,7 @@ class RpsController {
 
         $mkId = $cpmk['mk_id'];
         $mk = $this->mkModel->getById($mkId);
-        $cplList = $this->cplModel->getAll();
+        $cplList = $this->cplModel->getAll(['kurikulum_id' => $mk['kurikulum_id']]);
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $data = [
@@ -472,8 +473,9 @@ class RpsController {
         $rencanaEvaluasi = $fullData['rencanaEvaluasi'];
         $rubrik = $fullData['rubrik'];
 
-        // Daftar CPL untuk kolom matriks hubungan CPL dan Sub-CPMK
-        $allCpls = $this->cplModel->getAll();
+        // Daftar CPL kurikulum untuk kolom matriks hubungan CPL dan Sub-CPMK
+        $kurikulumCpls = $fullData['kurikulumCpls'] ?? $this->cplModel->getAll(['kurikulum_id' => $mk['kurikulum_id']]);
+        $allCpls = $kurikulumCpls;
 
         require __DIR__ . '/../../views/rps/document.php';
     }

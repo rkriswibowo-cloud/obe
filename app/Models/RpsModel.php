@@ -16,8 +16,14 @@ class RpsModel {
         $rps = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$rps) {
-            // Ambil data MK untuk nilai bawaan yang cerdas
-            $stmtMk = $this->db->prepare("SELECT * FROM mata_kuliah WHERE id = :mk_id");
+            // Ambil data MK beserta kurikulum dan program studi
+            $stmtMk = $this->db->prepare("
+                SELECT m.*, k.prodi_id, p.nama as prodi_nama, p.jenjang as prodi_jenjang, p.fakultas as prodi_fakultas
+                FROM mata_kuliah m
+                JOIN kurikulum k ON m.kurikulum_id = k.id
+                JOIN program_studi p ON k.prodi_id = p.id
+                WHERE m.id = :mk_id
+            ");
             $stmtMk->execute(['mk_id' => $mkId]);
             $mkRow = $stmtMk->fetch(PDO::FETCH_ASSOC);
 
@@ -32,17 +38,21 @@ class RpsModel {
             $stmtKelas->execute(['mk_id' => $mkId]);
             $kelasRow = $stmtKelas->fetch(PDO::FETCH_ASSOC);
 
-            $defaultDosen = !empty($kelasRow['dosen_nama']) ? "1. " . $kelasRow['dosen_nama'] . " (PJMK)" : "1. Rony Kriswibowo, M.Kom (PJMK)";
+            $defaultDosen = !empty($kelasRow['dosen_nama']) ? "1. " . $kelasRow['dosen_nama'] . " (PJMK)" : "1. Dosen Pengampu (PJMK)";
             $defaultKelas = !empty($kelasRow['nama_kelas']) ? $kelasRow['nama_kelas'] : "A";
             $defaultSemester = !empty($mkRow['semester']) ? $mkRow['semester'] : "1";
             $defaultSifat = !empty($mkRow['sifat']) ? $mkRow['sifat'] : "Wajib";
-            $defaultKK = !empty($mkRow['kelompok_keilmuan']) ? $mkRow['kelompok_keilmuan'] : "Sistem Informasi";
+            $defaultKK = !empty($mkRow['kelompok_keilmuan']) ? $mkRow['kelompok_keilmuan'] : ($mkRow['prodi_nama'] ?? 'Program Studi');
+            $defaultProdi = !empty($mkRow['prodi_nama']) 
+                ? (trim(($mkRow['prodi_jenjang'] ? $mkRow['prodi_jenjang'] . ' ' : '') . $mkRow['prodi_nama'])) 
+                : 'S1 Program Studi';
+            $defaultFakultas = !empty($mkRow['prodi_fakultas']) ? $mkRow['prodi_fakultas'] : 'Fakultas Sains dan Teknologi';
 
             return [
                 'mata_kuliah_id' => $mkId,
                 'versi' => '1/0',
-                'fakultas' => 'Fakultas Sains dan Teknologi',
-                'program_studi' => 'S1 Sistem Informasi',
+                'fakultas' => $defaultFakultas,
+                'program_studi' => $defaultProdi,
                 'kelas' => $defaultKelas,
                 'sifat' => $defaultSifat,
                 'semester_ke' => $defaultSemester,
@@ -53,7 +63,7 @@ class RpsModel {
                 'prasyarat' => '-',
                 'dosen_pengampu' => $defaultDosen,
                 'tahun_akademik' => 'Ganjil 2025/2026',
-                'referensi' => "1. Ward, J., & Peppard, J. (2016). Strategic Planning for Information Systems (4th ed.). Wiley.\n2. Pearlson, K. E., Saunders, C. S., & Galletta, D. F. (2020). Managing and Using Information Systems: A Strategic Approach (7th ed.). Wiley.\n3. O'Brien, J. A., & Marakas, G. M. (2017). Management Information Systems (10th ed.). McGraw-Hill Education.",
+                'referensi' => "1. Referensi Utama Mata Kuliah.\n2. Buku Referensi Pendukung.",
                 'sistem_penilaian_desc' => 'Sistem penilaian dilakukan pada CPMK masing-masing sesuai dengan rubrik yang dibuat.',
                 'bobot_keaktifan' => 5.00,
                 'bobot_tugas' => 15.00,
@@ -143,8 +153,20 @@ class RpsModel {
      * Mengambil paket data lengkap untuk kompilasi RPS resmi
      */
     public function getFullRpsData($mkId) {
-        // 1. Data MK
-        $stmt = $this->db->prepare("SELECT * FROM mata_kuliah WHERE id = ?");
+        // 1. Data MK beserta Kurikulum dan Prodi
+        $stmt = $this->db->prepare("
+            SELECT m.*, 
+                   k.prodi_id, 
+                   k.nama as kurikulum_nama, 
+                   k.kode as kurikulum_kode,
+                   p.nama as prodi_nama, 
+                   p.jenjang as prodi_jenjang, 
+                   p.fakultas as prodi_fakultas
+            FROM mata_kuliah m
+            JOIN kurikulum k ON m.kurikulum_id = k.id
+            JOIN program_studi p ON k.prodi_id = p.id
+            WHERE m.id = ?
+        ");
         $stmt->execute([$mkId]);
         $mk = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$mk) return null;
@@ -152,7 +174,7 @@ class RpsModel {
         // 2. Data RPS Metadata
         $rps = $this->getByMkId($mkId);
 
-        // 3. Data CPL yang terhubung
+        // 3. Data CPL yang terhubung dengan MK ini (via mk_cpl)
         $stmtCpl = $this->db->prepare("
             SELECT c.*, mc.bobot_kontribusi
             FROM cpl c
@@ -163,7 +185,17 @@ class RpsModel {
         $stmtCpl->execute([$mkId]);
         $cpls = $stmtCpl->fetchAll(PDO::FETCH_ASSOC);
 
-        // 4. Data CPMK & Sub-CPMK dengan Indikator
+        // Seluruh CPL Kurikulum Mata Kuliah ini
+        $stmtKurCpl = $this->db->prepare("
+            SELECT c.* 
+            FROM cpl c 
+            WHERE c.kurikulum_id = ? 
+            ORDER BY c.kode ASC
+        ");
+        $stmtKurCpl->execute([$mk['kurikulum_id']]);
+        $kurikulumCpls = $stmtKurCpl->fetchAll(PDO::FETCH_ASSOC);
+
+        // 4. Data CPMK & Sub-CPMK dengan Indikator dan keterhubungan CPL
         $stmtCpmk = $this->db->prepare("SELECT * FROM cpmk WHERE mk_id = ? ORDER BY id ASC");
         $stmtCpmk->execute([$mkId]);
         $cpmks = $stmtCpmk->fetchAll(PDO::FETCH_ASSOC);
@@ -172,6 +204,19 @@ class RpsModel {
         $totalSubBobot = 0;
 
         foreach ($cpmks as &$cpmk) {
+            // Ambil CPL yang terkait dengan CPMK ini
+            $stmtCpmkCpl = $this->db->prepare("
+                SELECT c.id, c.kode, c.rumusan 
+                FROM cpl c
+                JOIN cpmk_cpl cc ON c.id = cc.cpl_id
+                WHERE cc.cpmk_id = ?
+                ORDER BY c.kode ASC
+            ");
+            $stmtCpmkCpl->execute([$cpmk['id']]);
+            $cpmk['cpls'] = $stmtCpmkCpl->fetchAll(PDO::FETCH_ASSOC);
+            $cpmk['cpl_ids'] = array_column($cpmk['cpls'], 'id');
+            $cpmk['cpl_kodes'] = array_column($cpmk['cpls'], 'kode');
+
             $stmtSub = $this->db->prepare("
                 SELECT * FROM sub_cpmk 
                 WHERE cpmk_id = ? 
@@ -185,6 +230,11 @@ class RpsModel {
                 $stmtInd = $this->db->prepare("SELECT * FROM sub_cpmk_indikator WHERE sub_cpmk_id = ? ORDER BY id ASC");
                 $stmtInd->execute([$sub['id']]);
                 $sub['indikators'] = $stmtInd->fetchAll(PDO::FETCH_ASSOC);
+
+                // Warisi CPL dari CPMK induk
+                $sub['cpmk_kode'] = $cpmk['kode'];
+                $sub['cpl_ids'] = $cpmk['cpl_ids'];
+                $sub['cpl_kodes'] = $cpmk['cpl_kodes'];
 
                 $totalSubBobot += floatval($sub['bobot']);
                 $allSubCpmks[] = $sub;
@@ -270,6 +320,7 @@ class RpsModel {
             'mk' => $mk,
             'rps' => $rps,
             'cpls' => $cpls,
+            'kurikulumCpls' => $kurikulumCpls,
             'cpmks' => $cpmks,
             'allSubCpmks' => $allSubCpmks,
             'totalSubBobot' => $totalSubBobot,

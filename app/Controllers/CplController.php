@@ -1,23 +1,40 @@
 <?php
 // app/Controllers/CplController.php
 
+require_once __DIR__ . '/../Models/CplModel.php';
+require_once __DIR__ . '/../Models/KurikulumModel.php';
+require_once __DIR__ . '/../Models/ProdiModel.php';
+
 class CplController {
     private $cplModel;
     private $kurikulumModel;
+    private $prodiModel;
 
     public function __construct() {
-        require_once __DIR__ . '/../Models/CplModel.php';
-        require_once __DIR__ . '/../Models/KurikulumModel.php';
         $this->cplModel = new CplModel();
         $this->kurikulumModel = new KurikulumModel();
+        $this->prodiModel = new ProdiModel();
     }
 
     public function index() {
-        $cplList = $this->cplModel->getAll();
+        $selectedProdiId = $_GET['prodi_id'] ?? '';
+        $selectedKurikulumId = $_GET['kurikulum_id'] ?? '';
+
+        $filters = [
+            'prodi_id' => $selectedProdiId,
+            'kurikulum_id' => $selectedKurikulumId,
+            'status' => $_GET['status'] ?? ''
+        ];
+
+        $prodiList = $this->prodiModel->getAll();
+        $kurikulumList = $this->kurikulumModel->getAll($selectedProdiId ?: null);
+        $cplList = $this->cplModel->getAll($filters);
+
         require_once __DIR__ . '/../../views/cpl/index.php';
     }
 
     public function create() {
+        $prodiList = $this->prodiModel->getAll();
         $kurikulumList = $this->kurikulumModel->getAll();
         require_once __DIR__ . '/../../views/cpl/create.php';
     }
@@ -42,21 +59,22 @@ class CplController {
             exit;
         }
     }
-
     public function edit() {
+        $baseUrl = $GLOBALS['config']['base_url'] ?? '/obe/public';
         $id = $_GET['id'] ?? null;
         if (!$id) {
-            header('Location: ' . ($config['base_url'] ?? '/obe/public') . '/cpl');
+            header('Location: ' . $baseUrl . '/cpl');
             exit;
         }
 
         $cpl = $this->cplModel->getById($id);
         if (!$cpl) {
             $_SESSION['error'] = "Data CPL tidak ditemukan.";
-            header('Location: ' . ($config['base_url'] ?? '/obe/public') . '/cpl');
+            header('Location: ' . $baseUrl . '/cpl');
             exit;
         }
 
+        $prodiList = $this->prodiModel->getAll();
         $kurikulumList = $this->kurikulumModel->getAll();
         require_once __DIR__ . '/../../views/cpl/edit.php';
     }

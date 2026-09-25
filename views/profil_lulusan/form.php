@@ -32,10 +32,21 @@ $baseUrl = $config['base_url'] ?? '/obe/public';
                         Kurikulum <span style="color: var(--danger);">*</span>
                     </label>
                     <select name="kurikulum_id" required style="width: 100%; padding: 10px 12px; font-size: 0.9rem; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-hover); color: var(--text-main);">
-                        <?php foreach ($kurikulumList as $k): ?>
-                            <option value="<?= $k['id'] ?>" <?= (($isEdit ? $pl['kurikulum_id'] : $selectedKurikulumId) == $k['id']) ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($k['nama']) ?> (<?= htmlspecialchars($k['status']) ?>)
-                            </option>
+                        <?php 
+                        $groupedKurikulum = [];
+                        foreach ($kurikulumList as $k) {
+                            $prodiKey = trim(($k['jenjang_prodi'] ?? '') . ' ' . ($k['nama_prodi'] ?? 'Umum'));
+                            if (empty($prodiKey)) $prodiKey = 'Program Studi';
+                            $groupedKurikulum[$prodiKey][] = $k;
+                        }
+                        foreach ($groupedKurikulum as $prodiName => $kList): ?>
+                            <optgroup label="Program Studi: <?= htmlspecialchars($prodiName) ?>">
+                                <?php foreach ($kList as $k): ?>
+                                    <option value="<?= $k['id'] ?>" <?= (($isEdit ? $pl['kurikulum_id'] : $selectedKurikulumId) == $k['id']) ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($k['kode']) ?> - <?= htmlspecialchars($k['nama']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </optgroup>
                         <?php endforeach; ?>
                     </select>
                 </div>

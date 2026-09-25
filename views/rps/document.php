@@ -578,51 +578,67 @@ $logoSrc = file_exists($logoFile)
              ==================================================================== -->
         <div class="keep-together">
             <div class="section-title">2b. HUBUNGAN CPL DAN SUB-CPMK</div>
+            <?php 
+            $matrixCpls = !empty($kurikulumCpls) ? $kurikulumCpls : (!empty($cpls) ? $cpls : []);
+            $cplColsCount = count($matrixCpls);
+            ?>
+            <?php if ($cplColsCount === 0): ?>
+                <div style="padding: 12px; text-align: center; font-style: italic; color: #64748b;">
+                    Belum ada data CPL yang didefinisikan untuk kurikulum mata kuliah ini.
+                </div>
+            <?php else: ?>
             <table class="rps-table">
                 <thead>
                     <tr>
                         <th rowspan="2" style="width: 25%; vertical-align: middle;">Kode SUB-CPMK</th>
-                        <th colspan="5">Kode CPL/Bobot</th>
-                        <th rowspan="2" style="width: 20%; vertical-align: middle;">Jumlah Bobot (%)</th>
+                        <th colspan="<?= $cplColsCount ?>">Kode CPL / Bobot Kontribusi</th>
+                        <th rowspan="2" style="width: 18%; vertical-align: middle;">Jumlah Bobot (%)</th>
                     </tr>
                     <tr>
-                        <th style="width: 11%;">CPL 01</th>
-                        <th style="width: 11%;">CPL 02</th>
-                        <th style="width: 11%;">CPL 03</th>
-                        <th style="width: 11%;">CPL 04</th>
-                        <th style="width: 11%;">CPL 05</th>
+                        <?php foreach ($matrixCpls as $mcpl): ?>
+                            <th style="text-align: center;" title="<?= htmlspecialchars($mcpl['rumusan']) ?>">
+                                <?= htmlspecialchars($mcpl['kode']) ?>
+                            </th>
+                        <?php endforeach; ?>
                     </tr>
                 </thead>
                 <tbody>
                     <?php 
                     $grandTotal = 0;
-                    $cpl04Total = 0;
+                    $cplTotals = array_fill_keys(array_column($matrixCpls, 'id'), 0);
+
                     foreach ($allSubCpmks as $sub): 
                         $bobot = floatval($sub['bobot']);
                         $grandTotal += $bobot;
-                        $cpl04Total += $bobot;
+                        $subCplIds = $sub['cpl_ids'] ?? [];
                     ?>
                         <tr>
                             <td class="text-bold" style="padding-left: 10px;"><?= htmlspecialchars($sub['kode']) ?></td>
-                            <td class="text-center"></td>
-                            <td class="text-center"></td>
-                            <td class="text-center"></td>
-                            <td class="text-center text-bold"><?= $bobot ?>%</td>
-                            <td class="text-center"></td>
+                            <?php foreach ($matrixCpls as $mcpl): 
+                                $isLinked = in_array($mcpl['id'], $subCplIds);
+                                if ($isLinked) {
+                                    $cplTotals[$mcpl['id']] += $b = $bobot;
+                                }
+                            ?>
+                                <td class="text-center <?= $isLinked ? 'text-bold' : '' ?>">
+                                    <?= $isLinked ? ($bobot . '%') : '' ?>
+                                </td>
+                            <?php endforeach; ?>
                             <td class="text-center text-bold"><?= $bobot ?>%</td>
                         </tr>
                     <?php endforeach; ?>
                     <tr style="background: #f8f9fa; font-weight: bold;">
                         <td class="text-center">Jumlah</td>
-                        <td class="text-center"></td>
-                        <td class="text-center"></td>
-                        <td class="text-center"></td>
-                        <td class="text-center"><?= $cpl04Total ?>%</td>
-                        <td class="text-center"></td>
+                        <?php foreach ($matrixCpls as $mcpl): ?>
+                            <td class="text-center">
+                                <?= $cplTotals[$mcpl['id']] > 0 ? ($cplTotals[$mcpl['id']] . '%') : '' ?>
+                            </td>
+                        <?php endforeach; ?>
                         <td class="text-center"><?= $grandTotal ?>%</td>
                     </tr>
                 </tbody>
             </table>
+            <?php endif; ?>
         </div>
 
         <!-- ====================================================================

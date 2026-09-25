@@ -11,11 +11,25 @@ ob_start();
 <div style="background: var(--surface); padding: 24px; border: 1px solid var(--border); border-radius: var(--radius-md);">
     <form action="<?= $config['base_url'] ?? '/obe/public' ?>/cpl/store" method="POST">
         <div style="margin-bottom: 15px;">
-            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Kurikulum</label>
+            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Kurikulum Program Studi</label>
             <select name="kurikulum_id" required style="width: 100%; padding: 10px; background: var(--background); border: 1px solid var(--border); color: white; border-radius: var(--radius-sm);">
-                <option value="">-- Pilih Kurikulum --</option>
-                <?php foreach($kurikulumList as $k): ?>
-                    <option value="<?= $k['id'] ?>"><?= htmlspecialchars($k['kode']) ?> - <?= htmlspecialchars($k['nama']) ?></option>
+                <option value="">-- Pilih Kurikulum Program Studi --</option>
+                <?php 
+                $groupedKurikulum = [];
+                foreach ($kurikulumList as $k) {
+                    $prodiKey = trim(($k['jenjang_prodi'] ?? '') . ' ' . ($k['nama_prodi'] ?? 'Umum'));
+                    if (empty($prodiKey)) $prodiKey = 'Program Studi';
+                    $groupedKurikulum[$prodiKey][] = $k;
+                }
+                $selectedKid = $_GET['kurikulum_id'] ?? '';
+                foreach ($groupedKurikulum as $prodiName => $kList): ?>
+                    <optgroup label="Program Studi: <?= htmlspecialchars($prodiName) ?>">
+                        <?php foreach($kList as $k): ?>
+                            <option value="<?= $k['id'] ?>" <?= ($selectedKid == $k['id']) ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($k['kode']) ?> - <?= htmlspecialchars($k['nama']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </optgroup>
                 <?php endforeach; ?>
             </select>
         </div>

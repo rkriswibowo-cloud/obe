@@ -17,10 +17,21 @@ $baseUrl = $config['base_url'] ?? '/obe/public';
         <!-- Filter Kurikulum -->
         <form method="GET" action="<?= $baseUrl ?>/profil-lulusan" style="display: flex; gap: 8px; align-items: center;">
             <select name="kurikulum_id" onchange="this.form.submit()" style="padding: 8px 12px; font-size: 0.88rem; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text-main);">
-                <?php foreach ($kurikulumList as $k): ?>
-                    <option value="<?= $k['id'] ?>" <?= $selectedKurikulumId == $k['id'] ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($k['nama']) ?> (<?= htmlspecialchars($k['status']) ?>)
-                    </option>
+                <?php 
+                $groupedKurikulum = [];
+                foreach ($kurikulumList as $k) {
+                    $prodiKey = trim(($k['jenjang_prodi'] ?? '') . ' ' . ($k['nama_prodi'] ?? 'Umum'));
+                    if (empty($prodiKey)) $prodiKey = 'Program Studi';
+                    $groupedKurikulum[$prodiKey][] = $k;
+                }
+                foreach ($groupedKurikulum as $prodiName => $kList): ?>
+                    <optgroup label="Program Studi: <?= htmlspecialchars($prodiName) ?>">
+                        <?php foreach ($kList as $k): ?>
+                            <option value="<?= $k['id'] ?>" <?= $selectedKurikulumId == $k['id'] ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($k['kode']) ?> - <?= htmlspecialchars($k['nama']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </optgroup>
                 <?php endforeach; ?>
             </select>
         </form>

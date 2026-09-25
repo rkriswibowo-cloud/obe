@@ -1037,40 +1037,56 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
             </div>
 
             <div style="overflow-x: auto;">
+                <?php 
+                $matrixCpls = !empty($kurikulumCpls) ? $kurikulumCpls : (!empty($cpls) ? $cpls : []);
+                $cplColsCount = count($matrixCpls);
+                ?>
+                <?php if ($cplColsCount === 0): ?>
+                    <div style="padding: 24px; text-align: center; color: var(--text-muted);">
+                        <i class="fa-solid fa-circle-info" style="font-size: 1.5rem; margin-bottom: 8px; display: block; opacity: 0.6;"></i>
+                        Belum ada CPL yang terdaftar pada kurikulum mata kuliah ini. Silakan tambahkan CPL pada Master CPL terlebih dahulu.
+                    </div>
+                <?php else: ?>
                 <table class="table" style="width: 100%; border-collapse: collapse;">
                     <thead>
                         <tr style="background: var(--surface-hover);">
                             <th rowspan="2" style="border: 1px solid var(--border); padding: 10px; text-align: left;">Kode SUB-CPMK</th>
-                            <th colspan="5" style="border: 1px solid var(--border); padding: 10px; text-align: center;">Kode CPL / Bobot</th>
+                            <th colspan="<?= $cplColsCount ?>" style="border: 1px solid var(--border); padding: 10px; text-align: center;">Kode CPL / Bobot Kontribusi</th>
                             <th rowspan="2" style="border: 1px solid var(--border); padding: 10px; text-align: center; width: 140px;">Jumlah Bobot (%)</th>
                         </tr>
                         <tr style="background: var(--surface-hover);">
-                            <th style="border: 1px solid var(--border); padding: 8px; text-align: center; width: 80px;">CPL 01</th>
-                            <th style="border: 1px solid var(--border); padding: 8px; text-align: center; width: 80px;">CPL 02</th>
-                            <th style="border: 1px solid var(--border); padding: 8px; text-align: center; width: 80px;">CPL 03</th>
-                            <th style="border: 1px solid var(--border); padding: 8px; text-align: center; width: 80px; background: rgba(59, 130, 246, 0.1); color: var(--primary);">CPL 04</th>
-                            <th style="border: 1px solid var(--border); padding: 8px; text-align: center; width: 80px;">CPL 05</th>
+                            <?php foreach ($matrixCpls as $mcpl): ?>
+                                <th style="border: 1px solid var(--border); padding: 8px; text-align: center; min-width: 80px;" title="<?= htmlspecialchars($mcpl['rumusan']) ?>">
+                                    <?= htmlspecialchars($mcpl['kode']) ?>
+                                </th>
+                            <?php endforeach; ?>
                         </tr>
                     </thead>
                     <tbody>
                         <?php 
                         $totalMatrix = 0;
+                        $cplTotals = array_fill_keys(array_column($matrixCpls, 'id'), 0);
+
                         foreach ($allSubCpmks as $sub): 
                             $b = floatval($sub['bobot']);
                             $totalMatrix += $b;
+                            $subCplIds = $sub['cpl_ids'] ?? [];
                         ?>
                             <tr>
                                 <td style="border: 1px solid var(--border); padding: 10px; font-weight: 600;">
-                                    <?= htmlspecialchars($sub['kode']) ?>
-                                    <div style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);"><?= htmlspecialchars(substr($sub['rumusan'], 0, 65)) ?>...</div>
+                                    <span style="color: var(--primary); font-family: monospace;"><?= htmlspecialchars($sub['kode']) ?></span>
+                                    <div style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);"><?= htmlspecialchars(substr($sub['rumusan'], 0, 75)) ?>...</div>
                                 </td>
-                                <td style="border: 1px solid var(--border); text-align: center; color: var(--text-muted);">-</td>
-                                <td style="border: 1px solid var(--border); text-align: center; color: var(--text-muted);">-</td>
-                                <td style="border: 1px solid var(--border); text-align: center; color: var(--text-muted);">-</td>
-                                <td style="border: 1px solid var(--border); text-align: center; font-weight: 700; color: var(--primary); background: rgba(59, 130, 246, 0.04);">
-                                    <?= $b ?>%
-                                </td>
-                                <td style="border: 1px solid var(--border); text-align: center; color: var(--text-muted);">-</td>
+                                <?php foreach ($matrixCpls as $mcpl): 
+                                    $isLinked = in_array($mcpl['id'], $subCplIds);
+                                    if ($isLinked) {
+                                        $cplTotals[$mcpl['id']] += $b;
+                                    }
+                                ?>
+                                    <td style="border: 1px solid var(--border); text-align: center; <?= $isLinked ? 'font-weight: 700; color: var(--primary); background: rgba(59, 130, 246, 0.06);' : 'color: var(--text-muted);' ?>">
+                                        <?= $isLinked ? ($b . '%') : '-' ?>
+                                    </td>
+                                <?php endforeach; ?>
                                 <td style="border: 1px solid var(--border); text-align: center; font-weight: 700; color: var(--success);">
                                     <?= $b ?>%
                                 </td>
@@ -1078,17 +1094,18 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
                         <?php endforeach; ?>
                         <tr style="background: var(--surface-hover); font-weight: 700;">
                             <td style="border: 1px solid var(--border); padding: 12px; text-align: center;">Jumlah</td>
-                            <td style="border: 1px solid var(--border); text-align: center;">-</td>
-                            <td style="border: 1px solid var(--border); text-align: center;">-</td>
-                            <td style="border: 1px solid var(--border); text-align: center;">-</td>
-                            <td style="border: 1px solid var(--border); text-align: center; color: var(--primary);"><?= $totalMatrix ?>%</td>
-                            <td style="border: 1px solid var(--border); text-align: center;">-</td>
+                            <?php foreach ($matrixCpls as $mcpl): ?>
+                                <td style="border: 1px solid var(--border); text-align: center; color: <?= $cplTotals[$mcpl['id']] > 0 ? 'var(--primary)' : 'var(--text-muted)' ?>;">
+                                    <?= $cplTotals[$mcpl['id']] > 0 ? ($cplTotals[$mcpl['id']] . '%') : '-' ?>
+                                </td>
+                            <?php endforeach; ?>
                             <td style="border: 1px solid var(--border); text-align: center; color: <?= $totalMatrix == 100 ? 'var(--success)' : 'var(--warning)' ?>;">
                                 <?= $totalMatrix ?>%
                             </td>
                         </tr>
                     </tbody>
                 </table>
+                <?php endif; ?>
             </div>
         </div>
 
