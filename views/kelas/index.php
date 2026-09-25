@@ -34,9 +34,10 @@
                             <?= htmlspecialchars($k['jumlah_mahasiswa']) ?>
                         </span>
                     </td>
-                    <td style="padding: 12px; text-align: right;">
-                        <a href="/obe/public/kelas/peserta?id=<?= $k['id'] ?>" class="btn" style="padding: 4px 8px; font-size: 0.9em; background: var(--success); color: white; margin-right: 4px;"><i class="fa-solid fa-users"></i> Peserta</a>
-                        <a href="/obe/public/kelas/edit?id=<?= $k['id'] ?>" class="btn" style="padding: 4px 8px; font-size: 0.9em; background: var(--bg-hover); color: var(--text-primary); margin-right: 4px;"><i class="fa-solid fa-pen-to-square"></i> Edit</a>
+                    <td style="padding: 12px; text-align: right; white-space: nowrap;">
+                        <a href="/obe/public/kelas/peserta?id=<?= $k['id'] ?>" class="btn" style="padding: 4px 8px; font-size: 0.9em; background: var(--success); color: white; margin-right: 4px;" title="Kelola Peserta Kelas"><i class="fa-solid fa-users"></i> Peserta</a>
+                        <a href="/obe/public/asesmen?kelas_id=<?= $k['id'] ?>" class="btn" style="padding: 4px 8px; font-size: 0.9em; background: var(--primary); color: white; margin-right: 4px;" title="Input Nilai Asesmen"><i class="fa-solid fa-check-to-slot"></i> Input Nilai</a>
+                        <a href="/obe/public/kelas/edit?id=<?= $k['id'] ?>" class="btn" style="padding: 4px 8px; font-size: 0.9em; background: var(--bg-hover); color: var(--text-main); border: 1px solid var(--border); margin-right: 4px;"><i class="fa-solid fa-pen-to-square"></i> Edit</a>
                         <a href="/obe/public/kelas/delete?id=<?= $k['id'] ?>" class="btn" style="padding: 4px 8px; font-size: 0.9em; background: var(--danger); color: white;" onclick="return confirm('Hapus kelas ini?');"><i class="fa-solid fa-trash"></i> Hapus</a>
                     </td>
                 </tr>

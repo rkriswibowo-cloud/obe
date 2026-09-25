@@ -36,7 +36,7 @@ class KhsModel {
     }
 
     public function getAllTahunAkademik() {
-        return $this->db->query("SELECT * FROM tahun_akademik ORDER BY nama DESC")->fetchAll(PDO::FETCH_ASSOC);
+        return $this->db->query("SELECT * FROM tahun_akademik ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
@@ -61,7 +61,7 @@ class KhsModel {
             JOIN mata_kuliah mk ON k.mata_kuliah_id = mk.id
             JOIN tahun_akademik ta ON k.tahun_akademik_id = ta.id
             WHERE km.mahasiswa_id = :mhs_id
-            ORDER BY ta.nama ASC, mk.kode ASC
+            ORDER BY ta.id ASC, mk.semester ASC, mk.kode ASC
         ";
         $stmt = $this->db->prepare($sql);
         $stmt->execute(['mhs_id' => $mahasiswa_id]);
@@ -128,6 +128,7 @@ class KhsModel {
                 'mk_id' => $row['mk_id'],
                 'mk_kode' => $row['mk_kode'],
                 'mk_nama' => $row['mk_nama'],
+                'mk_semester' => (int)$row['mk_semester'],
                 'sks' => $sks,
                 'nilai_angka' => $hasScore ? $nilaiAkhirAngka : null,
                 'nilai_huruf' => $huruf,

@@ -189,13 +189,55 @@ ob_start();
 
     <!-- TAB 1: KARTU HASIL STUDI (KHS) -->
     <div id="tab-khs" class="tab-pane active">
+        <!-- Navigasi Semester 1 - 8 & Ringkasan IPS -->
+        <?php if (!empty($khsData['per_semester'])): ?>
+            <div style="margin-bottom: 22px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                    <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.04em;">
+                        <i class="fa-solid fa-graduation-cap" style="color: var(--primary); margin-right: 6px;"></i> Progres Studi Per Semester (Semester 1 s/d 8)
+                    </span>
+                    <a href="<?= ($GLOBALS['config']['base_url'] ?? '/obe/public') ?>/khs?id=<?= $selectedMhsId ?>" style="font-size: 0.82rem; color: var(--primary); text-decoration: none; font-weight: 600; padding: 4px 10px; border-radius: 6px; background: rgba(var(--primary-rgb), 0.08);">
+                        <i class="fa-solid fa-arrows-rotate" style="margin-right: 4px;"></i> Tampilkan Semua (Kumulatif 1-8)
+                    </a>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;">
+                    <?php 
+                    $semIdx = 1;
+                    foreach ($daftarTahunAkademik as $ta): 
+                        $taData = $khsData['per_semester'][$ta['id']] ?? null;
+                        $isSelected = ($filterTaId == $ta['id']);
+                    ?>
+                        <a href="<?= ($GLOBALS['config']['base_url'] ?? '/obe/public') ?>/khs?id=<?= $selectedMhsId ?>&ta_id=<?= $ta['id'] ?>" 
+                           style="display: block; text-decoration: none; padding: 10px 12px; border-radius: 10px; border: 1.5px solid <?= $isSelected ? 'var(--primary)' : 'var(--border)' ?>; background: <?= $isSelected ? 'rgba(var(--primary-rgb), 0.12)' : 'var(--surface)' ?>; transition: all 0.2s; box-shadow: <?= $isSelected ? '0 0 0 2px rgba(var(--primary-rgb), 0.2)' : 'none' ?>;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 0.82rem; font-weight: 700; color: <?= $isSelected ? 'var(--primary)' : 'var(--text-main)' ?>;">
+                                    Semester <?= $semIdx++ ?>
+                                </span>
+                                <?php if ($taData): ?>
+                                    <span style="font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; background: rgba(16, 185, 129, 0.15); color: #10b981; font-weight: 700;">
+                                        IPS <?= number_format($taData['ips'], 2) ?>
+                                    </span>
+                                <?php else: ?>
+                                    <span style="font-size: 0.7rem; color: var(--text-muted);">-</span>
+                                <?php endif; ?>
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; display: flex; justify-content: space-between;">
+                                <span><?= $taData ? $taData['total_sks'] . ' SKS' : '0 SKS' ?></span>
+                                <span style="font-size: 0.7rem;"><?= $taData ? count($taData['mata_kuliah']) . ' MK' : '' ?></span>
+                            </div>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        <?php endif; ?>
+
         <div class="card" style="padding: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 24px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
                 <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-main);">
-                    Daftar Mata Kuliah & Nilai Hasil Belajar
+                    Daftar Mata Kuliah & Nilai Hasil Belajar <?= !empty($filterTaId) ? '(' . htmlspecialchars($daftarTahunAkademik[array_search($filterTaId, array_column($daftarTahunAkademik, 'id'))]['nama'] ?? '') . ')' : '(Kumulatif Semester 1 - 8)' ?>
                 </h4>
                 <span style="font-size: 0.82rem; color: var(--text-muted);">
-                    Menampilkan <?= count($khsData['semua_mk']) ?> Mata Kuliah
+                    Menampilkan <?= count($khsData['semua_mk']) ?> Mata Kuliah (Total <?= array_sum(array_column($khsData['semua_mk'], 'sks')) ?> SKS)
                 </span>
             </div>
 
@@ -221,8 +263,10 @@ ob_start();
                             <?php $no = 1; foreach ($khsData['semua_mk'] as $mk): ?>
                                 <tr style="border-bottom: 1px solid var(--border);">
                                     <td style="padding: 12px 14px;"><?= $no++ ?></td>
-                                    <td style="padding: 12px 14px; color: var(--text-muted); font-size: 0.82rem;">
-                                        <?= htmlspecialchars($mk['tahun_akademik_nama']) ?>
+                                    <td style="padding: 12px 14px; font-weight: 600; font-size: 0.82rem; white-space: nowrap;">
+                                        <span class="badge" style="background: var(--surface-hover); color: var(--text-main); border: 1px solid var(--border); padding: 3px 8px; border-radius: 6px;">
+                                            Sem <?= $mk['mk_semester'] ?? '-' ?>
+                                        </span>
                                     </td>
                                     <td style="padding: 12px 14px; font-weight: 600; font-family: monospace;">
                                         <?= htmlspecialchars($mk['mk_kode']) ?>
