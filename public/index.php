@@ -80,6 +80,39 @@ switch ($path) {
         $k = new KurikulumController();
         $k->delete();
         break;
+
+    // Profil Lulusan Routes
+    case '/profil-lulusan':
+        require_once __DIR__ . '/../app/Controllers/ProfilLulusanController.php';
+        $pl = new ProfilLulusanController();
+        $pl->index();
+        break;
+    case '/profil-lulusan/create':
+        require_once __DIR__ . '/../app/Controllers/ProfilLulusanController.php';
+        $pl = new ProfilLulusanController();
+        $pl->create();
+        break;
+    case '/profil-lulusan/store':
+        require_once __DIR__ . '/../app/Controllers/ProfilLulusanController.php';
+        $pl = new ProfilLulusanController();
+        $pl->store();
+        break;
+    case '/profil-lulusan/edit':
+        require_once __DIR__ . '/../app/Controllers/ProfilLulusanController.php';
+        $pl = new ProfilLulusanController();
+        $pl->edit();
+        break;
+    case '/profil-lulusan/update':
+        require_once __DIR__ . '/../app/Controllers/ProfilLulusanController.php';
+        $pl = new ProfilLulusanController();
+        $pl->update();
+        break;
+    case '/profil-lulusan/delete':
+        require_once __DIR__ . '/../app/Controllers/ProfilLulusanController.php';
+        $pl = new ProfilLulusanController();
+        $pl->delete();
+        break;
+
     case '/cpl':
         require_once __DIR__ . '/../app/Controllers/CplController.php';
         $c = new CplController();
@@ -489,6 +522,13 @@ switch ($path) {
         require_once __DIR__ . '/../app/Controllers/KhsController.php';
         $khsCtrl = new KhsController();
         $khsCtrl->cetak();
+        break;
+
+    // Audit Log Route
+    case '/audit-log':
+        require_once __DIR__ . '/../app/Controllers/AuditLogController.php';
+        $auditCtrl = new AuditLogController();
+        $auditCtrl->index();
         break;
     
     default:

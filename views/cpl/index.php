@@ -1,61 +1,104 @@
 <?php
 $title = 'Data CPL - Sistem OBE';
 ob_start();
+$baseUrl = $config['base_url'] ?? '/obe/public';
 ?>
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 15px;">
     <div>
-        <h2>Master Data CPL</h2>
-        <p style="color: var(--text-muted); margin-top: 5px;">Kelola data Capaian Pembelajaran Lulusan (CPL).</p>
+        <h2 style="margin: 0; font-size: 1.5rem; font-weight: 700; color: var(--text-main);">Master Data CPL</h2>
+        <p style="color: var(--text-muted); margin-top: 4px; font-size: 0.9rem;">
+            Kelola Capaian Pembelajaran Lulusan (CPL) dan keterhubungannya dengan Profil Lulusan.
+        </p>
     </div>
-    <a href="<?= $config['base_url'] ?? '/obe/public' ?>/cpl/create" class="btn btn-primary">
+    <a href="<?= $baseUrl ?>/cpl/create" class="btn btn-primary">
         <i class="fa-solid fa-plus"></i> Tambah CPL
     </a>
 </div>
 
 <?php if(isset($_SESSION['success'])): ?>
-    <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success); color: var(--success); padding: 12px 20px; border-radius: var(--radius-sm); margin-bottom: 20px;">
-        <?= $_SESSION['success'] ?>
+    <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid var(--success); color: var(--success); padding: 12px 18px; border-radius: var(--radius-md); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+        <i class="fa-solid fa-circle-check"></i>
+        <span><?= $_SESSION['success'] ?></span>
     </div>
     <?php unset($_SESSION['success']); ?>
 <?php endif; ?>
+
 <?php if(isset($_SESSION['error'])): ?>
-    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); color: var(--danger); padding: 12px 20px; border-radius: var(--radius-sm); margin-bottom: 20px;">
-        <?= $_SESSION['error'] ?>
+    <div style="background: rgba(239, 68, 68, 0.12); border: 1px solid var(--danger); color: var(--danger); padding: 12px 18px; border-radius: var(--radius-md); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span><?= $_SESSION['error'] ?></span>
     </div>
     <?php unset($_SESSION['error']); ?>
 <?php endif; ?>
 
-<div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden;">
+<div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
     <table style="width: 100%; border-collapse: collapse; text-align: left;">
         <thead>
-            <tr style="border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.2);">
-                <th style="padding: 15px 20px; font-weight: 600;">Kode</th>
-                <th style="padding: 15px 20px; font-weight: 600;">Kurikulum</th>
-                <th style="padding: 15px 20px; font-weight: 600;">Rumusan</th>
-                <th style="padding: 15px 20px; font-weight: 600;">Target</th>
-                <th style="padding: 15px 20px; font-weight: 600;">Status</th>
-                <th style="padding: 15px 20px; font-weight: 600;">Aksi</th>
+            <tr style="border-bottom: 1px solid var(--border); background: var(--bg-hover);">
+                <th style="padding: 14px 18px; font-weight: 600; font-size: 0.85rem; color: var(--text-muted); width: 85px;">KODE</th>
+                <th style="padding: 14px 18px; font-weight: 600; font-size: 0.85rem; color: var(--text-muted); width: 140px;">KATEGORI</th>
+                <th style="padding: 14px 18px; font-weight: 600; font-size: 0.85rem; color: var(--text-muted);">RUMUSAN CAPAIAN PEMBELAJARAN</th>
+                <th style="padding: 14px 18px; font-weight: 600; font-size: 0.85rem; color: var(--text-muted); width: 170px;">PROFIL LULUSAN</th>
+                <th style="padding: 14px 18px; font-weight: 600; font-size: 0.85rem; color: var(--text-muted); width: 85px; text-align: center;">TARGET</th>
+                <th style="padding: 14px 18px; font-weight: 600; font-size: 0.85rem; color: var(--text-muted); width: 85px; text-align: center;">STATUS</th>
+                <th style="padding: 14px 18px; font-weight: 600; font-size: 0.85rem; color: var(--text-muted); text-align: right; width: 110px;">AKSI</th>
             </tr>
         </thead>
         <tbody>
             <?php if (empty($cplList)): ?>
-            <tr>
-                <td colspan="6" style="padding: 30px; text-align: center; color: var(--text-muted);">Belum ada data CPL.</td>
-            </tr>
+                <tr>
+                    <td colspan="7" style="padding: 40px; text-align: center; color: var(--text-muted);">
+                        <i class="fa-solid fa-bullseye" style="font-size: 2rem; opacity: 0.4; margin-bottom: 8px; display: block;"></i>
+                        Belum ada data CPL terdaftar.
+                    </td>
+                </tr>
             <?php else: ?>
                 <?php foreach($cplList as $c): ?>
-                <tr style="border-bottom: 1px solid var(--border);">
-                    <td style="padding: 15px 20px;"><?= htmlspecialchars($c['kode']) ?></td>
-                    <td style="padding: 15px 20px;"><?= htmlspecialchars($c['kurikulum_nama'] ?? '') ?></td>
-                    <td style="padding: 15px 20px;"><?= htmlspecialchars(strlen($c['rumusan']) > 50 ? substr($c['rumusan'], 0, 50) . '...' : $c['rumusan']) ?></td>
-                    <td style="padding: 15px 20px;"><?= htmlspecialchars($c['target_capaian']) ?>%</td>
-                    <td style="padding: 15px 20px;">
-                        <span style="background: <?= $c['status'] == 'ACTIVE' ? 'var(--success)' : 'var(--border)' ?>; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600;"><?= htmlspecialchars($c['status']) ?></span>
+                <tr style="border-bottom: 1px solid var(--border); transition: background-color 0.15s ease;">
+                    <td style="padding: 14px 18px; font-weight: 700;">
+                        <span style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); color: var(--primary); padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-family: monospace;">
+                            <?= htmlspecialchars($c['kode']) ?>
+                        </span>
                     </td>
-                    <td style="padding: 15px 20px;">
-                        <a href="<?= $config['base_url'] ?? '/obe/public' ?>/cpl/edit?id=<?= $c['id'] ?>" class="btn btn-sm btn-secondary" style="padding: 4px 8px;"><i class="fa-solid fa-edit"></i> Edit</a>
-                        <a href="<?= $config['base_url'] ?? '/obe/public' ?>/cpl/delete?id=<?= $c['id'] ?>" class="btn btn-sm btn-danger" style="padding: 4px 8px;" onclick="return confirm('Yakin ingin menghapus CPL ini?')"><i class="fa-solid fa-trash"></i></a>
+                    <td style="padding: 14px 18px; font-size: 0.85rem;">
+                        <span style="background: rgba(100, 116, 139, 0.15); color: var(--text-main); padding: 3px 8px; border-radius: 4px; font-size: 0.78rem; font-weight: 600;">
+                            <?= htmlspecialchars($c['kategori'] ?? 'Umum') ?>
+                        </span>
+                    </td>
+                    <td style="padding: 14px 18px; font-size: 0.88rem; color: var(--text-main); line-height: 1.45;">
+                        <?= htmlspecialchars($c['rumusan']) ?>
+                    </td>
+                    <td style="padding: 14px 18px;">
+                        <?php if (!empty($c['pl_kodes'])): ?>
+                            <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                                <?php foreach (explode(',', $c['pl_kodes']) as $plKode): ?>
+                                    <span style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: var(--success); padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; font-family: monospace;">
+                                        <?= htmlspecialchars(trim($plKode)) ?>
+                                    </span>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php else: ?>
+                            <span style="font-size: 0.78rem; color: var(--text-muted); font-style: italic;">-</span>
+                        <?php endif; ?>
+                    </td>
+                    <td style="padding: 14px 18px; text-align: center; font-weight: 700; font-family: monospace; color: var(--primary);">
+                        <?= floatval($c['target_capaian']) ?>%
+                    </td>
+                    <td style="padding: 14px 18px; text-align: center;">
+                        <span style="background: <?= $c['status'] == 'ACTIVE' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(100, 116, 139, 0.15)' ?>; color: <?= $c['status'] == 'ACTIVE' ? 'var(--success)' : 'var(--text-muted)' ?>; border: 1px solid <?= $c['status'] == 'ACTIVE' ? 'rgba(16, 185, 129, 0.3)' : 'var(--border)' ?>; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">
+                            <?= htmlspecialchars($c['status']) ?>
+                        </span>
+                    </td>
+                    <td style="padding: 14px 18px; text-align: right;">
+                        <div style="display: flex; gap: 6px; justify-content: flex-end;">
+                            <a href="<?= $baseUrl ?>/cpl/edit?id=<?= $c['id'] ?>" class="btn btn-sm btn-secondary" title="Edit CPL">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </a>
+                            <a href="<?= $baseUrl ?>/cpl/delete?id=<?= $c['id'] ?>" class="btn btn-sm btn-danger" title="Hapus CPL" onclick="return confirm('Yakin ingin menghapus CPL <?= htmlspecialchars($c['kode']) ?>?')">
+                                <i class="fa-solid fa-trash"></i>
+                            </a>
+                        </div>
                     </td>
                 </tr>
                 <?php endforeach; ?>

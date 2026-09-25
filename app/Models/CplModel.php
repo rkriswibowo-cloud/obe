@@ -10,10 +10,14 @@ class CplModel {
 
     public function getAll() {
         $stmt = $this->db->query("
-            SELECT c.*, k.nama as kurikulum_nama 
+            SELECT c.*, k.nama as kurikulum_nama,
+                   GROUP_CONCAT(DISTINCT pl.kode ORDER BY pl.kode SEPARATOR ', ') as pl_kodes
             FROM cpl c 
             JOIN kurikulum k ON c.kurikulum_id = k.id 
-            ORDER BY c.id DESC
+            LEFT JOIN pl_cpl pc ON c.id = pc.cpl_id
+            LEFT JOIN profil_lulusan pl ON pc.pl_id = pl.id
+            GROUP BY c.id
+            ORDER BY c.kode ASC
         ");
         return $stmt->fetchAll();
     }

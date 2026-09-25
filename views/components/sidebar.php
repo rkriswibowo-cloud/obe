@@ -129,6 +129,12 @@ try {
                         <span>Kurikulum</span>
                     </a>
                 </li>
+                <li class="sidebar-nav-item <?= isNavActive($baseUrl . '/profil-lulusan', $currentUri) ? 'active' : '' ?>" data-label="profil lulusan graduate profile peran profesi pl">
+                    <a href="<?= $baseUrl ?>/profil-lulusan" class="sidebar-link">
+                        <i class="fa-solid fa-id-card-clip"></i>
+                        <span>Profil Lulusan</span>
+                    </a>
+                </li>
                 <li class="sidebar-nav-item <?= isNavActive($baseUrl . '/cpl', $currentUri) ? 'active' : '' ?>" data-label="cpl capaian pembelajaran lulusan clo plo">
                     <a href="<?= $baseUrl ?>/cpl" class="sidebar-link">
                         <i class="fa-solid fa-bullseye"></i>
@@ -207,6 +213,19 @@ try {
                     <a href="<?= $baseUrl ?>/cqi" class="sidebar-link">
                         <i class="fa-solid fa-arrows-rotate"></i>
                         <span>Tindak Lanjut CQI</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Section: Sistem & Audit -->
+        <div class="sidebar-group" data-group="sistem">
+            <div class="sidebar-section-title">SISTEM & AUDIT</div>
+            <ul class="sidebar-nav">
+                <li class="sidebar-nav-item <?= isNavActive($baseUrl . '/audit-log', $currentUri) ? 'active' : '' ?>" data-label="audit log trail riwayat aktivitas keamanan sistem">
+                    <a href="<?= $baseUrl ?>/audit-log" class="sidebar-link">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span>Audit Log</span>
                     </a>
                 </li>
             </ul>
