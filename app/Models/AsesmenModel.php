@@ -40,7 +40,7 @@ class AsesmenModel {
         $stmt = $this->db->prepare("
             INSERT INTO asesmen_nilai (kelas_id, mahasiswa_id, sub_cpmk_id, nilai)
             VALUES (:kelas_id, :mahasiswa_id, :sub_cpmk_id, :nilai)
-            ON DUPLICATE KEY UPDATE nilai = :nilai
+            ON DUPLICATE KEY UPDATE nilai = VALUES(nilai)
         ");
         return $stmt->execute([
             'kelas_id' => $kelas_id,

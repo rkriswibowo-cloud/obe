@@ -59,8 +59,8 @@ class MkCplModel {
             INSERT INTO mk_cpl (mk_id, cpl_id, bobot_kontribusi, is_diukur)
             VALUES (:mk_id, :cpl_id, :bobot, :is_diukur)
             ON DUPLICATE KEY UPDATE 
-            bobot_kontribusi = :bobot,
-            is_diukur = :is_diukur
+            bobot_kontribusi = VALUES(bobot_kontribusi),
+            is_diukur = VALUES(is_diukur)
         ");
         return $stmt->execute([
             'mk_id' => $mk_id,
