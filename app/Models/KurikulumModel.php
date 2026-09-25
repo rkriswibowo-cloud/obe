@@ -6,13 +6,21 @@ class KurikulumModel {
         $this->db = Database::getInstance();
     }
 
-    public function getAll() {
-        $stmt = $this->db->query("
-            SELECT k.*, p.nama as nama_prodi 
+    public function getAll($prodi_id = null) {
+        $sql = "
+            SELECT k.*, p.nama as nama_prodi, p.jenjang as jenjang_prodi 
             FROM kurikulum k 
             JOIN program_studi p ON k.prodi_id = p.id 
-            ORDER BY k.tahun_mulai DESC, k.id DESC
-        ");
+        ";
+        $params = [];
+        if ($prodi_id) {
+            $sql .= " WHERE k.prodi_id = :pid";
+            $params['pid'] = (int)$prodi_id;
+        }
+        $sql .= " ORDER BY k.tahun_mulai DESC, k.id DESC";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         return $stmt->fetchAll();
     }
 

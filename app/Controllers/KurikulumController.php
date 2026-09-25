@@ -13,7 +13,9 @@ class KurikulumController {
     }
 
     public function index() {
-        $kurikulumList = $this->kurikulumModel->getAll();
+        $selectedProdiId = $_GET['prodi_id'] ?? null;
+        $prodiList = $this->prodiModel->getAll();
+        $kurikulumList = $this->kurikulumModel->getAll($selectedProdiId);
         require_once __DIR__ . '/../../views/kurikulum/index.php';
     }
 

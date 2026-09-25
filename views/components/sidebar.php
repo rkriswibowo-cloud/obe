@@ -123,6 +123,12 @@ try {
                         <span>Mahasiswa</span>
                     </a>
                 </li>
+                <li class="sidebar-nav-item <?= isNavActive($baseUrl . '/prodi', $currentUri) ? 'active' : '' ?>" data-label="program studi prodi jurusan fakultas department">
+                    <a href="<?= $baseUrl ?>/prodi" class="sidebar-link">
+                        <i class="fa-solid fa-building-columns"></i>
+                        <span>Program Studi</span>
+                    </a>
+                </li>
                 <li class="sidebar-nav-item <?= isNavActive($baseUrl . '/kurikulum', $currentUri) ? 'active' : '' ?>" data-label="kurikulum struktur sks curriculum">
                     <a href="<?= $baseUrl ?>/kurikulum" class="sidebar-link">
                         <i class="fa-solid fa-book"></i>

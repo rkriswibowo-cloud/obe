@@ -50,6 +50,39 @@ switch ($path) {
         $d = new DashboardController();
         $d->index();
         break;
+
+    // Program Studi Routes
+    case '/prodi':
+        require_once __DIR__ . '/../app/Controllers/ProdiController.php';
+        $pr = new ProdiController();
+        $pr->index();
+        break;
+    case '/prodi/create':
+        require_once __DIR__ . '/../app/Controllers/ProdiController.php';
+        $pr = new ProdiController();
+        $pr->create();
+        break;
+    case '/prodi/store':
+        require_once __DIR__ . '/../app/Controllers/ProdiController.php';
+        $pr = new ProdiController();
+        $pr->store();
+        break;
+    case '/prodi/edit':
+        require_once __DIR__ . '/../app/Controllers/ProdiController.php';
+        $pr = new ProdiController();
+        $pr->edit();
+        break;
+    case '/prodi/update':
+        require_once __DIR__ . '/../app/Controllers/ProdiController.php';
+        $pr = new ProdiController();
+        $pr->update();
+        break;
+    case '/prodi/delete':
+        require_once __DIR__ . '/../app/Controllers/ProdiController.php';
+        $pr = new ProdiController();
+        $pr->delete();
+        break;
+
     case '/kurikulum':
         require_once __DIR__ . '/../app/Controllers/KurikulumController.php';
         $k = new KurikulumController();
