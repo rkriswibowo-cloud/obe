@@ -22,12 +22,16 @@
 
                 const savedPalette = localStorage.getItem('accent_palette') || 'slate';
                 document.documentElement.setAttribute('data-palette', savedPalette);
+
+                if (localStorage.getItem('sidebar_collapsed') === 'true') {
+                    document.documentElement.classList.add('sidebar-collapsed');
+                }
             } catch(e) {}
         })();
     </script>
 </head>
 <body>
-    <div class="app-layout">
+    <div class="app-layout" id="appLayout">
         <!-- Full-width Topbar matching screenshot -->
         <?php require __DIR__ . '/../components/topbar.php'; ?>
 

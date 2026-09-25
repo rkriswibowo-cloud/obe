@@ -1,5 +1,10 @@
 <div class="topbar">
     <div class="topbar-left">
+        <!-- Sidebar Toggle Collapse / Expand Button -->
+        <button type="button" class="topbar-sidebar-toggle-btn" id="sidebarToggleBtn" onclick="window.toggleSidebarCollapse()" title="Ciutkan / Buka Lebar Sidebar (Ctrl+B)" aria-label="Toggle Sidebar">
+            <i class="fa-solid fa-bars-staggered"></i>
+        </button>
+
         <!-- Brand Squircle Logo -->
         <a href="<?= $config['base_url'] ?? '/obe/public' ?>/dashboard" class="brand-squircle-link" title="Sistem Informasi OBE & CPL">
             <div class="brand-squircle">
