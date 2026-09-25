@@ -494,8 +494,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        const gridColor = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)';
-        const textColor = isDark ? '#e2e8f0' : '#334155';
+        const gridColor = isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.12)';
+        const textColor = isDark ? '#ffffff' : '#000000';
+        const primaryColor = isDark ? '#38bdf8' : '#0284c7';
 
         const ctx = canvas.getContext('2d');
         window.cplChartInstance = new Chart(ctx, {
@@ -506,13 +507,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     {
                         label: 'Capaian Aktual (%)',
                         data: radarPayload.scores || [],
-                        backgroundColor: 'rgba(51, 104, 160, 0.25)',
-                        borderColor: '#3368A0',
+                        backgroundColor: isDark ? 'rgba(56, 189, 248, 0.25)' : 'rgba(2, 132, 199, 0.2)',
+                        borderColor: primaryColor,
                         borderWidth: 2.5,
-                        pointBackgroundColor: '#3368A0',
+                        pointBackgroundColor: primaryColor,
                         pointBorderColor: '#fff',
                         pointHoverBackgroundColor: '#fff',
-                        pointHoverBorderColor: '#3368A0'
+                        pointHoverBorderColor: primaryColor
                     },
                     {
                         label: 'Target Capaian Prodi (%)',

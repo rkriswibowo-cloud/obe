@@ -51,7 +51,7 @@
         <!-- Accent Palette Switcher Dropdown -->
         <div class="palette-dropdown-wrapper" id="paletteDropdownWrapper">
             <button type="button" id="paletteToggleBtn" class="palette-toggle-btn" onclick="window.togglePaletteDropdown(event)" title="Pilih Tema Palet Warna" aria-label="Palette Selector">
-                <span class="palette-dot-preview" id="paletteActiveDot" style="background-color: #3368A0;"></span>
+                <span class="palette-dot-preview" id="paletteActiveDot" style="background-color: #0284c7;"></span>
                 <i class="fa-solid fa-palette" style="font-size: 0.85rem; opacity: 0.85;"></i>
                 <span id="paletteActiveName" style="font-size: 0.82rem; font-weight: 600;">Slate Blue</span>
                 <i class="fa-solid fa-chevron-down" style="font-size: 0.65rem; opacity: 0.6; margin-left: 2px;"></i>
@@ -60,7 +60,7 @@
                 <div class="palette-dropdown-header">Warna Aksen</div>
                 <div class="palette-options-list">
                     <button type="button" class="palette-option active" data-pal="slate" onclick="window.applyPalette('slate')">
-                        <span class="palette-swatch" style="background: #3368A0;"></span>
+                        <span class="palette-swatch" style="background: #0284c7;"></span>
                         <span class="palette-name">Slate Blue (Utama)</span>
                         <i class="fa-solid fa-check palette-check"></i>
                     </button>

@@ -289,13 +289,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function getThemeChartConfig(theme) {
         const isLight = theme === 'light';
         return {
-            lineColor: isLight ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)',
-            labelColor: isLight ? '#0f172a' : '#f8fafc',
-            tickColor: isLight ? '#64748b' : '#94a3b8',
-            tooltipBg: isLight ? 'rgba(255, 255, 255, 0.96)' : 'rgba(15, 17, 26, 0.95)',
-            tooltipTitle: isLight ? '#0f172a' : '#f8fafc',
-            tooltipBody: isLight ? '#334155' : '#e2e8f0',
-            tooltipBorder: isLight ? '#cbd5e1' : '#2e334a'
+            lineColor: isLight ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.16)',
+            labelColor: isLight ? '#000000' : '#ffffff',
+            tickColor: isLight ? '#3f3f46' : '#a1a1aa',
+            tooltipBg: isLight ? 'rgba(255, 255, 255, 0.98)' : 'rgba(10, 10, 12, 0.98)',
+            tooltipTitle: isLight ? '#000000' : '#ffffff',
+            tooltipBody: isLight ? '#18181b' : '#f4f4f5',
+            tooltipBorder: isLight ? '#e4e4e7' : '#27272a'
         };
     }
 

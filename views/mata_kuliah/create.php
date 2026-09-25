@@ -12,7 +12,7 @@ ob_start();
     <form action="<?= $config['base_url'] ?? '/obe/public' ?>/mata-kuliah/store" method="POST">
         <div style="margin-bottom: 15px;">
             <label style="display: block; margin-bottom: 5px; font-weight: 500;">Kurikulum Program Studi</label>
-            <select name="kurikulum_id" required style="width: 100%; padding: 10px; background: var(--background); border: 1px solid var(--border); color: white; border-radius: var(--radius-sm);">
+            <select name="kurikulum_id" required style="width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: var(--radius-sm);">
                 <option value="">-- Pilih Kurikulum Program Studi --</option>
                 <?php 
                 $groupedKurikulum = [];
@@ -36,51 +36,54 @@ ob_start();
         <div style="display: flex; gap: 15px; margin-bottom: 15px;">
             <div style="flex: 1;">
                 <label style="display: block; margin-bottom: 5px; font-weight: 500;">Kode MK</label>
-                <input type="text" name="kode" required style="width: 100%; padding: 10px; background: var(--background); border: 1px solid var(--border); color: white; border-radius: var(--radius-sm);" placeholder="Contoh: SI101">
+                <input type="text" name="kode" required style="width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: var(--radius-sm);" placeholder="Contoh: SI101">
             </div>
             <div style="flex: 2;">
                 <label style="display: block; margin-bottom: 5px; font-weight: 500;">Nama Mata Kuliah</label>
-                <input type="text" name="nama" required style="width: 100%; padding: 10px; background: var(--background); border: 1px solid var(--border); color: white; border-radius: var(--radius-sm);" placeholder="Contoh: Algoritma dan Pemrograman">
+                <input type="text" name="nama" required style="width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: var(--radius-sm);" placeholder="Contoh: Algoritma dan Pemrograman">
             </div>
         </div>
 
         <div style="display: flex; gap: 15px; margin-bottom: 15px;">
             <div style="flex: 1;">
                 <label style="display: block; margin-bottom: 5px; font-weight: 500;">SKS Teori</label>
-                <input type="number" name="sks_teori" min="0" value="0" required style="width: 100%; padding: 10px; background: var(--background); border: 1px solid var(--border); color: white; border-radius: var(--radius-sm);">
+                <input type="number" name="sks_teori" min="0" value="0" required style="width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: var(--radius-sm);">
             </div>
             <div style="flex: 1;">
                 <label style="display: block; margin-bottom: 5px; font-weight: 500;">SKS Praktek</label>
-                <input type="number" name="sks_praktek" min="0" value="0" required style="width: 100%; padding: 10px; background: var(--background); border: 1px solid var(--border); color: white; border-radius: var(--radius-sm);">
+                <input type="number" name="sks_praktek" min="0" value="0" required style="width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: var(--radius-sm);">
             </div>
             <div style="flex: 1;">
                 <label style="display: block; margin-bottom: 5px; font-weight: 500;">Semester</label>
-                <input type="number" name="semester" min="1" max="14" value="1" required style="width: 100%; padding: 10px; background: var(--background); border: 1px solid var(--border); color: white; border-radius: var(--radius-sm);">
+                <input type="number" name="semester" min="1" max="14" value="1" required style="width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: var(--radius-sm);">
             </div>
         </div>
         
         <div style="display: flex; gap: 15px; margin-bottom: 15px;">
             <div style="flex: 1;">
                 <label style="display: block; margin-bottom: 5px; font-weight: 500;">Sifat</label>
-                <select name="sifat" style="width: 100%; padding: 10px; background: var(--background); border: 1px solid var(--border); color: white; border-radius: var(--radius-sm);">
+                <select name="sifat" style="width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: var(--radius-sm);">
                     <option value="Wajib">Wajib</option>
                     <option value="Pilihan">Pilihan</option>
                 </select>
             </div>
             <div style="flex: 2;">
                 <label style="display: block; margin-bottom: 5px; font-weight: 500;">Kelompok Keilmuan</label>
-                <input type="text" name="kelompok_keilmuan" style="width: 100%; padding: 10px; background: var(--background); border: 1px solid var(--border); color: white; border-radius: var(--radius-sm);" placeholder="Contoh: Rekayasa Perangkat Lunak">
+                <input type="text" name="kelompok_keilmuan" style="width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: var(--radius-sm);" placeholder="Contoh: Rekayasa Perangkat Lunak">
             </div>
         </div>
 
         <div style="margin-bottom: 15px;">
             <label style="display: block; margin-bottom: 5px; font-weight: 500;">Deskripsi</label>
-            <textarea name="deskripsi" rows="3" style="width: 100%; padding: 10px; background: var(--background); border: 1px solid var(--border); color: white; border-radius: var(--radius-sm);" placeholder="Deskripsi singkat tentang mata kuliah..."></textarea>
+            <textarea name="deskripsi" rows="3" style="width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: var(--radius-sm);" placeholder="Deskripsi singkat tentang mata kuliah..."></textarea>
         </div>
         
         <div style="margin-bottom: 25px;">
             <label style="display: block; margin-bottom: 5px; font-weight: 500;">Status</label>
-            <select name="status" style="width: 100%; padding: 10px; background: var(--background); border: 1px solid var(--border); color: white; border-radius: var(--radius-sm);">
+            <select name="status" style="width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: var(--radius-sm);">
+                <option value="ACTIVE">Active</option>
+                <option value="INACTIVE">Inactive</option>
+            </select>
                 <option value="ACTIVE">Active</option>
                 <option value="INACTIVE">Inactive</option>
             </select>

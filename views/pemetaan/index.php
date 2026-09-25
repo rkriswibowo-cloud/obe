@@ -27,7 +27,7 @@ ob_start();
     <form action="<?= $config['base_url'] ?? '/obe/public' ?>/pemetaan-mk-cpl" method="GET" style="display: flex; gap: 15px; align-items: flex-end;">
         <div style="flex: 1;">
             <label style="display: block; margin-bottom: 5px; font-weight: 500;">Pilih Kurikulum Program Studi</label>
-            <select name="kurikulum_id" onchange="this.form.submit()" style="width: 100%; padding: 10px; background: var(--background); border: 1px solid var(--border); color: white; border-radius: var(--radius-sm);">
+            <select name="kurikulum_id" onchange="this.form.submit()" style="width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: var(--radius-sm);">
                 <?php if (empty($kurikulumList)): ?>
                     <option value="">-- Belum ada Kurikulum --</option>
                 <?php else: ?>

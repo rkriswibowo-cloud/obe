@@ -29,13 +29,13 @@ $baseUrl = $GLOBALS['config']['base_url'] ?? '/obe/public';
         <form method="POST" action="">
             <div style="margin-bottom: 20px;">
                 <label for="kode" style="display: block; margin-bottom: 8px; font-weight: 500;">Kode CPMK <span style="color: var(--danger);">*</span></label>
-                <input type="text" id="kode" name="kode" value="<?= $isEdit ? htmlspecialchars($cpmk['kode']) : '' ?>" required placeholder="Contoh: CPMK01" style="width: 100%; padding: 10px; background: var(--background); border: 1px solid var(--border); color: white; border-radius: var(--radius-sm); box-sizing: border-box;">
+                <input type="text" id="kode" name="kode" value="<?= $isEdit ? htmlspecialchars($cpmk['kode']) : '' ?>" required placeholder="Contoh: CPMK01" style="width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: var(--radius-sm); box-sizing: border-box;">
                 <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">Gunakan format yang konsisten, misal CPMK01, CPMK02, dsb.</div>
             </div>
             
             <div style="margin-bottom: 20px;">
                 <label for="rumusan" style="display: block; margin-bottom: 8px; font-weight: 500;">Rumusan CPMK <span style="color: var(--danger);">*</span></label>
-                <textarea id="rumusan" name="rumusan" rows="4" required placeholder="Tuliskan rumusan capaian pembelajaran secara spesifik dan dapat diukur..." style="width: 100%; padding: 10px; background: var(--background); border: 1px solid var(--border); color: white; border-radius: var(--radius-sm); box-sizing: border-box; font-family: inherit;"><?= $isEdit ? htmlspecialchars($cpmk['rumusan']) : '' ?></textarea>
+                <textarea id="rumusan" name="rumusan" rows="4" required placeholder="Tuliskan rumusan capaian pembelajaran secara spesifik dan dapat diukur..." style="width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: var(--radius-sm); box-sizing: border-box; font-family: inherit;"><?= $isEdit ? htmlspecialchars($cpmk['rumusan']) : '' ?></textarea>
             </div>
             
             <div style="margin-bottom: 20px;">

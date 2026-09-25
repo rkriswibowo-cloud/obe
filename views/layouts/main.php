@@ -99,7 +99,7 @@
            ACCENT COLOR PALETTE LOGIC
            ========================================================================== */
         const paletteConfig = {
-            slate: { name: 'Slate Blue', color: '#3368A0' },
+            slate: { name: 'Slate Blue', color: '#0284c7' },
             indigo: { name: 'Indigo', color: '#6366f1' },
             emerald: { name: 'Emerald', color: '#10b981' },
             ocean: { name: 'Ocean Blue', color: '#0ea5e9' },

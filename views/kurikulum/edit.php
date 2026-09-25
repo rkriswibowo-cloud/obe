@@ -14,7 +14,7 @@ ob_start();
         
         <div style="margin-bottom: 15px;">
             <label style="display: block; margin-bottom: 5px; font-weight: 500;">Program Studi</label>
-            <select name="prodi_id" required style="width: 100%; padding: 10px; background: var(--background); border: 1px solid var(--border); color: white; border-radius: var(--radius-sm);">
+            <select name="prodi_id" required style="width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: var(--radius-sm);">
                 <option value="">-- Pilih Program Studi --</option>
                 <?php foreach($prodiList as $p): ?>
                     <option value="<?= $p['id'] ?>" <?= $p['id'] == $kurikulum['prodi_id'] ? 'selected' : '' ?>>
@@ -26,27 +26,27 @@ ob_start();
         
         <div style="margin-bottom: 15px;">
             <label style="display: block; margin-bottom: 5px; font-weight: 500;">Kode Kurikulum</label>
-            <input type="text" name="kode" value="<?= htmlspecialchars($kurikulum['kode']) ?>" required style="width: 100%; padding: 10px; background: var(--background); border: 1px solid var(--border); color: white; border-radius: var(--radius-sm);">
+            <input type="text" name="kode" value="<?= htmlspecialchars($kurikulum['kode']) ?>" required style="width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: var(--radius-sm);">
         </div>
         
         <div style="margin-bottom: 15px;">
             <label style="display: block; margin-bottom: 5px; font-weight: 500;">Nama Kurikulum</label>
-            <input type="text" name="nama" value="<?= htmlspecialchars($kurikulum['nama']) ?>" required style="width: 100%; padding: 10px; background: var(--background); border: 1px solid var(--border); color: white; border-radius: var(--radius-sm);">
+            <input type="text" name="nama" value="<?= htmlspecialchars($kurikulum['nama']) ?>" required style="width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: var(--radius-sm);">
         </div>
         
         <div style="margin-bottom: 15px;">
             <label style="display: block; margin-bottom: 5px; font-weight: 500;">Tahun Mulai</label>
-            <input type="number" name="tahun_mulai" value="<?= htmlspecialchars($kurikulum['tahun_mulai']) ?>" required style="width: 100%; padding: 10px; background: var(--background); border: 1px solid var(--border); color: white; border-radius: var(--radius-sm);">
+            <input type="number" name="tahun_mulai" value="<?= htmlspecialchars($kurikulum['tahun_mulai']) ?>" required style="width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: var(--radius-sm);">
         </div>
         
         <div style="margin-bottom: 15px;">
             <label style="display: block; margin-bottom: 5px; font-weight: 500;">Versi</label>
-            <input type="text" name="versi" value="<?= htmlspecialchars($kurikulum['versi']) ?>" required style="width: 100%; padding: 10px; background: var(--background); border: 1px solid var(--border); color: white; border-radius: var(--radius-sm);">
+            <input type="text" name="versi" value="<?= htmlspecialchars($kurikulum['versi']) ?>" required style="width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: var(--radius-sm);">
         </div>
         
         <div style="margin-bottom: 25px;">
             <label style="display: block; margin-bottom: 5px; font-weight: 500;">Status</label>
-            <select name="status" style="width: 100%; padding: 10px; background: var(--background); border: 1px solid var(--border); color: white; border-radius: var(--radius-sm);">
+            <select name="status" style="width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: var(--radius-sm);">
                 <option value="DRAFT" <?= $kurikulum['status'] == 'DRAFT' ? 'selected' : '' ?>>Draft</option>
                 <option value="ACTIVE" <?= $kurikulum['status'] == 'ACTIVE' ? 'selected' : '' ?>>Active</option>
                 <option value="INACTIVE" <?= $kurikulum['status'] == 'INACTIVE' ? 'selected' : '' ?>>Inactive</option>

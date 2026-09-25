@@ -12,7 +12,7 @@ ob_start();
     <form action="<?= $config['base_url'] ?? '/obe/public' ?>/cpl/store" method="POST">
         <div style="margin-bottom: 15px;">
             <label style="display: block; margin-bottom: 5px; font-weight: 500;">Kurikulum Program Studi</label>
-            <select name="kurikulum_id" required style="width: 100%; padding: 10px; background: var(--background); border: 1px solid var(--border); color: white; border-radius: var(--radius-sm);">
+            <select name="kurikulum_id" required style="width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: var(--radius-sm);">
                 <option value="">-- Pilih Kurikulum Program Studi --</option>
                 <?php 
                 $groupedKurikulum = [];
@@ -36,27 +36,27 @@ ob_start();
         
         <div style="margin-bottom: 15px;">
             <label style="display: block; margin-bottom: 5px; font-weight: 500;">Kode CPL</label>
-            <input type="text" name="kode" required style="width: 100%; padding: 10px; background: var(--background); border: 1px solid var(--border); color: white; border-radius: var(--radius-sm);" placeholder="Contoh: CPL-01">
+            <input type="text" name="kode" required style="width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: var(--radius-sm);" placeholder="Contoh: CPL-01">
         </div>
         
         <div style="margin-bottom: 15px;">
             <label style="display: block; margin-bottom: 5px; font-weight: 500;">Rumusan</label>
-            <textarea name="rumusan" required rows="4" style="width: 100%; padding: 10px; background: var(--background); border: 1px solid var(--border); color: white; border-radius: var(--radius-sm);" placeholder="Masukkan rumusan CPL..."></textarea>
+            <textarea name="rumusan" required rows="4" style="width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: var(--radius-sm);" placeholder="Masukkan rumusan CPL..."></textarea>
         </div>
         
         <div style="margin-bottom: 15px;">
             <label style="display: block; margin-bottom: 5px; font-weight: 500;">Kategori</label>
-            <input type="text" name="kategori" style="width: 100%; padding: 10px; background: var(--background); border: 1px solid var(--border); color: white; border-radius: var(--radius-sm);" placeholder="Contoh: Sikap, Pengetahuan, Keterampilan Umum...">
+            <input type="text" name="kategori" style="width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: var(--radius-sm);" placeholder="Contoh: Sikap, Pengetahuan, Keterampilan Umum...">
         </div>
         
         <div style="margin-bottom: 15px;">
             <label style="display: block; margin-bottom: 5px; font-weight: 500;">Target Capaian (%)</label>
-            <input type="number" step="0.01" name="target_capaian" value="70.00" required style="width: 100%; padding: 10px; background: var(--background); border: 1px solid var(--border); color: white; border-radius: var(--radius-sm);">
+            <input type="number" step="0.01" name="target_capaian" value="70.00" required style="width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: var(--radius-sm);">
         </div>
         
         <div style="margin-bottom: 25px;">
             <label style="display: block; margin-bottom: 5px; font-weight: 500;">Status</label>
-            <select name="status" style="width: 100%; padding: 10px; background: var(--background); border: 1px solid var(--border); color: white; border-radius: var(--radius-sm);">
+            <select name="status" style="width: 100%; padding: 10px; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-main); border-radius: var(--radius-sm);">
                 <option value="ACTIVE">Active</option>
                 <option value="INACTIVE">Inactive</option>
             </select>
