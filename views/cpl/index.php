@@ -49,7 +49,7 @@ $baseUrl = $config['base_url'] ?? '/obe/public';
 <?php if(isset($_SESSION['success'])): ?>
     <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid var(--success); color: var(--success); padding: 12px 18px; border-radius: var(--radius-md); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
         <i class="fa-solid fa-circle-check"></i>
-        <span><?= $_SESSION['success'] ?></span>
+        <span><?= htmlspecialchars($_SESSION['success']) ?></span>
     </div>
     <?php unset($_SESSION['success']); ?>
 <?php endif; ?>
@@ -57,7 +57,7 @@ $baseUrl = $config['base_url'] ?? '/obe/public';
 <?php if(isset($_SESSION['error'])): ?>
     <div style="background: rgba(239, 68, 68, 0.12); border: 1px solid var(--danger); color: var(--danger); padding: 12px 18px; border-radius: var(--radius-md); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
         <i class="fa-solid fa-circle-exclamation"></i>
-        <span><?= $_SESSION['error'] ?></span>
+        <span><?= htmlspecialchars($_SESSION['error']) ?></span>
     </div>
     <?php unset($_SESSION['error']); ?>
 <?php endif; ?>

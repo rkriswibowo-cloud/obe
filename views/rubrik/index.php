@@ -32,6 +32,17 @@ $baseUrl = $GLOBALS['config']['base_url'] ?? '/obe/public';
     </div>
 <?php endif; ?>
 
+<div class="card" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:20px;margin-bottom:22px;">
+    <h4 style="margin:0 0 6px;color:var(--text-main);"><i class="fa-solid fa-book-open" style="color:var(--primary);margin-right:7px;"></i>Master Jenis Rubrik</h4>
+    <p style="margin:0 0 14px;color:var(--text-muted);font-size:.84rem;">Referensi jenis instrumen yang dapat dipilih saat membuat rubrik penilaian.</p>
+    <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;min-width:760px;font-size:.84rem;">
+            <thead><tr style="background:var(--surface-hover);color:var(--text-muted);text-align:left;"><th style="padding:10px;">Kode</th><th style="padding:10px;">Jenis Rubrik</th><th style="padding:10px;">Karakteristik</th><th style="padding:10px;">Contoh Penggunaan</th></tr></thead>
+            <tbody><?php foreach ($jenisRubrikMaster as $kode => $meta): ?><tr style="border-top:1px solid var(--border);"><td style="padding:10px;font-weight:800;color:var(--primary);"><?= htmlspecialchars($kode) ?></td><td style="padding:10px;font-weight:700;color:var(--text-main);"><?= htmlspecialchars($meta['jenis']) ?></td><td style="padding:10px;"><?= htmlspecialchars($meta['karakteristik']) ?></td><td style="padding:10px;color:var(--text-muted);"><?= htmlspecialchars($meta['contoh']) ?></td></tr><?php endforeach; ?></tbody>
+        </table>
+    </div>
+</div>
+
 <div class="card" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden;">
     <?php if (empty($rubrikList)): ?>
         <div style="text-align: center; padding: 60px 20px;">
@@ -72,7 +83,10 @@ $baseUrl = $GLOBALS['config']['base_url'] ?? '/obe/public';
                                     </a>
                                 </div>
                                 <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 3px;">
-                                    Status: <span style="color: var(--success); font-weight: 600;"><?= htmlspecialchars($r['status']) ?></span>
+                                    <?= htmlspecialchars($r['kode_jenis'] ?? 'RB-ANA') ?> &bull; Status: <span style="color: var(--success); font-weight: 600;"><?= htmlspecialchars($r['status']) ?></span>
+                                </div>
+                                <div style="font-size:.75rem;color:var(--text-muted);margin-top:3px;">
+                                    <?= htmlspecialchars($r['karakteristik'] ?? '') ?><?= !empty($r['contoh_penggunaan']) ? ' — ' . htmlspecialchars($r['contoh_penggunaan']) : '' ?>
                                 </div>
                             </td>
                             <td style="padding: 14px 18px;">

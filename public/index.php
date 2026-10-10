@@ -3,6 +3,37 @@ session_start();
 $config = require_once __DIR__ . '/../config/app.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../app/Controllers/AuthController.php';
+require_once __DIR__ . '/../app/Support/AccessContext.php';
+
+// CSRF token is injected into every server-rendered POST form below.
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+$csrfToken = $_SESSION['csrf_token'];
+ob_start(static function ($html) use ($csrfToken) {
+    $html = preg_replace_callback(
+        '/<form\b([^>]*)\bmethod\s*=\s*(["\']?)post\2([^>]*)>/i',
+        static function ($match) use ($csrfToken) {
+            if (stripos($match[0], 'name="csrf_token"') !== false) {
+                return $match[0];
+            }
+            return $match[0] . '<input type="hidden" name="csrf_token" value="'
+                . htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8') . '">';
+        },
+        $html
+    );
+    return preg_replace_callback(
+        '/href=(["\'])([^"\']*(?:\/delete|\/remove|\/generate-template|\/logout)[^"\']*)\1/i',
+        static function ($match) use ($csrfToken) {
+            if (strpos($match[2], 'csrf_token=') !== false) {
+                return $match[0];
+            }
+            $separator = strpos($match[2], '?') === false ? '?' : '&amp;';
+            return 'href=' . $match[1] . $match[2] . $separator . 'csrf_token=' . rawurlencode($csrfToken) . $match[1];
+        },
+        $html
+    );
+});
 
 // Routing fleksibel: mendukung akses via http://localhost/obe maupun http://localhost/obe/public
 $request_uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/';
@@ -21,6 +52,26 @@ if ($path === '' || $path === '/') {
 }
 
 $base_path = '/obe/public';
+
+// Semua mutasi wajib berasal dari form/tautan aplikasi yang sah.
+$getMutationPaths = [
+    '/logout', '/prodi/delete', '/kurikulum/delete', '/profil-lulusan/delete',
+    '/cpl/delete', '/mata-kuliah/delete', '/rps/cpmk/delete', '/rps/sub_cpmk/delete',
+    '/rps/pertemuan/delete', '/rps/pertemuan/generate-template', '/rubrik/delete',
+    '/cqi/delete', '/kelas/delete', '/kelas/peserta/remove', '/tahun-akademik/delete',
+    '/dosen/delete', '/mahasiswa/delete', '/aturan-kurikulum/delete',
+];
+$requestMethod = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+if ($requestMethod === 'POST' || ($requestMethod === 'GET' && in_array($path, $getMutationPaths, true))) {
+    $submittedToken = $requestMethod === 'POST'
+        ? ($_POST['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? ''))
+        : ($_GET['csrf_token'] ?? '');
+    if (!is_string($submittedToken) || !hash_equals($_SESSION['csrf_token'], $submittedToken)) {
+        http_response_code(419);
+        echo 'Permintaan tidak valid atau sesi formulir telah kedaluwarsa. Silakan muat ulang halaman.';
+        exit;
+    }
+}
 
 $authController = new AuthController();
 
@@ -44,7 +95,85 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+// Otorisasi server-side berdasarkan tanggung jawab pada PRD.
+$role = $_SESSION['role'] ?? '';
+$access = new AccessContext();
+$isKaprodi = $access->isKaprodi();
+$rolePrefixes = [
+    'Super Admin' => ['/'],
+    'Admin Prodi' => ['/dashboard', '/prodi', '/kurikulum', '/aturan-kurikulum', '/profil-lulusan', '/cpl', '/mata-kuliah', '/pemetaan-mk-cpl', '/import', '/rps', '/rubrik', '/kelas', '/asesmen', '/laporan', '/laporan-semester', '/khs', '/transkrip', '/cqi', '/tahun-akademik', '/dosen', '/mahasiswa', '/rpl', '/rpl-setting'],
+    'Dosen' => ['/dashboard', '/rps', '/rubrik', '/kelas', '/asesmen', '/laporan', '/laporan-semester', '/khs', '/transkrip'],
+    'Kaprodi' => ['/dashboard', '/rps', '/rubrik', '/laporan', '/laporan-semester', '/khs', '/transkrip', '/cqi', '/rpl'],
+    'Mahasiswa' => ['/dashboard', '/laporan', '/khs', '/transkrip', '/rpl'],
+];
+$kaprodiPrefixes = ['/dashboard', '/tahun-akademik', '/dosen', '/mahasiswa', '/prodi', '/kurikulum', '/aturan-kurikulum', '/profil-lulusan', '/cpl', '/mata-kuliah', '/pemetaan-mk-cpl', '/pengampu-mk', '/rps', '/rubrik', '/kelas', '/asesmen', '/laporan', '/laporan-semester', '/khs', '/transkrip', '/cqi', '/rpl'];
+$allowedPrefixes = $rolePrefixes[$role] ?? [];
+if ($isKaprodi) {
+    $allowedPrefixes = array_values(array_unique(array_merge($allowedPrefixes, $kaprodiPrefixes)));
+}
+$allowed = false;
+foreach ($allowedPrefixes as $prefix) {
+    if ($prefix === '/' || $path === $prefix || strpos($path, $prefix . '/') === 0) {
+        $allowed = true;
+        break;
+    }
+}
+if (!$allowed) {
+    http_response_code(403);
+    echo '403 Forbidden: Anda tidak memiliki akses ke proses ini.';
+    exit;
+}
+
+$roleDeniedPaths = [
+    'Dosen' => [
+        '/kelas/create', '/kelas/store', '/kelas/edit', '/kelas/update', '/kelas/delete',
+        '/kelas/peserta/add', '/kelas/peserta/remove',
+        '/rps/cpmk/create', '/rps/cpmk/edit', '/rps/cpmk/delete',
+        '/rps/sub_cpmk/create', '/rps/sub_cpmk/edit', '/rps/sub_cpmk/delete',
+        '/rubrik/create', '/rubrik/store', '/rubrik/builder', '/rubrik/save-matrix',
+        '/rubrik/duplicate', '/rubrik/delete',
+    ],
+    'Kaprodi' => [
+        '/rps/cpmk/create', '/rps/cpmk/edit', '/rps/cpmk/delete',
+        '/rps/sub_cpmk/create', '/rps/sub_cpmk/edit', '/rps/sub_cpmk/delete',
+        '/rps/pertemuan/store', '/rps/pertemuan/update', '/rps/pertemuan/delete',
+        '/rps/pertemuan/generate-template', '/rps/pertemuan/import-csv', '/rps/save-settings',
+        '/rubrik/create', '/rubrik/store', '/rubrik/builder', '/rubrik/save-matrix',
+        '/rubrik/duplicate', '/rubrik/delete',
+    ],
+];
+if (in_array($path, $roleDeniedPaths[$role] ?? [], true)) {
+    http_response_code(403);
+    echo '403 Forbidden: Peran Anda hanya memiliki akses baca pada proses ini.';
+    exit;
+}
+
+if ($isKaprodi && !$access->isSuperAdmin()) {
+    $kaprodiDeniedPaths = [
+        '/prodi/create', '/prodi/store', '/prodi/edit', '/prodi/update', '/prodi/delete',
+        '/tahun-akademik/create', '/tahun-akademik/store', '/tahun-akademik/edit',
+        '/tahun-akademik/update', '/tahun-akademik/delete',
+    ];
+    if (in_array($path, $kaprodiDeniedPaths, true)) {
+        http_response_code(403);
+        echo '403 Forbidden: Pengaturan global hanya dapat diubah oleh Super Admin.';
+        exit;
+    }
+}
+
 switch ($path) {
+    case '/pengampu-mk':
+        require_once __DIR__ . '/../app/Controllers/PengampuMataKuliahController.php';(new PengampuMataKuliahController())->index();break;
+    case '/pengampu-mk/save':
+        require_once __DIR__ . '/../app/Controllers/PengampuMataKuliahController.php';(new PengampuMataKuliahController())->save();break;
+    case '/pengampu-mk/sync':
+        require_once __DIR__ . '/../app/Controllers/PengampuMataKuliahController.php';(new PengampuMataKuliahController())->sync();break;
+    case '/user-management':
+        require_once __DIR__ . '/../app/Controllers/UserManagementController.php';(new UserManagementController())->index();break;
+    case '/user-management/save':
+        require_once __DIR__ . '/../app/Controllers/UserManagementController.php';(new UserManagementController())->save();break;
+    case '/user-management/delete':
+        require_once __DIR__ . '/../app/Controllers/UserManagementController.php';(new UserManagementController())->delete();break;
     case '/dashboard':
         require_once __DIR__ . '/../app/Controllers/DashboardController.php';
         $d = new DashboardController();
@@ -291,6 +420,11 @@ switch ($path) {
         $r = new RpsController();
         $r->generateTemplatePertemuan();
         break;
+    case '/rps/pertemuan/import-csv':
+        require_once __DIR__ . '/../app/Controllers/RpsController.php';
+        $r = new RpsController();
+        $r->importPertemuanCsv();
+        break;
     case '/rps/document':
     case '/rps/view':
         require_once __DIR__ . '/../app/Controllers/RpsController.php';
@@ -404,6 +538,11 @@ switch ($path) {
         require_once __DIR__ . '/../app/Controllers/LaporanController.php';
         $l = new LaporanController();
         $l->detail();
+        break;
+    case '/laporan-semester':
+        require_once __DIR__ . '/../app/Controllers/LaporanSemesterController.php';
+        $laporanSemester = new LaporanSemesterController();
+        $laporanSemester->index();
         break;
     case '/kelas':
         require_once __DIR__ . '/../app/Controllers/KelasController.php';
@@ -545,6 +684,28 @@ switch ($path) {
         $m->delete();
         break;
 
+    // Aturan Kurikulum Routes
+    case '/aturan-kurikulum':
+        require_once __DIR__ . '/../app/Controllers/AturanKurikulumController.php';
+        $ak = new AturanKurikulumController();
+        $ak->index();
+        break;
+    case '/aturan-kurikulum/store':
+        require_once __DIR__ . '/../app/Controllers/AturanKurikulumController.php';
+        $ak = new AturanKurikulumController();
+        $ak->store();
+        break;
+    case '/aturan-kurikulum/update':
+        require_once __DIR__ . '/../app/Controllers/AturanKurikulumController.php';
+        $ak = new AturanKurikulumController();
+        $ak->update();
+        break;
+    case '/aturan-kurikulum/delete':
+        require_once __DIR__ . '/../app/Controllers/AturanKurikulumController.php';
+        $ak = new AturanKurikulumController();
+        $ak->delete();
+        break;
+
     // KHS & Tracking CPL Mahasiswa Routes
     case '/khs':
         require_once __DIR__ . '/../app/Controllers/KhsController.php';
@@ -557,11 +718,72 @@ switch ($path) {
         $khsCtrl->cetak();
         break;
 
+    // Transkrip Akademik & Capaian CPL Mahasiswa Routes
+    case '/transkrip':
+        require_once __DIR__ . '/../app/Controllers/TranskripController.php';
+        $transkripCtrl = new TranskripController();
+        $transkripCtrl->index();
+        break;
+    case '/transkrip/cetak':
+        require_once __DIR__ . '/../app/Controllers/TranskripController.php';
+        $transkripCtrl = new TranskripController();
+        $transkripCtrl->cetak();
+        break;
+
+    // Rekognisi Pembelajaran Lampau (modul tambahan, terpisah dari kelas reguler)
+    case '/rpl':
+        require_once __DIR__ . '/../app/Controllers/RplController.php';
+        (new RplController())->index();
+        break;
+    case '/rpl/profile/store':
+        require_once __DIR__ . '/../app/Controllers/RplController.php';
+        (new RplController())->storeProfile();
+        break;
+    case '/rpl/detail':
+        require_once __DIR__ . '/../app/Controllers/RplController.php';
+        (new RplController())->detail();
+        break;
+    case '/rpl/plan/print':
+        require_once __DIR__ . '/../app/Controllers/RplController.php';
+        (new RplController())->printPlan();
+        break;
+    case '/rpl/conversion/store':
+        require_once __DIR__ . '/../app/Controllers/RplController.php';
+        (new RplController())->addConversion();
+        break;
+    case '/rpl/conversion/decide':
+        require_once __DIR__ . '/../app/Controllers/RplController.php';
+        (new RplController())->decide();
+        break;
+    case '/rpl/conversion/update':
+        require_once __DIR__ . '/../app/Controllers/RplController.php';
+        (new RplController())->updateConversion();
+        break;
+    case '/rpl/conversion/delete':
+        require_once __DIR__ . '/../app/Controllers/RplController.php';
+        (new RplController())->deleteConversion();
+        break;
+    case '/rpl-setting':
+        require_once __DIR__ . '/../app/Controllers/RplSettingController.php';
+        (new RplSettingController())->index();
+        break;
+    case '/rpl-setting/save':
+        require_once __DIR__ . '/../app/Controllers/RplSettingController.php';
+        (new RplSettingController())->save();
+        break;
+
     // Audit Log Route
     case '/audit-log':
         require_once __DIR__ . '/../app/Controllers/AuditLogController.php';
         $auditCtrl = new AuditLogController();
         $auditCtrl->index();
+        break;
+
+    // Notifikasi Routes
+    case '/notifikasi/mark-read':
+        require_once __DIR__ . '/../app/Controllers/NotificationController.php';
+        $notifCtrl = new NotificationController();
+        $notifCtrl->markAllRead();
         break;
     
     default:

@@ -15,7 +15,11 @@ class KhsModel {
     public function getAllMahasiswa() {
         $sql = "
             SELECT u.id, u.username, u.nama_lengkap,
-                   SUBSTRING(u.username, 1, 4) as angkatan
+                   CASE 
+                       WHEN u.username REGEXP '^(19|20)[0-9]{2}' THEN CAST(SUBSTRING(u.username, 1, 4) AS UNSIGNED)
+                       WHEN u.username REGEXP '^[0-9]{2}' THEN 2000 + CAST(SUBSTRING(u.username, 1, 2) AS UNSIGNED)
+                       ELSE NULL
+                   END as angkatan
             FROM users u
             JOIN roles r ON u.role_id = r.id
             WHERE r.name = 'Mahasiswa'
@@ -40,9 +44,150 @@ class KhsModel {
     }
 
     /**
+     * Rincian read-only nilai Sub-CPMK beserta instrumen dan rubrik dari snapshot RPS.
+     */
+    public function getRincianSubCpmkMahasiswa($mahasiswa_id, $filter_ta_id = null, $kurikulum_id = null) {
+        $sql = "
+            SELECT an.nilai, an.updated_at, k.id AS kelas_id, k.nama_kelas,
+                   ta.id AS ta_id, ta.nama AS ta_nama,
+                   mk.id AS mk_id, mk.kode AS mk_kode, mk.nama AS mk_nama, mk.semester AS mk_semester,
+                   cp.kode AS cpmk_kode, cp.rumusan AS cpmk_rumusan,
+                   sc.id AS sub_cpmk_id, sc.kode AS sub_cpmk_kode,
+                   sc.rumusan AS sub_cpmk_rumusan, sc.bobot AS sub_cpmk_bobot,
+                   r.jenis_penilaian_json, r.rencana_evaluasi_json, r.rubrik_mk_json
+            FROM asesmen_nilai an
+            JOIN kelas k ON k.id = an.kelas_id
+            JOIN tahun_akademik ta ON ta.id = k.tahun_akademik_id
+            JOIN mata_kuliah mk ON mk.id = k.mata_kuliah_id
+            JOIN sub_cpmk sc ON sc.id = an.sub_cpmk_id
+            JOIN cpmk cp ON cp.id = sc.cpmk_id AND cp.mk_id = mk.id
+            LEFT JOIN rps r ON r.mata_kuliah_id = mk.id
+            WHERE an.mahasiswa_id = :mahasiswa_id
+        ";
+        $params = ['mahasiswa_id' => (int)$mahasiswa_id];
+        if ($filter_ta_id) {
+            $sql .= " AND ta.id = :ta_id";
+            $params['ta_id'] = (int)$filter_ta_id;
+        }
+        if ($kurikulum_id) {
+            $sql .= " AND mk.kurikulum_id = :kurikulum_id";
+            $params['kurikulum_id'] = (int)$kurikulum_id;
+        }
+        $sql .= " ORDER BY ta.id, mk.semester, mk.kode, cp.kode, sc.urutan, sc.id";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $rubrikMaster = [];
+        foreach ($this->db->query("SELECT id, nama, jenis FROM rubrik")->fetchAll(PDO::FETCH_ASSOC) as $rubrik) {
+            $rubrikMaster[(string)$rubrik['id']] = $rubrik;
+        }
+        $jenisLabels = [
+            'AKT' => 'Keaktifan', 'TGI' => 'Tugas Individu', 'KUI' => 'Kuis',
+            'UTS' => 'UTS', 'UAS' => 'UAS', 'PRK' => 'Praktikum',
+            'PRO' => 'Proyek', 'POR' => 'Portofolio', 'PRE' => 'Presentasi',
+        ];
+
+        $grouped = [];
+        $configCache = [];
+        foreach ($rows as $row) {
+            $mkId = (int)$row['mk_id'];
+            if (!isset($configCache[$mkId])) {
+                $jenisConfig = json_decode($row['jenis_penilaian_json'] ?: '[]', true);
+                $rencana = json_decode($row['rencana_evaluasi_json'] ?: '[]', true);
+                $rubrikMk = json_decode($row['rubrik_mk_json'] ?: '[]', true);
+                $jenisMap = [];
+                foreach (is_array($jenisConfig) ? $jenisConfig : [] as $jenis) {
+                    if (!empty($jenis['kode'])) $jenisMap[strtoupper($jenis['kode'])] = $jenis;
+                }
+                $rencanaMap = [];
+                foreach (is_array($rencana) ? $rencana : [] as $kode => $item) {
+                    $rencanaMap[$this->normalizeSubCpmkCode($kode)] = is_array($item) ? $item : [];
+                }
+                $configCache[$mkId] = [
+                    'jenis' => $jenisMap,
+                    'rencana' => $rencanaMap,
+                    'rubrik' => is_array($rubrikMk) ? $rubrikMk : [],
+                    'has_rps' => $row['rencana_evaluasi_json'] !== null || $row['jenis_penilaian_json'] !== null,
+                ];
+            }
+
+            $config = $configCache[$mkId];
+            $rencanaItem = $config['rencana'][$this->normalizeSubCpmkCode($row['sub_cpmk_kode'])] ?? [];
+            $instrumentCodes = [];
+            $questions = [];
+            foreach (($rencanaItem['soal'] ?? []) as $soal) {
+                $code = strtoupper(trim($soal['jenis'] ?? ''));
+                if ($code !== '') $instrumentCodes[$code] = true;
+                if (!empty($soal['pertanyaan'])) $questions[$code][] = $soal['pertanyaan'];
+            }
+            $legacyFields = ['tugas' => 'TGI', 'kuis' => 'KUI', 'uts' => 'UTS', 'uas' => 'UAS', 'keaktifan' => 'AKT'];
+            foreach ($legacyFields as $field => $code) {
+                $value = trim((string)($rencanaItem[$field] ?? ''));
+                if ($value !== '' && $value !== '-') {
+                    $instrumentCodes[$code] = true;
+                    $questions[$code][] = $value;
+                }
+            }
+
+            $instruments = [];
+            foreach (array_keys($instrumentCodes) as $code) {
+                $jenis = $config['jenis'][$code] ?? [];
+                $rubrikId = isset($jenis['rubrik_id']) && $jenis['rubrik_id'] !== '' ? (string)$jenis['rubrik_id'] : null;
+                $snapshot = $rubrikId !== null ? ($config['rubrik'][$rubrikId] ?? null) : null;
+                $master = $rubrikId !== null ? ($rubrikMaster[$rubrikId] ?? null) : null;
+                $instruments[] = [
+                    'kode' => $code,
+                    'nama' => $jenisLabels[$code] ?? $code,
+                    'bobot' => isset($jenis['bobot']) ? (float)$jenis['bobot'] : null,
+                    'rubrik' => $snapshot['nama'] ?? $master['nama'] ?? null,
+                    'rubrik_jenis' => $snapshot['jenis'] ?? $master['jenis'] ?? null,
+                    'pertanyaan' => $questions[$code] ?? [],
+                ];
+            }
+
+            $taId = (int)$row['ta_id'];
+            $kelasId = (int)$row['kelas_id'];
+            if (!isset($grouped[$taId])) {
+                $grouped[$taId] = ['ta_id' => $taId, 'ta_nama' => $row['ta_nama'], 'mata_kuliah' => []];
+            }
+            if (!isset($grouped[$taId]['mata_kuliah'][$kelasId])) {
+                $grouped[$taId]['mata_kuliah'][$kelasId] = [
+                    'kelas_id' => $kelasId, 'nama_kelas' => $row['nama_kelas'],
+                    'mk_id' => $mkId, 'mk_kode' => $row['mk_kode'], 'mk_nama' => $row['mk_nama'],
+                    'mk_semester' => (int)$row['mk_semester'], 'has_rps' => $config['has_rps'],
+                    'sub_cpmk' => [],
+                ];
+            }
+            $grouped[$taId]['mata_kuliah'][$kelasId]['sub_cpmk'][] = [
+                'id' => (int)$row['sub_cpmk_id'], 'kode' => $row['sub_cpmk_kode'],
+                'rumusan' => $row['sub_cpmk_rumusan'], 'bobot' => (float)$row['sub_cpmk_bobot'],
+                'cpmk_kode' => $row['cpmk_kode'], 'cpmk_rumusan' => $row['cpmk_rumusan'],
+                'nilai' => (float)$row['nilai'], 'updated_at' => $row['updated_at'],
+                'instruments' => $instruments,
+            ];
+        }
+
+        foreach ($grouped as &$semester) {
+            $semester['mata_kuliah'] = array_values($semester['mata_kuliah']);
+        }
+        unset($semester);
+        return array_values($grouped);
+    }
+
+    private function normalizeSubCpmkCode($code) {
+        $normalized = strtolower(trim((string)$code));
+        $normalized = str_replace(['sub-cpmk', 'sub cpmk', 'subcpmk'], '', $normalized);
+        $normalized = preg_replace('/[^0-9.]+/', '', $normalized);
+        $parts = array_values(array_filter(explode('.', $normalized), 'strlen'));
+        return implode('.', array_map(function ($part) { return (string)(int)$part; }, $parts));
+    }
+
+    /**
      * Hitung KHS (Kartu Hasil Studi), IPS, dan IPK untuk seorang mahasiswa
      */
-    public function getKhsMahasiswa($mahasiswa_id, $filter_ta_id = null) {
+    public function getKhsMahasiswa($mahasiswa_id, $filter_ta_id = null, $kurikulum_id = null) {
         $sql = "
             SELECT 
                 k.id as kelas_id,
@@ -61,11 +206,34 @@ class KhsModel {
             JOIN mata_kuliah mk ON k.mata_kuliah_id = mk.id
             JOIN tahun_akademik ta ON k.tahun_akademik_id = ta.id
             WHERE km.mahasiswa_id = :mhs_id
-            ORDER BY ta.id ASC, mk.semester ASC, mk.kode ASC
         ";
+        $params = ['mhs_id' => $mahasiswa_id];
+        if (!empty($kurikulum_id)) {
+            $sql .= " AND mk.kurikulum_id = :kurikulum_id";
+            $params['kurikulum_id'] = (int)$kurikulum_id;
+        }
+        $sql .= " ORDER BY ta.id ASC, mk.semester ASC, mk.kode ASC";
         $stmt = $this->db->prepare($sql);
-        $stmt->execute(['mhs_id' => $mahasiswa_id]);
+        $stmt->execute($params);
         $enrolledClasses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Kelas dari kurikulum lain tidak boleh memengaruhi KHS maupun IPK.
+        $ignoredEnrollmentCount = 0;
+        if (!empty($kurikulum_id)) {
+            $stmtIgnored = $this->db->prepare("
+                SELECT COUNT(*)
+                FROM kelas_mahasiswa km
+                JOIN kelas k ON km.kelas_id = k.id
+                JOIN mata_kuliah mk ON k.mata_kuliah_id = mk.id
+                WHERE km.mahasiswa_id = :mhs_id
+                  AND mk.kurikulum_id <> :kurikulum_id
+            ");
+            $stmtIgnored->execute([
+                'mhs_id' => $mahasiswa_id,
+                'kurikulum_id' => (int)$kurikulum_id
+            ]);
+            $ignoredEnrollmentCount = (int)$stmtIgnored->fetchColumn();
+        }
 
         $semuaNilai = [];
         $perSemester = [];
@@ -117,6 +285,7 @@ class KhsModel {
             $grade = $this->konversiNilai($nilaiAkhirAngka, $hasScore);
             $huruf = $grade['huruf'];
             $bobotMutu = $grade['bobot'];
+            $predikatMk = $grade['predikat'];
             $isLulus = $grade['is_lulus'];
             $sksXBobot = round($sks * $bobotMutu, 2);
 
@@ -133,6 +302,7 @@ class KhsModel {
                 'nilai_angka' => $hasScore ? $nilaiAkhirAngka : null,
                 'nilai_huruf' => $huruf,
                 'bobot' => $bobotMutu,
+                'predikat' => $predikatMk,
                 'sks_x_bobot' => $sksXBobot,
                 'is_lulus' => $isLulus,
                 'status' => $hasScore ? ($isLulus ? 'LULUS' : 'MENGULANG') : 'BELUM ADA NILAI'
@@ -170,7 +340,35 @@ class KhsModel {
 
         // Hitung IPS per semester
         foreach ($perSemester as &$sem) {
-            $sem['ips'] = $sem['total_sks'] > 0 ? round($sem['total_mutu'] / $sem['total_sks'], 2) : 0;
+            $sem['ips'] = $sem['total_sks'] > 0 ? round($sem['total_mutu'] / $sem['total_sks'], 2, PHP_ROUND_HALF_EVEN) : 0;
+        }
+        unset($sem);
+
+        // Nilai RPL disimpan terpisah dari kelas/asesmen reguler, lalu digabungkan
+        // hanya untuk KHS kumulatif dan transkrip mahasiswa RPL.
+        try {
+            $stmtRpl = $this->db->prepare("SELECT rk.*, mk.kode mk_kode, mk.nama mk_nama, mk.semester mk_semester
+                FROM rpl_konversi rk
+                JOIN rpl_mahasiswa rm ON rm.id=rk.rpl_mahasiswa_id
+                JOIN mata_kuliah mk ON mk.id=rk.mata_kuliah_id
+                WHERE rm.mahasiswa_id=:mhs_id AND rk.status='DISETUJUI'
+                ORDER BY mk.semester,mk.kode");
+            $stmtRpl->execute(['mhs_id' => $mahasiswa_id]);
+            foreach ($stmtRpl->fetchAll(PDO::FETCH_ASSOC) as $rpl) {
+                $sks=(int)$rpl['sks_diakui']; $mutu=round($sks*(float)$rpl['bobot_mutu'],2);
+                $semuaNilai[]=[
+                    'kelas_id'=>null,'nama_kelas'=>'Konversi RPL','tahun_akademik_id'=>0,
+                    'tahun_akademik_nama'=>'Konversi RPL','mk_id'=>$rpl['mata_kuliah_id'],
+                    'mk_kode'=>$rpl['mk_kode'],'mk_nama'=>$rpl['mk_nama'],
+                    'mk_semester'=>(int)$rpl['mk_semester'],'sks'=>$sks,
+                    'nilai_angka'=>(float)$rpl['nilai_angka'],'nilai_huruf'=>$rpl['nilai_huruf'],
+                    'bobot'=>(float)$rpl['bobot_mutu'],'sks_x_bobot'=>$mutu,
+                    'is_lulus'=>true,'status'=>'LULUS (RPL)','sumber'=>'RPL'
+                ];
+                $totalSksKumulatif += $sks; $totalSksLulusKumulatif += $sks; $totalMutuKumulatif += $mutu;
+            }
+        } catch (PDOException $e) {
+            // Kompatibel saat migration RPL belum dijalankan.
         }
 
         // Hitung IPK Kumulatif
@@ -207,7 +405,8 @@ class KhsModel {
                 'total_mutu' => round($totalMutuKumulatif, 2),
                 'ipk' => $ipk,
                 'predikat' => $predikat
-            ]
+            ],
+            'ignored_enrollment_count' => $ignoredEnrollmentCount
         ];
     }
 
@@ -257,31 +456,35 @@ class KhsModel {
     }
 
     /**
-     * Konversi nilai angka ke Huruf Mutu, Bobot Angka, dan Status Kelulusan
+     * Konversi nilai angka ke Huruf Mutu, Bobot Angka (AM), Predikat Resmi, dan Status Kelulusan
+     * Sesuai Standar Pedoman Penilaian Akademik:
+     * 1. A  : 76 - 100 (AM: 4.0) | Istimewa     (Lulus)
+     * 2. AB : 70 - 75  (AM: 3.5) | Baik Sekali  (Lulus)
+     * 3. B  : 65 - 69  (AM: 3.0) | Baik         (Lulus)
+     * 4. BC : 60 - 64  (AM: 2.5) | Cukup Baik   (Lulus)
+     * 5. C  : 50 - 59  (AM: 2.0) | Cukup        (Lulus)
+     * 6. D  : 40 - 49  (AM: 1.0) | Kurang       (Mengulang)
+     * 7. E  :  0 - 39  (AM: 0.0) | Kurang Sekali(Mengulang)
      */
     private function konversiNilai($angka, $hasScore) {
         if (!$hasScore) {
-            return ['huruf' => '-', 'bobot' => 0.00, 'is_lulus' => false];
+            return ['huruf' => '-', 'bobot' => 0.00, 'predikat' => '-', 'is_lulus' => false];
         }
 
-        if ($angka >= 85) {
-            return ['huruf' => 'A', 'bobot' => 4.00, 'is_lulus' => true];
-        } elseif ($angka >= 80) {
-            return ['huruf' => 'A-', 'bobot' => 3.75, 'is_lulus' => true];
-        } elseif ($angka >= 75) {
-            return ['huruf' => 'B+', 'bobot' => 3.50, 'is_lulus' => true];
+        if ($angka >= 76) {
+            return ['huruf' => 'A', 'bobot' => 4.00, 'predikat' => 'Istimewa', 'is_lulus' => true];
         } elseif ($angka >= 70) {
-            return ['huruf' => 'B', 'bobot' => 3.00, 'is_lulus' => true];
+            return ['huruf' => 'AB', 'bobot' => 3.50, 'predikat' => 'Baik Sekali', 'is_lulus' => true];
         } elseif ($angka >= 65) {
-            return ['huruf' => 'B-', 'bobot' => 2.75, 'is_lulus' => true];
+            return ['huruf' => 'B', 'bobot' => 3.00, 'predikat' => 'Baik', 'is_lulus' => true];
         } elseif ($angka >= 60) {
-            return ['huruf' => 'C+', 'bobot' => 2.50, 'is_lulus' => true];
-        } elseif ($angka >= 55) {
-            return ['huruf' => 'C', 'bobot' => 2.00, 'is_lulus' => true];
+            return ['huruf' => 'BC', 'bobot' => 2.50, 'predikat' => 'Cukup Baik', 'is_lulus' => true];
+        } elseif ($angka >= 50) {
+            return ['huruf' => 'C', 'bobot' => 2.00, 'predikat' => 'Cukup', 'is_lulus' => true];
         } elseif ($angka >= 40) {
-            return ['huruf' => 'D', 'bobot' => 1.00, 'is_lulus' => false];
+            return ['huruf' => 'D', 'bobot' => 1.00, 'predikat' => 'Kurang', 'is_lulus' => false];
         } else {
-            return ['huruf' => 'E', 'bobot' => 0.00, 'is_lulus' => false];
+            return ['huruf' => 'E', 'bobot' => 0.00, 'predikat' => 'Kurang Sekali', 'is_lulus' => false];
         }
     }
 }

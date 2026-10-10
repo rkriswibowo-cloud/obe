@@ -14,25 +14,75 @@ $baseUrl = $config['base_url'] ?? '/obe/public';
     </div>
 </div>
 
-<!-- Filter Pilih Kelas -->
+<!-- Filter Pilih Kurikulum & Kelas -->
 <div style="background: var(--surface); padding: 20px; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-    <form action="<?= $baseUrl ?>/asesmen" method="GET" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
-        <div style="flex: 1; min-width: 280px;">
-            <label style="display: block; margin-bottom: 8px; font-size: 0.88rem; font-weight: 600; color: var(--text-main);">
-                <i class="fa-solid fa-chalkboard-user" style="color: var(--primary); margin-right: 6px;"></i> Pilih Kelas Kuliah:
+    <form action="<?= $baseUrl ?>/asesmen" method="GET" id="formFilterAsesmen" style="display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;">
+        <!-- Filter Kurikulum -->
+        <div style="width: 270px; min-width: 230px;">
+            <label for="filterKurikulum" style="display: block; margin-bottom: 8px; font-size: 0.88rem; font-weight: 600; color: var(--text-main);">
+                <i class="fa-solid fa-book-bookmark" style="color: var(--primary); margin-right: 6px;"></i> Filter Kurikulum:
             </label>
-            <select name="kelas_id" required style="width: 100%; padding: 10px 14px; border: 1px solid var(--border); background: var(--bg-hover); color: var(--text-main); border-radius: var(--radius-sm); font-size: 0.9rem;">
-                <option value="">-- Pilih Kelas yang Anda Ampu --</option>
-                <?php foreach($kelasList as $k): ?>
-                    <option value="<?= $k['id'] ?>" <?= (isset($kelas) && $kelas['id'] == $k['id']) ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($k['tahun_akademik_nama'] . ' - ' . $k['mata_kuliah_kode'] . ' ' . $k['mata_kuliah_nama'] . ' (' . $k['nama_kelas'] . ')') ?>
-                    </option>
-                <?php endforeach; ?>
+            <select name="kurikulum_id" id="filterKurikulum" onchange="handleKurikulumFilterChange(this)" style="width: 100%; padding: 10px 14px; border: 1px solid var(--border); background: var(--bg-hover); color: var(--text-main); border-radius: var(--radius-sm); font-size: 0.9rem; font-weight: 500;">
+                <option value="">-- Semua Kurikulum --</option>
+                <?php if (!empty($kurikulumList)): ?>
+                    <?php foreach($kurikulumList as $kur): ?>
+                        <option value="<?= $kur['id'] ?>" <?= (!empty($selectedKurikulumId) && $selectedKurikulumId == $kur['id']) ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($kur['nama'] . ' (' . $kur['kode'] . ')') ?>
+                        </option>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </select>
         </div>
-        <button type="submit" class="btn btn-primary" style="padding: 10px 20px;">
-            <i class="fa-solid fa-table-list"></i> Tampilkan Form Penilaian
-        </button>
+
+        <!-- Pilih Kelas Kuliah -->
+        <div style="flex: 1; min-width: 320px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <label for="selectKelas" style="font-size: 0.88rem; font-weight: 600; color: var(--text-main);">
+                    <i class="fa-solid fa-chalkboard-user" style="color: var(--primary); margin-right: 6px;"></i> Pilih Kelas Kuliah:
+                </label>
+                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500;">
+                    <?= count($kelasList) ?> Kelas Tersedia
+                </span>
+            </div>
+            <select name="kelas_id" id="selectKelas" required style="width: 100%; padding: 10px 14px; border: 1px solid var(--border); background: var(--bg-hover); color: var(--text-main); border-radius: var(--radius-sm); font-size: 0.9rem;">
+                <option value="">-- Pilih Kelas yang Anda Ampu --</option>
+                <?php 
+                if (empty($selectedKurikulumId)) {
+                    // Kelompokkan per kurikulum jika opsi "Semua Kurikulum"
+                    $groupedKelas = [];
+                    foreach ($kelasList as $k) {
+                        $kNama = !empty($k['kurikulum_nama']) ? $k['kurikulum_nama'] : 'Kurikulum Lain';
+                        $groupedKelas[$kNama][] = $k;
+                    }
+                    foreach ($groupedKelas as $kNama => $items): ?>
+                        <optgroup label="Kurikulum: <?= htmlspecialchars($kNama) ?>">
+                            <?php foreach ($items as $k): ?>
+                                <option value="<?= $k['id'] ?>" <?= (!empty($kelas) && $kelas['id'] == $k['id']) ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($k['tahun_akademik_nama'] . ' - ' . $k['mata_kuliah_kode'] . ' ' . $k['mata_kuliah_nama'] . ' (' . $k['nama_kelas'] . ')') ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </optgroup>
+                    <?php endforeach;
+                } else {
+                    foreach ($kelasList as $k): ?>
+                        <option value="<?= $k['id'] ?>" <?= (!empty($kelas) && $kelas['id'] == $k['id']) ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($k['tahun_akademik_nama'] . ' - ' . $k['mata_kuliah_kode'] . ' ' . $k['mata_kuliah_nama'] . ' (' . $k['nama_kelas'] . ')') ?>
+                        </option>
+                    <?php endforeach;
+                } ?>
+            </select>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+            <button type="submit" class="btn btn-primary" style="padding: 10px 20px;">
+                <i class="fa-solid fa-table-list"></i> Tampilkan Form Penilaian
+            </button>
+            <?php if (!empty($selectedKurikulumId) || !empty($kelas_id)): ?>
+                <a href="<?= $baseUrl ?>/asesmen" class="btn btn-secondary" style="padding: 10px 14px; display: inline-flex; align-items: center; gap: 6px;" title="Reset Filter">
+                    <i class="fa-solid fa-arrows-rotate"></i> Reset
+                </a>
+            <?php endif; ?>
+        </div>
     </form>
 </div>
 
@@ -46,7 +96,7 @@ $baseUrl = $config['base_url'] ?? '/obe/public';
     </div>
 <?php endif; ?>
 
-<?php if (isset($kelas)): ?>
+<?php if (!empty($kelas)): ?>
     <!-- Info Ringkas Kelas Aktif -->
     <div style="background: var(--surface); padding: 18px 24px; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
         <div style="display: flex; gap: 24px; flex-wrap: wrap; align-items: center;">
@@ -54,6 +104,13 @@ $baseUrl = $config['base_url'] ?? '/obe/public';
                 <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Mata Kuliah</span>
                 <div style="font-size: 1.05rem; font-weight: 700; color: var(--text-main);">
                     <?= htmlspecialchars($kelas['mata_kuliah_kode']) ?> - <?= htmlspecialchars($kelas['mata_kuliah_nama']) ?>
+                </div>
+            </div>
+            <div>
+                <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Kurikulum</span>
+                <div style="font-size: 0.95rem; font-weight: 700; color: var(--primary);">
+                    <i class="fa-solid fa-book" style="margin-right: 4px;"></i>
+                    <?= htmlspecialchars($kelas['kurikulum_nama'] ?? 'Kurikulum OBE') ?>
                 </div>
             </div>
             <div>
@@ -250,8 +307,18 @@ $baseUrl = $config['base_url'] ?? '/obe/public';
     </div>
 </div>
 
-<!-- CLIENT SCRIPT UNTUK MODAL RUBRIK INTERAKTIF -->
+<!-- CLIENT SCRIPT UNTUK MODAL RUBRIK INTERAKTIF & FILTER -->
 <script>
+function handleKurikulumFilterChange(elem) {
+    const form = elem.form;
+    const kelasSelect = form.querySelector('#selectKelas');
+    if (kelasSelect) {
+        kelasSelect.removeAttribute('required');
+        kelasSelect.value = '';
+    }
+    form.submit();
+}
+
 (function() {
     const rubrikData = <?= json_encode($rubrikData ?? []) ?>;
     let currentTargetInputId = null;

@@ -12,10 +12,14 @@ class RpsPertemuanModel {
 
     public function getByMkId($mkId) {
         $sql = "
-            SELECT rp.*, sc.kode as sub_cpmk_kode, sc.rumusan as sub_cpmk_rumusan
+            SELECT rp.*, GROUP_CONCAT(sc.id ORDER BY sc.urutan, sc.id) AS sub_cpmk_ids,
+                   GROUP_CONCAT(sc.kode ORDER BY sc.urutan, sc.id SEPARATOR ', ') AS sub_cpmk_kode,
+                   GROUP_CONCAT(sc.rumusan ORDER BY sc.urutan, sc.id SEPARATOR ' | ') AS sub_cpmk_rumusan
             FROM rps_pertemuan rp
-            LEFT JOIN sub_cpmk sc ON rp.sub_cpmk_id = sc.id
+            LEFT JOIN rps_pertemuan_sub_cpmk rpsc ON rpsc.rps_pertemuan_id = rp.id
+            LEFT JOIN sub_cpmk sc ON rpsc.sub_cpmk_id = sc.id
             WHERE rp.mata_kuliah_id = :mk_id
+            GROUP BY rp.id
             ORDER BY rp.pertemuan_ke ASC
         ";
         $stmt = $this->db->prepare($sql);
@@ -39,7 +43,7 @@ class RpsPertemuanModel {
              :pengalaman_belajar, :alokasi_waktu, :durasi_detail, :pustaka, :indikator_penilaian, :bobot_penilaian)
         ";
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute([
+        $ok = $stmt->execute([
             'mk_id' => $data['mata_kuliah_id'],
             'pertemuan_ke' => $data['pertemuan_ke'],
             'sub_cpmk_id' => !empty($data['sub_cpmk_id']) ? $data['sub_cpmk_id'] : null,
@@ -53,6 +57,8 @@ class RpsPertemuanModel {
             'indikator_penilaian' => $data['indikator_penilaian'] ?? null,
             'bobot_penilaian' => $data['bobot_penilaian'] ?? 0.00
         ]);
+        if ($ok) $this->syncSubCpmks((int)$this->db->lastInsertId(), $data['sub_cpmk_ids'] ?? array_filter([$data['sub_cpmk_id'] ?? null]));
+        return $ok;
     }
 
     public function update($id, $data) {
@@ -72,7 +78,7 @@ class RpsPertemuanModel {
             WHERE id = :id
         ";
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute([
+        $ok = $stmt->execute([
             'pertemuan_ke' => $data['pertemuan_ke'],
             'sub_cpmk_id' => !empty($data['sub_cpmk_id']) ? $data['sub_cpmk_id'] : null,
             'bahan_kajian' => $data['bahan_kajian'],
@@ -86,6 +92,15 @@ class RpsPertemuanModel {
             'bobot_penilaian' => $data['bobot_penilaian'] ?? 0.00,
             'id' => $id
         ]);
+        if ($ok) $this->syncSubCpmks((int)$id, $data['sub_cpmk_ids'] ?? array_filter([$data['sub_cpmk_id'] ?? null]));
+        return $ok;
+    }
+
+    private function syncSubCpmks($pertemuanId, array $subCpmkIds) {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $subCpmkIds))));
+        $this->db->prepare("DELETE FROM rps_pertemuan_sub_cpmk WHERE rps_pertemuan_id = ?")->execute([$pertemuanId]);
+        $insert = $this->db->prepare("INSERT INTO rps_pertemuan_sub_cpmk (rps_pertemuan_id, sub_cpmk_id) VALUES (?, ?)");
+        foreach ($ids as $subCpmkId) $insert->execute([$pertemuanId, $subCpmkId]);
     }
 
     public function delete($id) {
@@ -296,4 +311,3 @@ class RpsPertemuanModel {
         }
     }
 }
-

@@ -15,7 +15,7 @@ $baseUrl = $GLOBALS['config']['base_url'] ?? '/obe/public';
             </h2>
         </div>
         <p style="color: var(--text-muted); margin: 0; font-size: 0.9rem;">
-            <?= htmlspecialchars($rubrik['nama']) ?> &bull; Jenis: <strong><?= htmlspecialchars($rubrik['jenis']) ?></strong>
+            <?= htmlspecialchars($rubrik['nama']) ?> &bull; <strong><?= htmlspecialchars($rubrik['kode_jenis'] ?? 'RB-ANA') ?> — <?= htmlspecialchars($rubrik['jenis']) ?></strong>
         </p>
     </div>
 
@@ -49,8 +49,9 @@ $baseUrl = $GLOBALS['config']['base_url'] ?? '/obe/public';
             <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600;">JENIS PENILAIAN</div>
             <div style="margin-top: 5px;">
                 <span style="background: rgba(99, 102, 241, 0.15); color: var(--primary); padding: 3px 10px; border-radius: 999px; font-weight: 600; font-size: 0.85rem; border: 1px solid rgba(99, 102, 241, 0.3);">
-                    Rubrik <?= htmlspecialchars($rubrik['jenis']) ?>
+                    <?= htmlspecialchars($rubrik['kode_jenis'] ?? 'RB-ANA') ?> — <?= htmlspecialchars($rubrik['jenis']) ?>
                 </span>
+                <div style="font-size:.78rem;color:var(--text-muted);margin-top:7px;"><?= htmlspecialchars($rubrik['karakteristik'] ?? '') ?><br>Contoh: <?= htmlspecialchars($rubrik['contoh_penggunaan'] ?? '-') ?></div>
             </div>
         </div>
         <div>

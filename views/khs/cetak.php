@@ -1,3 +1,9 @@
+<?php
+$kopImgPath = __DIR__ . '/../../public/assets/images/kop_surat_uam.jpg';
+$kopImgSrc = file_exists($kopImgPath)
+    ? 'data:image/jpeg;base64,' . base64_encode(file_get_contents($kopImgPath))
+    : (($GLOBALS['config']['base_url'] ?? '/obe/public') . '/assets/images/kop_surat_uam.jpg');
+?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -25,27 +31,16 @@
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.06);
         }
-        .kop-header {
-            text-align: center;
-            border-bottom: 2px solid #111827;
-            padding-bottom: 12px;
-            margin-bottom: 20px;
+        .kop-banner-wrapper {
+            width: 100%;
+            margin-bottom: 12px;
         }
-        .kop-header h2 {
-            margin: 0;
-            font-size: 16px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        .kop-header h3 {
-            margin: 3px 0;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        .kop-header p {
-            margin: 2px 0 0;
-            font-size: 10px;
-            color: #4b5563;
+        .kop-banner-img {
+            width: 100%;
+            height: auto;
+            max-height: 98px;
+            object-fit: contain;
+            display: block;
         }
         .doc-title {
             text-align: center;
@@ -94,14 +89,26 @@
             font-size: 11px;
         }
         .ttd-container {
-            display: flex;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 56px;
             margin-top: 36px;
             page-break-inside: avoid;
         }
         .ttd-box {
             text-align: center;
-            width: 220px;
+            width: auto;
+            min-width: 0;
+            padding: 0 8px;
+        }
+        .ttd-box:last-child {
+            transform: translateX(-12px);
+        }
+        .ttd-name {
+            font-weight: 700;
+            text-decoration: underline;
+            white-space: nowrap;
+            font-size: 10.5px;
         }
         .ttd-space {
             height: 60px;
@@ -110,8 +117,40 @@
             max-width: 860px;
             margin: 0 auto 16px;
             display: flex;
-            justify-content: space-between;
+            align-items: flex-end;
+            gap: 10px;
+        }
+        .pa-manual-field {
+            flex: 1;
+            min-width: 150px;
+        }
+        .pa-manual-field label {
+            display: block;
+            margin-bottom: 4px;
+            color: #374151;
+            font-size: 10px;
+            font-weight: 700;
+        }
+        .pa-manual-field input {
+            width: 100%;
+            height: 34px;
+            box-sizing: border-box;
+            padding: 7px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background: #fff;
+            color: #111827;
+            font: inherit;
+        }
+        .back-link {
+            height: 34px;
+            display: inline-flex;
             align-items: center;
+            gap: 6px;
+            color: #4b5563;
+            text-decoration: none;
+            font-size: 12px;
+            white-space: nowrap;
         }
         .btn-print {
             background: #2563eb;
@@ -125,6 +164,17 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
+            height: 34px;
+            white-space: nowrap;
+        }
+        @media (max-width: 760px) {
+            .no-print-bar {
+                align-items: stretch;
+                flex-direction: column;
+            }
+            .back-link, .btn-print {
+                justify-content: center;
+            }
         }
         @media print {
             body {
@@ -145,20 +195,26 @@
 <body>
 
     <div class="no-print-bar">
-        <a href="<?= ($GLOBALS['config']['base_url'] ?? '/obe/public') ?>/khs?id=<?= $mahasiswa['id'] ?>" style="color: #4b5563; text-decoration: none; font-size: 13px; display: flex; align-items: center; gap: 6px;">
+        <a href="<?= ($GLOBALS['config']['base_url'] ?? '/obe/public') ?>/khs?id=<?= $mahasiswa['id'] ?>" class="back-link">
             <i class="fa-solid fa-arrow-left"></i> Kembali ke Sistem
         </a>
+        <div class="pa-manual-field">
+            <label for="paNameInput">Dosen Penasihat Akademik</label>
+            <input id="paNameInput" placeholder="Nama dan gelar Dosen PA" oninput="syncDosenPa()">
+        </div>
+        <div class="pa-manual-field">
+            <label for="paIdInput">NIDN/NUPTK</label>
+            <input id="paIdInput" placeholder="NIDN atau NIP" oninput="syncDosenPa()">
+        </div>
         <button onclick="window.print()" class="btn-print">
             <i class="fa-solid fa-print"></i> Cetak Dokumen (PDF)
         </button>
     </div>
 
     <div class="print-container">
-        <!-- Kop Surat -->
-        <div class="kop-header">
-            <h2>KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI</h2>
-            <h3>PROGRAM STUDI SISTEM INFORMASI</h3>
-            <p>SISTEM INFORMASI OUTCOME-BASED EDUCATION (OBE) & CAPAIAN PEMBELAJARAN LULUSAN (CPL)</p>
+        <!-- Kop Surat Banner -->
+        <div class="kop-banner-wrapper">
+            <img src="<?= $kopImgSrc ?>" alt="Kop Surat Universitas Anwar Medika" class="kop-banner-img">
         </div>
 
         <div class="doc-title">
@@ -184,14 +240,33 @@
                 <td>Sistem Informasi (S1)</td>
             </tr>
             <tr>
+                <td style="font-weight: 600;">Kurikulum</td>
+                <td>:</td>
+                <td><?= htmlspecialchars($kurikulumMhs['nama'] ?? 'Belum ditentukan') ?></td>
+                <td style="font-weight: 600;">Angkatan</td>
+                <td>:</td>
+                <td><?= htmlspecialchars((string)(AturanKurikulumModel::extractAngkatan($mahasiswa['username'] ?? '') ?? '')) ?></td>
+            </tr>
+            <tr>
                 <td style="font-weight: 600;">Dosen PA</td>
                 <td>:</td>
-                <td>Dr. Budi Santoso, M.Kom.</td>
+                <td id="paBio">Belum diisi</td>
                 <td style="font-weight: 600;">Status Mahasiswa</td>
                 <td>:</td>
-                <td>Aktif</td>
+                <td>
+                    <?php
+                    $studiCetak = AturanKurikulumModel::getStatusStudiByAngkatan($angkatan);
+                    echo htmlspecialchars($studiCetak['badge']);
+                    ?>
+                </td>
             </tr>
         </table>
+
+        <?php if (!empty($khsData['ignored_enrollment_count'])): ?>
+            <div style="margin-bottom: 14px; padding: 8px 10px; border: 1px solid #f59e0b; background: #fffbeb; color: #92400e; font-size: 10px;">
+                <?= (int)$khsData['ignored_enrollment_count'] ?> pendaftaran kelas dari kurikulum lain tidak disertakan. Dokumen ini hanya menghitung data kurikulum <?= htmlspecialchars($kurikulumMhs['nama'] ?? 'sesuai aturan angkatan') ?>.
+            </div>
+        <?php endif; ?>
 
         <!-- BAGIAN 1: KARTU HASIL STUDI -->
         <div style="font-weight: 700; font-size: 12px; margin-bottom: 6px; text-transform: uppercase;">
@@ -248,6 +323,12 @@
             </div>
         </div>
 
+        <!-- Pedoman Skala Penilaian Akademik Resmi -->
+        <div style="margin: -6px 0 14px 0; padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 4px; background: #f8fafc; font-size: 8px; color: #475569;">
+            <span style="font-weight: 700; color: #1e293b;">Pedoman Penilaian:</span>
+            A (76-100 / AM: 4.0 / Istimewa) • AB (70-75 / AM: 3.5 / Baik Sekali) • B (65-69 / AM: 3.0 / Baik) • BC (60-64 / AM: 2.5 / Cukup Baik) • C (50-59 / AM: 2.0 / Cukup) • D (40-49 / AM: 1.0 / Kurang) • E (0-39 / AM: 0.0 / Kurang Sekali)
+        </div>
+
         <!-- BAGIAN 2: KETERCAPAIAN CPL -->
         <div style="font-weight: 700; font-size: 12px; margin-bottom: 6px; text-transform: uppercase;">
             II. Portofolio Ketercapaian Capaian Pembelajaran Lulusan (CPL)
@@ -285,19 +366,29 @@
                 <div>Mengetahui,</div>
                 <div style="font-weight: 600;">Dosen Pembimbing Akademik</div>
                 <div class="ttd-space"></div>
-                <div style="font-weight: 700; text-decoration: underline;">Dr. Budi Santoso, M.Kom.</div>
-                <div>NIP. 198005122005011002</div>
+                <div id="paSignature" class="ttd-name">........................................</div>
+                <div id="paIdSignature"></div>
             </div>
 
             <div class="ttd-box">
-                <div>Surabaya, <?= date('d F Y') ?></div>
-                <div style="font-weight: 600;">Ketua Program Studi</div>
+                <div>Sidoarjo, <?= date('d F Y') ?></div>
+                <div style="font-weight: 600;">Ketua Program Studi Sistem Informasi</div>
                 <div class="ttd-space"></div>
-                <div style="font-weight: 700; text-decoration: underline;">Rony Kriswibowo, M.Kom.</div>
-                <div>NIP. 198507202010121003</div>
+                <div class="ttd-name"><?= htmlspecialchars($pejabat['nama_kaprodi_display'] ?? 'Belum diatur') ?></div>
+                <div><?= !empty($pejabat['nidn_kaprodi_display']) ? 'NIDN/NUPTK. ' . htmlspecialchars($pejabat['nidn_kaprodi_display']) : '' ?></div>
             </div>
         </div>
     </div>
+
+    <script>
+        function syncDosenPa() {
+            const name = document.getElementById('paNameInput').value.trim();
+            const id = document.getElementById('paIdInput').value.trim();
+            document.getElementById('paBio').textContent = name || 'Belum diisi';
+            document.getElementById('paSignature').textContent = name || '........................................';
+            document.getElementById('paIdSignature').textContent = id ? 'NIDN/NUPTK. ' + id : '';
+        }
+    </script>
 
 </body>
 </html>

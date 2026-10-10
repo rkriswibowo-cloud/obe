@@ -8,6 +8,21 @@ class RubrikModel {
         $this->db = Database::getInstance();
     }
 
+    public static function getJenisMaster() {
+        return [
+            'RB-ANA' => ['jenis' => 'Rubrik Analitik', 'karakteristik' => 'Beberapa kriteria dinilai terpisah', 'contoh' => 'Proyek, laporan, presentasi, praktikum'],
+            'RB-HOL' => ['jenis' => 'Rubrik Holistik', 'karakteristik' => 'Kinerja dinilai secara keseluruhan', 'contoh' => 'Presentasi singkat, performa'],
+            'RB-SKL' => ['jenis' => 'Rating Scale', 'karakteristik' => 'Setiap indikator diberi skala', 'contoh' => 'Sikap, keaktifan, observasi'],
+            'RB-CHK' => ['jenis' => 'Checklist', 'karakteristik' => 'Ya/Tidak atau Terpenuhi/Tidak', 'contoh' => 'Prosedur praktikum, SOP'],
+            'RB-SKR' => ['jenis' => 'Skor Langsung', 'karakteristik' => 'Jawaban memiliki skor tertentu', 'contoh' => 'Kuis, UTS, UAS'],
+            'RB-KUN' => ['jenis' => 'Kunci Jawaban', 'karakteristik' => 'Benar/salah berdasarkan kunci', 'contoh' => 'Pilihan ganda'],
+            'RB-CMP' => ['jenis' => 'Rubrik Kompetensi', 'karakteristik' => 'Kompeten/belum kompeten', 'contoh' => 'Uji kompetensi, keterampilan'],
+            'RB-PRF' => ['jenis' => 'Rubrik Portofolio', 'karakteristik' => 'Menilai kumpulan karya/bukti', 'contoh' => 'Portofolio mahasiswa'],
+            'RB-PEER' => ['jenis' => 'Rubrik Peer Assessment', 'karakteristik' => 'Dinilai oleh teman sejawat', 'contoh' => 'Kerja kelompok'],
+            'RB-SELF' => ['jenis' => 'Rubrik Self Assessment', 'karakteristik' => 'Penilaian diri', 'contoh' => 'Refleksi pembelajaran']
+        ];
+    }
+
     public function getAll() {
         $sql = "
             SELECT 
@@ -16,7 +31,7 @@ class RubrikModel {
                 (SELECT COUNT(*) FROM rubrik_level rl WHERE rl.rubrik_id = r.id) as total_level,
                 (SELECT COALESCE(SUM(bobot), 0) FROM rubrik_kriteria rk WHERE rk.rubrik_id = r.id) as total_bobot
             FROM rubrik r
-            ORDER BY r.id DESC
+            ORDER BY FIELD(r.kode_jenis, 'RB-ANA','RB-HOL','RB-SKL','RB-CHK','RB-SKR','RB-KUN','RB-CMP','RB-PRF','RB-PEER','RB-SELF'), r.id
         ";
         $stmt = $this->db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -61,14 +76,21 @@ class RubrikModel {
         return $rubrik;
     }
 
-    public function create($nama, $jenis, $status, $levels, $kriterias, $descriptors) {
+    public function create($nama, $kodeJenis, $status, $levels, $kriterias, $descriptors) {
+        $master = self::getJenisMaster();
+        if (!isset($master[$kodeJenis])) return false;
+        $meta = $master[$kodeJenis];
         $this->db->beginTransaction();
         try {
             // 1. Insert Rubrik
-            $stmt = $this->db->prepare("INSERT INTO rubrik (nama, jenis, status) VALUES (:nama, :jenis, :status)");
+            $stmt = $this->db->prepare("INSERT INTO rubrik (nama, kode_jenis, jenis, karakteristik, contoh_penggunaan, deskripsi, status) VALUES (:nama, :kode_jenis, :jenis, :karakteristik, :contoh, :deskripsi, :status)");
             $stmt->execute([
                 'nama' => $nama,
-                'jenis' => $jenis,
+                'kode_jenis' => $kodeJenis,
+                'jenis' => $meta['jenis'],
+                'karakteristik' => $meta['karakteristik'],
+                'contoh' => $meta['contoh'],
+                'deskripsi' => $meta['karakteristik'] . '. Contoh penggunaan: ' . $meta['contoh'] . '.',
                 'status' => $status
             ]);
             $rubrikId = $this->db->lastInsertId();
@@ -203,7 +225,7 @@ class RubrikModel {
             }
         }
 
-        return $this->create($namaBaru, $source['jenis'], $source['status'], $levels, $kriterias, $descriptors);
+        return $this->create($namaBaru, $source['kode_jenis'] ?? 'RB-ANA', $source['status'], $levels, $kriterias, $descriptors);
     }
 
     public function delete($id) {

@@ -7,18 +7,24 @@ require_once __DIR__ . '/../Models/AuditLogModel.php';
 class ProdiController {
     private $prodiModel;
     private $auditModel;
+    private $db;
+    private $access;
 
     public function __construct() {
         $this->prodiModel = new ProdiModel();
         $this->auditModel = new AuditLogModel();
+        $this->db = Database::getInstance();
+        $this->access = new AccessContext();
     }
 
     public function index() {
         $prodiList = $this->prodiModel->getAll();
+        $prodiList = $this->access->filterProdiRows($prodiList);
         require __DIR__ . '/../../views/prodi/index.php';
     }
 
     public function create() {
+        $dosenList = $this->getDosenList();
         require __DIR__ . '/../../views/prodi/form.php';
     }
 
@@ -28,8 +34,8 @@ class ProdiController {
             $nama = trim($_POST['nama'] ?? '');
             $jenjang = trim($_POST['jenjang'] ?? 'S1');
             $fakultas = trim($_POST['fakultas'] ?? 'Fakultas Sains dan Teknologi');
-            $nama_kaprodi = trim($_POST['nama_kaprodi'] ?? '');
-            $nidn_kaprodi = trim($_POST['nidn_kaprodi'] ?? '');
+            $dekan = $this->resolveDekan((int)($_POST['dekan_user_id'] ?? 0));
+            $kaprodi = $this->resolveDekan((int)($_POST['kaprodi_user_id'] ?? 0));
             $status = trim($_POST['status'] ?? 'ACTIVE');
 
             if ($kode && $nama) {
@@ -38,8 +44,12 @@ class ProdiController {
                     'nama' => $nama,
                     'jenjang' => $jenjang,
                     'fakultas' => $fakultas,
-                    'nama_kaprodi' => $nama_kaprodi ?: null,
-                    'nidn_kaprodi' => $nidn_kaprodi ?: null,
+                    'nama_dekan' => $dekan['nama_lengkap'] ?? null,
+                    'nidn_dekan' => $dekan['nomor'] ?? null,
+                    'dekan_user_id' => $dekan['id'] ?? null,
+                    'nama_kaprodi' => $kaprodi['nama_lengkap'] ?? null,
+                    'nidn_kaprodi' => $kaprodi['nomor'] ?? null,
+                    'kaprodi_user_id' => $kaprodi['id'] ?? null,
                     'status' => $status
                 ]);
 
@@ -66,6 +76,7 @@ class ProdiController {
             exit;
         }
 
+        $dosenList = $this->getDosenList();
         require __DIR__ . '/../../views/prodi/form.php';
     }
 
@@ -76,8 +87,8 @@ class ProdiController {
             $nama = trim($_POST['nama'] ?? '');
             $jenjang = trim($_POST['jenjang'] ?? 'S1');
             $fakultas = trim($_POST['fakultas'] ?? 'Fakultas Sains dan Teknologi');
-            $nama_kaprodi = trim($_POST['nama_kaprodi'] ?? '');
-            $nidn_kaprodi = trim($_POST['nidn_kaprodi'] ?? '');
+            $dekan = $this->resolveDekan((int)($_POST['dekan_user_id'] ?? 0));
+            $kaprodi = $this->resolveDekan((int)($_POST['kaprodi_user_id'] ?? 0));
             $status = trim($_POST['status'] ?? 'ACTIVE');
 
             if ($id && $kode && $nama) {
@@ -86,8 +97,12 @@ class ProdiController {
                     'nama' => $nama,
                     'jenjang' => $jenjang,
                     'fakultas' => $fakultas,
-                    'nama_kaprodi' => $nama_kaprodi ?: null,
-                    'nidn_kaprodi' => $nidn_kaprodi ?: null,
+                    'nama_dekan' => $dekan['nama_lengkap'] ?? null,
+                    'nidn_dekan' => $dekan['nomor'] ?? null,
+                    'dekan_user_id' => $dekan['id'] ?? null,
+                    'nama_kaprodi' => $kaprodi['nama_lengkap'] ?? null,
+                    'nidn_kaprodi' => $kaprodi['nomor'] ?? null,
+                    'kaprodi_user_id' => $kaprodi['id'] ?? null,
                     'status' => $status
                 ]);
 
@@ -127,5 +142,16 @@ class ProdiController {
 
         header('Location: ' . $baseUrl . '/prodi');
         exit;
+    }
+
+    private function getDosenList() {
+        return $this->db->query("SELECT u.id,u.nama_lengkap,u.nidn,u.nuptk,u.homebase FROM users u JOIN roles r ON r.id=u.role_id WHERE r.name='Dosen' ORDER BY u.nama_lengkap")->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    private function resolveDekan($id) {
+        if ($id <= 0) return null;
+        $stmt=$this->db->prepare("SELECT u.id,u.nama_lengkap,COALESCE(NULLIF(u.nuptk,''),NULLIF(u.nidn,'')) nomor FROM users u JOIN roles r ON r.id=u.role_id WHERE u.id=? AND r.name='Dosen'");
+        $stmt->execute([$id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 }

@@ -50,9 +50,10 @@ $baseUrl = $GLOBALS['config']['base_url'] ?? '/obe/public';
                 <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 0.88rem; color: var(--text-main);">
                     Jenis Rubrik
                 </label>
-                <select name="jenis" style="width: 100%; padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--background); color: var(--text-main); font-size: 0.9rem;">
-                    <option value="Analitik" selected>Analitik (Multi-Kriteria Berbobot)</option>
-                    <option value="Holistik">Holistik (Penilaian Keseluruhan)</option>
+                <select name="kode_jenis" id="kodeJenisRubrik" required style="width: 100%; padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--background); color: var(--text-main); font-size: 0.9rem;">
+                    <?php foreach ($jenisRubrikMaster as $kode => $meta): ?>
+                        <option value="<?= htmlspecialchars($kode) ?>" <?= (($_POST['kode_jenis'] ?? 'RB-ANA') === $kode) ? 'selected' : '' ?>><?= htmlspecialchars($kode . ' - ' . $meta['jenis']) ?></option>
+                    <?php endforeach; ?>
                 </select>
             </div>
 
@@ -66,6 +67,7 @@ $baseUrl = $GLOBALS['config']['base_url'] ?? '/obe/public';
                 </select>
             </div>
         </div>
+        <div id="jenisRubrikInfo" style="margin-top:14px;padding:12px 14px;border-radius:var(--radius-sm);background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);font-size:.84rem;color:var(--text-muted);"></div>
     </div>
 
     <!-- Card 2: Pengaturan Level Capaian / Skor -->
@@ -154,6 +156,15 @@ $baseUrl = $GLOBALS['config']['base_url'] ?? '/obe/public';
 </form>
 
 <script>
+const jenisRubrikMaster = <?= json_encode($jenisRubrikMaster, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+function updateJenisRubrikInfo() {
+    const select = document.getElementById('kodeJenisRubrik');
+    const info = document.getElementById('jenisRubrikInfo');
+    const meta = jenisRubrikMaster[select?.value];
+    if (info && meta) info.innerHTML = `<strong>Karakteristik:</strong> ${meta.karakteristik}<br><strong>Contoh penggunaan:</strong> ${meta.contoh}`;
+}
+document.getElementById('kodeJenisRubrik')?.addEventListener('change', updateJenisRubrikInfo);
+updateJenisRubrikInfo();
 let kriteriaCount = 0;
 
 function updateLevelsFromUI() {

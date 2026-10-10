@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $title ?? 'Sistem Informasi OBE & CPL' ?></title>
+    <title><?= $title ?? 'SIP-OKE : Sistem Informasi Pengukuran Outcome Kompetensi dan Evaluasi' ?></title>
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="<?= $config['base_url'] ?? '/obe/public' ?>/assets/css/app.css">
+    <link rel="stylesheet" href="<?= $config['base_url'] ?? '/obe/public' ?>/assets/css/app.css?v=<?= filemtime(__DIR__ . '/../../public/assets/css/app.css') ?>">
     
     <!-- Script Anti-FOUC: Eksekusi tema & palet sebelum DOM selesai render -->
     <script>
@@ -42,11 +42,34 @@
             <!-- Main Content Area -->
             <div class="main-content">
                 <div class="content-area">
+                    <?php
+                    $globalSuccess = $_SESSION['flash_success'] ?? $_SESSION['success'] ?? null;
+                    $globalError = $_SESSION['flash_error'] ?? $_SESSION['error'] ?? null;
+                    unset($_SESSION['flash_success'], $_SESSION['flash_error'], $_SESSION['success'], $_SESSION['error']);
+                    ?>
+                    <?php if ($globalSuccess): ?>
+                        <div role="status" style="margin-bottom:16px;padding:12px 16px;border:1px solid rgba(16,185,129,.35);border-radius:10px;background:rgba(16,185,129,.1);color:#10b981;">
+                            <?= htmlspecialchars((string)$globalSuccess) ?>
+                        </div>
+                    <?php endif; ?>
+                    <?php if ($globalError): ?>
+                        <div role="alert" style="margin-bottom:16px;padding:12px 16px;border:1px solid rgba(239,68,68,.35);border-radius:10px;background:rgba(239,68,68,.1);color:#ef4444;">
+                            <?= htmlspecialchars((string)$globalError) ?>
+                        </div>
+                    <?php endif; ?>
                     <?= $content ?? '' ?>
                 </div>
+
+                <!-- Footer SIP-OKE -->
+                <footer style="padding: 16px 24px; text-align: center; font-size: 0.78rem; color: var(--text-muted); border-top: 1px solid var(--border-subtle); margin-top: auto;">
+                    <span><strong>SIP-OKE</strong> &bull; Sistem Informasi Pengukuran Outcome Kompetensi dan Evaluasi &copy; <?= date('Y') ?></span>
+                </footer>
             </div>
         </div>
     </div>
+
+    <!-- CPL Measurement Flow Guide Toast -->
+    <?php require __DIR__ . '/../components/cpl_guide_toast.php'; ?>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

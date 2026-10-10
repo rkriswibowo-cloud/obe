@@ -9,16 +9,20 @@ class CplController {
     private $cplModel;
     private $kurikulumModel;
     private $prodiModel;
+    private $access;
 
     public function __construct() {
         $this->cplModel = new CplModel();
         $this->kurikulumModel = new KurikulumModel();
         $this->prodiModel = new ProdiModel();
+        $this->access = new AccessContext();
     }
 
     public function index() {
-        $selectedProdiId = $_GET['prodi_id'] ?? '';
+        $selectedProdiId = $_GET['prodi_id'] ?? ($this->access->isKaprodi() ? $this->access->primaryManagedProdiId() : '');
         $selectedKurikulumId = $_GET['kurikulum_id'] ?? '';
+        if ($selectedProdiId && !$this->access->isSuperAdmin()) $this->access->assertProdi($selectedProdiId);
+        if ($selectedKurikulumId && !$this->access->isSuperAdmin()) $this->access->assertKurikulum($selectedKurikulumId);
 
         $filters = [
             'prodi_id' => $selectedProdiId,
@@ -26,7 +30,7 @@ class CplController {
             'status' => $_GET['status'] ?? ''
         ];
 
-        $prodiList = $this->prodiModel->getAll();
+        $prodiList = $this->access->filterProdiRows($this->prodiModel->getAll());
         $kurikulumList = $this->kurikulumModel->getAll($selectedProdiId ?: null);
         $cplList = $this->cplModel->getAll($filters);
 
@@ -34,13 +38,14 @@ class CplController {
     }
 
     public function create() {
-        $prodiList = $this->prodiModel->getAll();
-        $kurikulumList = $this->kurikulumModel->getAll();
+        $prodiList = $this->access->filterProdiRows($this->prodiModel->getAll());
+        $kurikulumList = $this->access->filterKurikulumRows($this->kurikulumModel->getAll());
         require_once __DIR__ . '/../../views/cpl/create.php';
     }
 
     public function store() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!$this->access->isSuperAdmin()) $this->access->assertKurikulum($_POST['kurikulum_id'] ?? 0);
             $data = [
                 'kurikulum_id' => $_POST['kurikulum_id'] ?? '',
                 'kode' => $_POST['kode'] ?? '',
@@ -74,8 +79,9 @@ class CplController {
             exit;
         }
 
-        $prodiList = $this->prodiModel->getAll();
-        $kurikulumList = $this->kurikulumModel->getAll();
+        if (!$this->access->isSuperAdmin()) $this->access->assertCpl($id);
+        $prodiList = $this->access->filterProdiRows($this->prodiModel->getAll());
+        $kurikulumList = $this->access->filterKurikulumRows($this->kurikulumModel->getAll());
         require_once __DIR__ . '/../../views/cpl/edit.php';
     }
 
@@ -83,6 +89,10 @@ class CplController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = $_POST['id'] ?? null;
             if ($id) {
+                if (!$this->access->isSuperAdmin()) {
+                    $this->access->assertCpl($id);
+                    $this->access->assertKurikulum($_POST['kurikulum_id'] ?? 0);
+                }
                 $data = [
                     'kurikulum_id' => $_POST['kurikulum_id'] ?? '',
                     'kode' => $_POST['kode'] ?? '',
@@ -106,6 +116,7 @@ class CplController {
     public function delete() {
         $id = $_GET['id'] ?? null;
         if ($id) {
+            if (!$this->access->isSuperAdmin()) $this->access->assertCpl($id);
             if ($this->cplModel->delete($id)) {
                 $_SESSION['success'] = "CPL berhasil dihapus.";
             } else {

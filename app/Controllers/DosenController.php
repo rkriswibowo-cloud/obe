@@ -8,20 +8,24 @@ class DosenController {
     private $userModel;
     private $auditModel;
     private $db;
+    private $access;
 
     public function __construct() {
         $this->userModel = new UserModel();
         $this->auditModel = new AuditLogModel();
         $this->db = Database::getInstance();
+        $this->access = new AccessContext();
     }
 
     public function index() {
         $dosen = $this->userModel->getByRole('Dosen');
+        if (!$this->access->isSuperAdmin()) $dosen = array_values(array_filter($dosen, fn($row) => $this->access->canAccessProdi($row['prodi_id'] ?? 0)));
         require __DIR__ . '/../../views/dosen/index.php';
     }
 
     public function create() {
         $prodiList = $this->db->query("SELECT * FROM program_studi ORDER BY jenjang ASC, nama ASC")->fetchAll();
+        $prodiList = $this->access->filterProdiRows($prodiList);
         require __DIR__ . '/../../views/dosen/form.php';
     }
 
@@ -32,6 +36,8 @@ class DosenController {
             $nidn = trim($_POST['nidn'] ?? '');
             $nuptk = trim($_POST['nuptk'] ?? '');
             $homebase = trim($_POST['homebase'] ?? '');
+            $prodiId = $this->access->isSuperAdmin() ? $this->resolveProdiId($homebase) : (int)$this->access->primaryManagedProdiId();
+            if (!$this->access->isSuperAdmin()) $this->access->assertProdi($prodiId);
 
             // default password is same as username
             $password = password_hash($username, PASSWORD_BCRYPT);
@@ -42,8 +48,8 @@ class DosenController {
             $role_id = $stmt->fetchColumn();
 
             $stmt = $this->db->prepare("
-                INSERT INTO users (username, password, nama_lengkap, nidn, nuptk, homebase, role_id) 
-                VALUES (:username, :password, :nama_lengkap, :nidn, :nuptk, :homebase, :role_id)
+                INSERT INTO users (username, password, nama_lengkap, nidn, nuptk, homebase, prodi_id, role_id)
+                VALUES (:username, :password, :nama_lengkap, :nidn, :nuptk, :homebase, :prodi_id, :role_id)
             ");
             $stmt->execute([
                 'username' => $username,
@@ -52,6 +58,7 @@ class DosenController {
                 'nidn' => $nidn ?: null,
                 'nuptk' => $nuptk ?: null,
                 'homebase' => $homebase ?: null,
+                'prodi_id' => $prodiId ?: null,
                 'role_id' => $role_id
             ]);
 
@@ -66,9 +73,11 @@ class DosenController {
     public function edit() {
         $id = $_GET['id'] ?? null;
         if ($id) {
+            if (!$this->access->isSuperAdmin()) $this->access->assertMahasiswa($id);
             $dosen = $this->userModel->getById($id);
             if ($dosen) {
                 $prodiList = $this->db->query("SELECT * FROM program_studi ORDER BY jenjang ASC, nama ASC")->fetchAll();
+                $prodiList = $this->access->filterProdiRows($prodiList);
                 require __DIR__ . '/../../views/dosen/form.php';
                 return;
             }
@@ -80,11 +89,13 @@ class DosenController {
     public function update() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = (int)$_POST['id'];
+            if (!$this->access->isSuperAdmin()) $this->access->assertMahasiswa($id);
             $username = trim($_POST['username'] ?? '');
             $nama_lengkap = trim($_POST['nama_lengkap'] ?? '');
             $nidn = trim($_POST['nidn'] ?? '');
             $nuptk = trim($_POST['nuptk'] ?? '');
             $homebase = trim($_POST['homebase'] ?? '');
+            $prodiId = $this->access->isSuperAdmin() ? $this->resolveProdiId($homebase) : (int)$this->access->primaryManagedProdiId();
 
             $stmt = $this->db->prepare("
                 UPDATE users 
@@ -92,7 +103,8 @@ class DosenController {
                     nama_lengkap = :nama_lengkap, 
                     nidn = :nidn, 
                     nuptk = :nuptk, 
-                    homebase = :homebase 
+                    homebase = :homebase,
+                    prodi_id = :prodi_id
                 WHERE id = :id
             ");
             $stmt->execute([
@@ -101,6 +113,7 @@ class DosenController {
                 'nidn' => $nidn ?: null,
                 'nuptk' => $nuptk ?: null,
                 'homebase' => $homebase ?: null,
+                'prodi_id' => $prodiId ?: null,
                 'id' => $id
             ]);
 
@@ -115,6 +128,7 @@ class DosenController {
     public function delete() {
         $id = $_GET['id'] ?? null;
         if ($id) {
+            if (!$this->access->isSuperAdmin()) $this->access->assertMahasiswa($id);
             $dosen = $this->userModel->getById($id);
             $stmt = $this->db->prepare("DELETE FROM users WHERE id = :id");
             $stmt->execute(['id' => $id]);
@@ -125,5 +139,13 @@ class DosenController {
         }
         $baseUrl = $GLOBALS['config']['base_url'] ?? '/obe/public';
         header('Location: ' . $baseUrl . '/dosen?success=3');
+    }
+
+    private function resolveProdiId(string $homebase): ?int {
+        if ($homebase === '') return null;
+        $stmt = $this->db->prepare("SELECT id FROM program_studi WHERE CONCAT(jenjang, ' ', nama) = ? OR nama = ? LIMIT 1");
+        $stmt->execute([$homebase, $homebase]);
+        $id = $stmt->fetchColumn();
+        return $id !== false ? (int)$id : null;
     }
 }

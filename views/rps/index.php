@@ -5,14 +5,27 @@ $title = "RPS Builder: " . htmlspecialchars($mk['nama']);
 ob_start();
 $baseUrl = $GLOBALS['config']['base_url'] ?? '/obe/public';
 $activeTab = $_GET['tab'] ?? 'identitas';
+$rpsCanEdit = $rpsCanEdit ?? true;
+$rpsIsArchive = $rpsIsArchive ?? false;
+$assignmentQuery = !empty($rpsAssignment) ? '&ta_id='.(int)$rpsAssignment['tahun_akademik_id'] : '';
 
-// Hitung total bobot asesmen sistem penilaian
-$totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) + 
-                    floatval($rps['bobot_tugas'] ?? 15) + 
-                    floatval($rps['bobot_kuis'] ?? 20) + 
-                    floatval($rps['bobot_uts'] ?? 30) + 
-                    floatval($rps['bobot_uas'] ?? 30);
+// Hitung total bobot asesmen dinamis dari master jenis penilaian.
+$jenisPenilaianMaster = $jenisPenilaianMaster ?? RpsModel::getJenisPenilaianMaster();
+$jenisPenilaian = $jenisPenilaian ?? [];
+$totalBobotSistem = array_sum(array_map(static fn($item) => (float)($item['bobot'] ?? 0), $jenisPenilaian));
+$ringkasanPenilaian = [];
+foreach ($jenisPenilaian as $item) {
+    $kode = $item['kode'] ?? '';
+    $ringkasanPenilaian[] = ($jenisPenilaianMaster[$kode] ?? $kode) . ' ' . (float)($item['bobot'] ?? 0) . '%';
+}
 ?>
+
+<?php if(!empty($rpsAssignment)): ?>
+<div style="margin-bottom:16px;padding:13px 16px;border:1px solid <?= $rpsCanEdit?'rgba(16,185,129,.35)':'rgba(148,163,184,.35)' ?>;border-radius:10px;background:<?= $rpsCanEdit?'rgba(16,185,129,.09)':'rgba(148,163,184,.09)' ?>;display:flex;align-items:center;gap:10px;">
+    <i class="fa-solid <?= $rpsCanEdit?'fa-circle-check':'fa-box-archive' ?>"></i>
+    <div><strong><?= $rpsCanEdit?'RPS semester aktif — dapat diedit':'Arsip RPS — hanya dapat dilihat' ?></strong><div style="font-size:.78rem;color:var(--text-muted);margin-top:2px"><?= htmlspecialchars($rpsAssignment['tahun_akademik']) ?> · PJMK <?= htmlspecialchars($rpsAssignment['pjmk_nama']) ?></div></div>
+</div>
+<?php endif; ?>
 
 <!-- ========================================================================
      TOP HEADER & ACTION BAR
@@ -21,7 +34,7 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
         <div>
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-                <a href="<?= $baseUrl ?>/mata-kuliah" class="btn btn-sm btn-secondary" style="padding: 5px 10px;" title="Kembali ke Daftar Mata Kuliah">
+                <a href="<?= $baseUrl ?><?= (($_SESSION['role']??'')==='Dosen')?'/rps':'/mata-kuliah' ?>" class="btn btn-sm btn-secondary" style="padding: 5px 10px;" title="Kembali">
                     <i class="fa-solid fa-arrow-left"></i>
                 </a>
                 <span style="background: rgba(59, 130, 246, 0.15); color: var(--primary); padding: 3px 10px; border-radius: 6px; font-weight: 700; font-size: 0.8rem; letter-spacing: 0.5px;">
@@ -47,10 +60,10 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
 
         <!-- Tombol Aksi Dokumen Resmi -->
         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <a href="<?= $baseUrl ?>/rps/document?mk_id=<?= $mk['id'] ?>" target="_blank" class="btn btn-primary" style="padding: 10px 18px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);">
+            <a href="<?= $baseUrl ?>/rps/document?mk_id=<?= $mk['id'] ?><?= $assignmentQuery ?>" target="_blank" class="btn btn-primary" style="padding: 10px 18px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);">
                 <i class="fa-solid fa-file-lines"></i> Lihat Dokumen Resmi RPS (PDF Layout)
             </a>
-            <a href="<?= $baseUrl ?>/rps/document?mk_id=<?= $mk['id'] ?>&print=1" target="_blank" class="btn btn-secondary" style="padding: 10px 16px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
+            <a href="<?= $baseUrl ?>/rps/document?mk_id=<?= $mk['id'] ?><?= $assignmentQuery ?>&print=1" target="_blank" class="btn btn-secondary" style="padding: 10px 16px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
                 <i class="fa-solid fa-print"></i> Cetak Dokumen RPS
             </a>
         </div>
@@ -73,7 +86,7 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
         <div style="font-size: 0.85rem;">
             <span style="color: var(--text-muted);">Sistem Penilaian:</span>
             <strong style="color: <?= $totalBobotSistem == 100 ? 'var(--success)' : 'var(--danger)' ?>; margin-left: 4px;">
-                <?= $totalBobotSistem ?>% (Keaktifan <?= floatval($rps['bobot_keaktifan']??5) ?>%, Tugas <?= floatval($rps['bobot_tugas']??15) ?>%, Kuis <?= floatval($rps['bobot_kuis']??20) ?>%, UTS <?= floatval($rps['bobot_uts']??30) ?>%, UAS <?= floatval($rps['bobot_uas']??30) ?>%)
+                <?= $totalBobotSistem ?>%<?= $ringkasanPenilaian ? ' (' . htmlspecialchars(implode(', ', $ringkasanPenilaian)) . ')' : '' ?>
             </strong>
         </div>
     </div>
@@ -276,6 +289,26 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
     }
 
     $hasTimTeaching = !empty($timTeachingRows);
+
+    // Penugasan resmi MK menjadi sumber utama, bukan teks lama pada tabel RPS.
+    if (!empty($officialAssignment)) {
+        $currentPjmk = $officialAssignment['pjmk_nama'];
+        $timTeachingRows = [];
+        foreach (($officialAssignment['tim'] ?? []) as $member) {
+            $timTeachingRows[] = [
+                'nama' => $member['nama_lengkap'],
+                'peran' => 'Anggota Tim Teaching'
+            ];
+        }
+        $hasTimTeaching = !empty($timTeachingRows);
+        $officialLines = ['1. ' . $currentPjmk . ' (PJMK)'];
+        foreach ($timTeachingRows as $index => $member) {
+            $officialLines[] = ($index + 2) . '. ' . $member['nama'] . ' (' . $member['peran'] . ')';
+        }
+        $officialDosenText = implode("\n", $officialLines);
+    } else {
+        $officialDosenText = $rps['dosen_pengampu'] ?? ('1. ' . $currentPjmk . ' (PJMK)');
+    }
     ?>
 
     <div style="display: flex; flex-direction: column; gap: 24px;">
@@ -330,12 +363,18 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
 
                     <div class="form-group">
                         <label style="display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.88rem;">Program Studi:</label>
-                        <input type="text" name="program_studi" class="form-control" value="<?= htmlspecialchars($rps['program_studi'] ?? 'S1 Sistem Informasi') ?>" required>
+                        <textarea name="program_studi" class="form-control" rows="3" maxlength="1000" placeholder="Pisahkan setiap program studi dengan baris baru atau koma" required><?= htmlspecialchars($rps['program_studi'] ?? 'S1 Sistem Informasi') ?></textarea>
+                        <small style="color: var(--text-muted); font-size: 0.78rem;">Maksimal 1.000 karakter. Setiap program studi akan ditampilkan pada baris tersendiri di header cetak.</small>
                     </div>
 
                     <div class="form-group">
                         <label style="display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.88rem;">Semester / Tahun Akademik:</label>
-                        <input type="text" name="tahun_akademik" class="form-control" value="<?= htmlspecialchars($rps['tahun_akademik'] ?? 'Genap 2025/2026') ?>" placeholder="Contoh: Genap 2025/2026" required>
+                        <select name="tahun_akademik_id" class="form-control" required>
+                            <?php foreach (($activeAcademicYears ?? []) as $ta): ?>
+                                <option value="<?= (int)$ta['id'] ?>" <?= !empty($officialAssignment) && (int)$officialAssignment['tahun_akademik_id']===(int)$ta['id'] ? 'selected' : '' ?>><?= htmlspecialchars($ta['nama']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <small style="color: var(--text-muted); font-size: 0.78rem;">Diambil dari Tahun Akademik aktif agar periode RPS konsisten.</small>
                     </div>
 
                     <div class="form-group">
@@ -421,8 +460,17 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
                     </div>
                 </div>
 
+                <?php if (!empty($officialAssignment)): ?>
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:18px">
+                        <div style="display:flex;align-items:center;gap:10px"><i class="fa-solid fa-circle-check" style="color:#10b981"></i><div><strong>Sudah tersinkron dengan Pengampu Mata Kuliah</strong><div style="font-size:.8rem;color:var(--text-muted)">PJMK dan tim teaching mengikuti penugasan tahun akademik aktif.</div></div></div>
+                        <a href="<?= $baseUrl ?>/pengampu-mk" class="btn btn-sm btn-secondary"><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Pengaturan</a>
+                    </div>
+                <?php else: ?>
+                    <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:18px;color:var(--warning)"><i class="fa-solid fa-triangle-exclamation"></i> Belum ada penugasan pengampu untuk mata kuliah ini pada tahun akademik aktif.</div>
+                <?php endif; ?>
+
                 <!-- Notifikasi Auto-Detect Dosen dari Kelas Perkuliahan Aktif -->
-                <?php if (!empty($detectedKelasTimTeaching)): ?>
+                <?php if (!empty($detectedKelasTimTeaching) && empty($officialAssignment)): ?>
                     <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
                         <div style="display: flex; align-items: center; gap: 10px;">
                             <i class="fa-solid fa-lightbulb" style="color: var(--info); font-size: 1.2rem;"></i>
@@ -459,7 +507,7 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
                         <div>
                             <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px;">Pilih dari Daftar Dosen Terdaftar:</label>
-                            <select id="select_pjmk" class="form-control" onchange="onPjmkSelectChange(this)" style="font-size: 0.9rem;">
+                            <select id="select_pjmk" class="form-control" onchange="onPjmkSelectChange(this)" style="font-size: 0.9rem;" <?= !empty($officialAssignment) ? 'disabled' : '' ?>>
                                 <option value="">-- Pilih Dosen Pengampu Sistem --</option>
                                 <?php foreach ($allDosen as $dsn): ?>
                                     <option value="<?= htmlspecialchars($dsn['nama_lengkap']) ?>" <?= (trim($currentPjmk) === trim($dsn['nama_lengkap'])) ? 'selected' : '' ?>>
@@ -471,7 +519,7 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
                         </div>
                         <div>
                             <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px;">Nama Lengkap & Gelar PJMK:</label>
-                            <input type="text" name="dosen_pjmk" id="input_dosen_pjmk" class="form-control" value="<?= htmlspecialchars($currentPjmk) ?>" placeholder="Contoh: Dr. Budi Santoso, M.Kom." oninput="updateDosenPreview()" required>
+                            <input type="text" name="dosen_pjmk" id="input_dosen_pjmk" class="form-control" value="<?= htmlspecialchars($currentPjmk) ?>" placeholder="Contoh: Dr. Budi Santoso, M.Kom." oninput="updateDosenPreview()" required <?= !empty($officialAssignment) ? 'readonly' : '' ?>>
                         </div>
                     </div>
                 </div>
@@ -479,7 +527,7 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
                 <!-- Toggle Checkbox Memiliki Tim Teaching -->
                 <div style="background: var(--surface-hover); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 18px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <input type="checkbox" id="has_tim_teaching" name="has_tim_teaching" value="1" <?= $hasTimTeaching ? 'checked' : '' ?> onchange="toggleTimTeachingSection()" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary);">
+                        <input type="checkbox" id="has_tim_teaching" name="has_tim_teaching" value="1" <?= $hasTimTeaching ? 'checked' : '' ?> onchange="toggleTimTeachingSection()" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary);" <?= !empty($officialAssignment) ? 'disabled' : '' ?>>
                         <label for="has_tim_teaching" style="margin: 0; cursor: pointer; font-weight: 600; font-size: 0.92rem; color: var(--text-main);">
                             Mata Kuliah ini Diampu oleh Tim Teaching (Memiliki Anggota Dosen Tambahan)
                         </label>
@@ -495,7 +543,7 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
                         <h5 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
                             <i class="fa-solid fa-users"></i> Anggota Tim Teaching Tambahan:
                         </h5>
-                        <button type="button" class="btn btn-sm btn-primary" onclick="addTimTeachingRow()" style="font-size: 0.82rem; padding: 6px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                        <button type="button" class="btn btn-sm btn-primary" onclick="addTimTeachingRow()" style="font-size: 0.82rem; padding: 6px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;" <?= !empty($officialAssignment) ? 'disabled' : '' ?>>
                             <i class="fa-solid fa-plus"></i> Tambah Dosen Tim
                         </button>
                     </div>
@@ -519,7 +567,7 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
                                                 <?= ($idx + 2) ?>
                                             </td>
                                             <td style="padding: 10px 14px;">
-                                                <select class="form-control select-dosen-row" onchange="onRowDosenSelectChange(this)" style="font-size: 0.85rem; padding: 6px 10px;">
+                                                <select class="form-control select-dosen-row" onchange="onRowDosenSelectChange(this)" style="font-size: 0.85rem; padding: 6px 10px;" <?= !empty($officialAssignment) ? 'disabled' : '' ?>>
                                                     <option value="">-- Pilih Dosen --</option>
                                                     <?php foreach ($allDosen as $dsn): ?>
                                                         <option value="<?= htmlspecialchars($dsn['nama_lengkap']) ?>" <?= (trim($row['nama']) === trim($dsn['nama_lengkap'])) ? 'selected' : '' ?>>
@@ -530,15 +578,15 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
                                                 </select>
                                             </td>
                                             <td style="padding: 10px 14px;">
-                                                <input type="text" name="tim_teaching_dosen[]" class="form-control input-dosen-nama" value="<?= htmlspecialchars($row['nama']) ?>" placeholder="Nama Lengkap & Gelar Dosen" oninput="updateDosenPreview()" style="font-size: 0.88rem; padding: 6px 10px;" required>
+                                                <input type="text" name="tim_teaching_dosen[]" class="form-control input-dosen-nama" value="<?= htmlspecialchars($row['nama']) ?>" placeholder="Nama Lengkap & Gelar Dosen" oninput="updateDosenPreview()" style="font-size: 0.88rem; padding: 6px 10px;" required <?= !empty($officialAssignment) ? 'readonly' : '' ?>>
                                             </td>
                                             <td style="padding: 10px 14px;">
                                                 <div style="display: flex; gap: 6px;">
-                                                    <input type="text" name="tim_teaching_peran[]" class="form-control input-dosen-peran" value="<?= htmlspecialchars($row['peran']) ?>" placeholder="Contoh: Anggota Tim Teaching" oninput="updateDosenPreview()" style="font-size: 0.88rem; padding: 6px 10px;" list="peranOptions">
+                                                    <input type="text" name="tim_teaching_peran[]" class="form-control input-dosen-peran" value="<?= htmlspecialchars($row['peran']) ?>" placeholder="Contoh: Anggota Tim Teaching" oninput="updateDosenPreview()" style="font-size: 0.88rem; padding: 6px 10px;" list="peranOptions" <?= !empty($officialAssignment) ? 'readonly' : '' ?>>
                                                 </div>
                                             </td>
                                             <td style="padding: 10px 14px; text-align: center;">
-                                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeTimTeachingRow(this)" style="padding: 6px 10px; border-radius: 4px; color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.08); cursor: pointer;" title="Hapus Baris">
+                                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeTimTeachingRow(this)" style="padding: 6px 10px; border-radius: 4px; color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.08); cursor: pointer;" title="Hapus Baris" <?= !empty($officialAssignment) ? 'disabled' : '' ?>>
                                                     <i class="fa-solid fa-trash-can"></i>
                                                 </button>
                                             </td>
@@ -569,7 +617,7 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
                         <span style="font-size: 0.78rem; color: var(--text-muted);">Otomatis terformat sesuai standar RPS A4</span>
                     </div>
                     <div id="previewDosenPengampu" style="background: var(--surface); border: 1px solid var(--border); padding: 12px 16px; border-radius: 4px; font-family: 'Bookman Old Style', 'Bookman', serif; font-size: 0.92rem; color: var(--text-main); white-space: pre-line; line-height: 1.6;">
-                        <?= htmlspecialchars($rps['dosen_pengampu'] ?? '1. ' . $currentPjmk . ' (PJMK)') ?>
+                        <?= htmlspecialchars($officialDosenText) ?>
                     </div>
                 </div>
             </div>
@@ -1506,6 +1554,9 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
                 </p>
             </div>
             <div style="display: flex; gap: 10px;">
+                <button type="button" onclick="openCsvModal()" class="btn btn-secondary">
+                    <i class="fa-solid fa-file-csv"></i> Tempel CSV
+                </button>
                 <button type="button" onclick="openCreateModal()" class="btn btn-primary">
                     <i class="fa-solid fa-plus"></i> Tambah Sesi Pertemuan
                 </button>
@@ -1580,6 +1631,37 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
         </div>
     </div>
 
+    <!-- Modal Import CSV Pertemuan -->
+    <div id="csvPertemuanModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.68);z-index:10000;justify-content:center;align-items:center;padding:20px;">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);width:min(1050px,100%);max-height:92vh;overflow:auto;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.45);">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:15px;margin-bottom:16px;">
+                <div><h3 style="margin:0 0 5px;font-size:1.2rem;"><i class="fa-solid fa-file-csv" style="color:var(--success);margin-right:8px;"></i>Impor Rincian Pertemuan dari CSV</h3><p style="margin:0;color:var(--text-muted);font-size:.84rem;">Tempel isi CSV dengan pemisah titik koma atau koma. Pertemuan yang sudah ada akan diperbarui berdasarkan nomor pekan.</p></div>
+                <button type="button" onclick="closeCsvModal()" style="background:none;border:0;color:var(--text-muted);font-size:1.2rem;cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form action="<?= $baseUrl ?>/rps/pertemuan/import-csv" method="POST" onsubmit="return validateCsvImport();">
+                <input type="hidden" name="mata_kuliah_id" value="<?= $mk['id'] ?>">
+                <div style="padding:12px 14px;border:1px solid rgba(59,130,246,.3);background:rgba(59,130,246,.08);border-radius:8px;margin-bottom:12px;font-size:.8rem;line-height:1.55;color:var(--text-muted);">
+                    <strong style="color:var(--text-main);">Header wajib:</strong> pertemuan_ke, sub_cpmk, bahan_kajian.<br>
+                    <strong style="color:var(--text-main);">Header opsional:</strong> bentuk_metode, mode_pembelajaran, pengalaman_belajar, alokasi_waktu, durasi_detail, pustaka, indikator_penilaian, bobot_penilaian.<br>
+                    Gunakan tanda <strong>|</strong> untuk beberapa Sub-CPMK, contoh: <code>Sub-CPMK 1.1|Sub-CPMK 1.2</code>.
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:10px;">
+                    <label for="csvPertemuanText" style="font-weight:700;font-size:.86rem;">Isi CSV</label>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="fillCsvExample()"><i class="fa-solid fa-wand-magic-sparkles"></i> Isi Contoh Format</button>
+                </div>
+                <textarea id="csvPertemuanText" name="csv_text" required spellcheck="false" placeholder="pertemuan_ke;sub_cpmk;bahan_kajian;..." style="width:100%;min-height:330px;box-sizing:border-box;padding:14px;border:1px solid var(--border);border-radius:8px;background:#070b12;color:#dbeafe;font:13px/1.55 Consolas,monospace;resize:vertical;white-space:pre;overflow:auto;"></textarea>
+                <div id="csvPreviewStatus" style="margin-top:12px;font-size:.82rem;color:var(--text-muted);"></div>
+                <div id="csvPreviewWrap" style="display:none;margin-top:8px;border:1px solid var(--border);border-radius:8px;overflow:auto;max-height:280px;">
+                    <table id="csvPreviewTable" style="width:100%;border-collapse:collapse;min-width:850px;font-size:.76rem;"></table>
+                </div>
+                <div style="display:flex;justify-content:flex-end;gap:10px;border-top:1px solid var(--border);padding-top:15px;margin-top:15px;">
+                    <button type="button" onclick="closeCsvModal()" class="btn btn-secondary">Batal</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-file-import"></i> Impor CSV</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal Form Pertemuan -->
     <div id="pertemuanModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; padding: 20px;">
         <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); width: 100%; max-width: 650px; padding: 24px; max-height: 90vh; overflow-y: auto;">
@@ -1600,12 +1682,12 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
 
                     <div class="form-group">
                         <label style="display: block; margin-bottom: 4px; font-weight: 600;">Sub-CPMK:</label>
-                        <select name="sub_cpmk_id" id="field_sub_cpmk_id" class="form-control">
-                            <option value="">-- Pilih Sub-CPMK --</option>
+                        <select name="sub_cpmk_ids[]" id="field_sub_cpmk_id" class="form-control" multiple size="5">
                             <?php foreach ($allSubCpmks as $sub): ?>
                                 <option value="<?= $sub['id'] ?>"><?= htmlspecialchars($sub['kode']) ?> - <?= htmlspecialchars(substr($sub['rumusan'], 0, 45)) ?>...</option>
                             <?php endforeach; ?>
                         </select>
+                        <small style="display:block; margin-top:4px; color:var(--text-muted);">Tahan Ctrl (Windows) atau Cmd (Mac) untuk memilih beberapa Sub-CPMK.</small>
                     </div>
                 </div>
 
@@ -1650,12 +1732,52 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
     </div>
 
     <script>
+    function openCsvModal() {
+        document.getElementById('csvPertemuanModal').style.display = 'flex';
+        setTimeout(() => { document.getElementById('csvPertemuanText').focus(); renderCsvPreview(); }, 50);
+    }
+    function closeCsvModal() { document.getElementById('csvPertemuanModal').style.display = 'none'; }
+    function fillCsvExample() {
+        const example = <?= json_encode("pertemuan_ke;sub_cpmk;bahan_kajian;bentuk_metode;mode_pembelajaran;alokasi_waktu;durasi_detail;pustaka;indikator_penilaian;bobot_penilaian\n1;" . ($allSubCpmks[0]['kode'] ?? 'Sub-CPMK 1.1') . ";Pengantar dan ruang lingkup;Kuliah & Diskusi;TM;2 x 50 menit;Penjelasan materi dan diskusi;Referensi [1];Keaktifan dan pemahaman;5\n2;" . ($allSubCpmks[1]['kode'] ?? ($allSubCpmks[0]['kode'] ?? 'Sub-CPMK 1.2')) . ";Topik pertemuan kedua;Studi Kasus;ASM dan TM;2 x 50 menit;Analisis kasus dan presentasi;Referensi [1], [2];Ketepatan analisis;5", JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+        const textarea = document.getElementById('csvPertemuanText');
+        if (!textarea.value || confirm('Ganti isi textarea dengan contoh format CSV?')) { textarea.value = example; renderCsvPreview(); }
+    }
+    function detectCsvDelimiter(line) {
+        const counts = {'\t':(line.match(/\t/g)||[]).length,';':(line.match(/;/g)||[]).length,',':(line.match(/,/g)||[]).length};
+        return Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0];
+    }
+    function parseCsvPreviewLine(line, delimiter) {
+        const cells=[]; let value=''; let quoted=false;
+        for(let i=0;i<line.length;i++) { const char=line[i]; if(char==='"'){ if(quoted&&line[i+1]==='"'){value+='"';i++;}else quoted=!quoted; } else if(char===delimiter&&!quoted){cells.push(value.trim());value='';} else value+=char; }
+        cells.push(value.trim()); return cells;
+    }
+    function normalizeCsvHeader(header) {
+        let key=header.replace(/^\uFEFF/,'').trim().toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+        const aliases={pekan:'pertemuan_ke',pekan_ke:'pertemuan_ke',minggu:'pertemuan_ke',minggu_ke:'pertemuan_ke',pertemuan:'pertemuan_ke',sub_cpmk_kode:'sub_cpmk',kode_sub_cpmk:'sub_cpmk',topik:'bahan_kajian',bahan_kajian_topik:'bahan_kajian',materi:'bahan_kajian',metode:'bentuk_metode',mode:'mode_pembelajaran',waktu:'alokasi_waktu',aktivitas:'durasi_detail',aktivitas_durasi:'durasi_detail',rancangan_aktivitas:'durasi_detail',rancangan_aktivitas_durasi:'durasi_detail',rancangan_aktivitas_dan_durasi:'durasi_detail',media:'pustaka',referensi:'pustaka',media_pustaka:'pustaka',media_referensi:'pustaka',media_pembelajaran_referensi:'pustaka',indikator:'indikator_penilaian',bobot:'bobot_penilaian'};
+        return aliases[key]||key;
+    }
+    function renderCsvPreview() {
+        const text=document.getElementById('csvPertemuanText').value.trim(); const status=document.getElementById('csvPreviewStatus'); const wrap=document.getElementById('csvPreviewWrap'); const table=document.getElementById('csvPreviewTable');
+        if(!text){status.textContent='Tempel data untuk melihat preview.';wrap.style.display='none';return;}
+        const lines=text.replace(/\r\n?/g,'\n').split('\n').filter(line=>line.trim()!==''); const delimiter=detectCsvDelimiter(lines[0]);
+        const headers=parseCsvPreviewLine(lines[0],delimiter).map(normalizeCsvHeader); const required=['pertemuan_ke','sub_cpmk','bahan_kajian']; const missing=required.filter(key=>!headers.includes(key));
+        if(missing.length){status.innerHTML=`<span style="color:var(--danger)"><i class="fa-solid fa-circle-exclamation"></i> Header belum dikenali: ${missing.join(', ')}. Pemisah terdeteksi: ${delimiter==='\t'?'TAB':delimiter}</span>`;wrap.style.display='none';return;}
+        const rows=lines.slice(1).map(line=>parseCsvPreviewLine(line,delimiter)); const shown=rows.slice(0,16);
+        table.innerHTML=`<thead><tr>${headers.map(h=>`<th style="position:sticky;top:0;background:var(--surface-hover);padding:8px;border:1px solid var(--border);text-align:left;white-space:nowrap">${h}</th>`).join('')}</tr></thead><tbody>${shown.map(row=>`<tr>${headers.map((_,i)=>`<td style="padding:7px;border:1px solid var(--border);vertical-align:top">${String(row[i]||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</td>`).join('')}</tr>`).join('')}</tbody>`;
+        status.innerHTML=`<span style="color:var(--success)"><i class="fa-solid fa-circle-check"></i> Format dikenali — ${rows.length} baris data, pemisah ${delimiter==='\t'?'TAB/Excel':delimiter}. ${rows.length>16?'Preview menampilkan 16 baris pertama.':''}</span>`; wrap.style.display='block';
+    }
+    function validateCsvImport() {
+        renderCsvPreview();
+        if(document.getElementById('csvPreviewWrap').style.display==='none'){ alert('Format CSV belum valid. Periksa header dan preview terlebih dahulu.'); return false; }
+        return confirm('Impor data CSV ini? Pertemuan dengan nomor yang sama akan diperbarui.');
+    }
+    let csvPreviewTimer; document.getElementById('csvPertemuanText')?.addEventListener('input',()=>{clearTimeout(csvPreviewTimer);csvPreviewTimer=setTimeout(renderCsvPreview,180);});
     function openCreateModal() {
         document.getElementById('modalTitle').innerText = 'Tambah Sesi Pertemuan RPS';
         document.getElementById('formPertemuan').action = '<?= $baseUrl ?>/rps/pertemuan/store';
         document.getElementById('field_id').value = '';
         document.getElementById('field_pertemuan_ke').value = '';
-        document.getElementById('field_sub_cpmk_id').value = '';
+        Array.from(document.getElementById('field_sub_cpmk_id').options).forEach(option => option.selected = false);
         document.getElementById('field_bahan_kajian').value = '';
         document.getElementById('field_durasi_detail').value = '';
         document.getElementById('pertemuanModal').style.display = 'flex';
@@ -1666,7 +1788,8 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
         document.getElementById('formPertemuan').action = '<?= $baseUrl ?>/rps/pertemuan/update';
         document.getElementById('field_id').value = p.id;
         document.getElementById('field_pertemuan_ke').value = p.pertemuan_ke;
-        document.getElementById('field_sub_cpmk_id').value = p.sub_cpmk_id || '';
+        const selectedSubCpmks = String(p.sub_cpmk_ids || p.sub_cpmk_id || '').split(',');
+        Array.from(document.getElementById('field_sub_cpmk_id').options).forEach(option => option.selected = selectedSubCpmks.includes(option.value));
         document.getElementById('field_bahan_kajian').value = p.bahan_kajian || '';
         document.getElementById('field_mode_pembelajaran').value = p.mode_pembelajaran || 'ASM dan TM';
         document.getElementById('field_alokasi_waktu').value = p.alokasi_waktu || '2 x 50 menit';
@@ -1699,7 +1822,7 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
         <div style="margin-bottom: 20px;">
             <h3 style="margin: 0 0 6px 0; font-size: 1.25rem;">6 & 7. Sistem Penilaian dan Rencana Evaluasi Mahasiswa</h3>
             <p style="color: var(--text-muted); margin: 0; font-size: 0.9rem;">
-                Tentukan proporsi bobot evaluasi teori (Keaktifan, Tugas, Kuis, UTS, UAS) serta aturan ambang batas kelulusan CPMK (standar minimal 60/C).
+                Pilih jenis penilaian dari master, tentukan bobot dan hubungkan rubrik yang digunakan. Total bobot wajib tepat 100%.
             </p>
         </div>
 
@@ -1708,35 +1831,30 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
             <input type="hidden" name="tab" value="penilaian">
 
             <div style="background: var(--surface-hover); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; margin-bottom: 24px;">
-                <h4 style="margin: 0 0 14px 0; font-size: 1.05rem; color: var(--primary);">
-                    Proporsi Bobot Komponen Penilaian Teori (Total Harus 100%):
-                </h4>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px;">
-                    <div class="form-group">
-                        <label style="display: block; margin-bottom: 4px; font-weight: 600;">Keaktifan (%):</label>
-                        <input type="number" step="0.5" name="bobot_keaktifan" class="form-control calc-bobot" value="<?= floatval($rps['bobot_keaktifan'] ?? 5) ?>" required>
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+                    <div>
+                        <h4 style="margin:0 0 4px;font-size:1.05rem;color:var(--primary);">Komponen & Rubrik Penilaian</h4>
+                        <div style="font-size:.82rem;color:var(--text-muted);">Satu jenis hanya dapat dipilih sekali. Rubrik bersifat opsional dan diambil dari Rubrik Penilaian aktif.</div>
                     </div>
-                    <div class="form-group">
-                        <label style="display: block; margin-bottom: 4px; font-weight: 600;">Tugas Mandiri/Kelompok (%):</label>
-                        <input type="number" step="0.5" name="bobot_tugas" class="form-control calc-bobot" value="<?= floatval($rps['bobot_tugas'] ?? 15) ?>" required>
-                    </div>
-                    <div class="form-group">
-                        <label style="display: block; margin-bottom: 4px; font-weight: 600;">Kuis / Pretes / Postes (%):</label>
-                        <input type="number" step="0.5" name="bobot_kuis" class="form-control calc-bobot" value="<?= floatval($rps['bobot_kuis'] ?? 20) ?>" required>
-                    </div>
-                    <div class="form-group">
-                        <label style="display: block; margin-bottom: 4px; font-weight: 600;">UTS (Ujian Tengah) (%):</label>
-                        <input type="number" step="0.5" name="bobot_uts" class="form-control calc-bobot" value="<?= floatval($rps['bobot_uts'] ?? 30) ?>" required>
-                    </div>
-                    <div class="form-group">
-                        <label style="display: block; margin-bottom: 4px; font-weight: 600;">UAS (Ujian Akhir) (%):</label>
-                        <input type="number" step="0.5" name="bobot_uas" class="form-control calc-bobot" value="<?= floatval($rps['bobot_uas'] ?? 30) ?>" required>
-                    </div>
+                    <button type="button" class="btn btn-sm btn-secondary" id="addJenisPenilaian"><i class="fa-solid fa-plus"></i> Tambah Jenis</button>
                 </div>
-
-                <div style="margin-top: 14px; font-size: 0.95rem; font-weight: 700;">
-                    Total Persentase: <span id="totalEvaluasiBadge" style="color: var(--success);"><?= $totalBobotSistem ?>%</span>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%;border-collapse:collapse;min-width:720px;">
+                        <thead><tr style="text-align:left;color:var(--text-muted);font-size:.8rem;border-bottom:1px solid var(--border);"><th style="padding:8px;">Jenis Penilaian</th><th style="padding:8px;width:140px;">Bobot (%)</th><th style="padding:8px;">Rubrik Penilaian</th><th style="padding:8px;width:52px;"></th></tr></thead>
+                        <tbody id="jenisPenilaianRows">
+                        <?php foreach ($jenisPenilaian as $idx => $item): ?>
+                            <tr class="jenis-penilaian-row" style="border-bottom:1px solid var(--border);">
+                                <td style="padding:8px;"><select class="form-control jenis-select" name="jenis_penilaian[<?= $idx ?>][kode]" required><option value="">Pilih jenis...</option><?php foreach ($jenisPenilaianMaster as $kode => $nama): ?><option value="<?= htmlspecialchars($kode) ?>" <?= ($item['kode'] ?? '') === $kode ? 'selected' : '' ?>><?= htmlspecialchars($kode . ' - ' . $nama) ?></option><?php endforeach; ?></select></td>
+                                <td style="padding:8px;"><input type="number" min="0.01" max="100" step="0.01" class="form-control calc-bobot" name="jenis_penilaian[<?= $idx ?>][bobot]" value="<?= htmlspecialchars($item['bobot'] ?? 0) ?>" required></td>
+                                <td style="padding:8px;"><select class="form-control" name="jenis_penilaian[<?= $idx ?>][rubrik_id]"><option value="">Tanpa rubrik</option><?php foreach ($rubrikMaster as $r): ?><option value="<?= (int)$r['id'] ?>" <?= (string)($item['rubrik_id'] ?? '') === (string)$r['id'] ? 'selected' : '' ?>><?= htmlspecialchars($r['nama'] . ' (' . $r['jenis'] . ')') ?></option><?php endforeach; ?></select></td>
+                                <td style="padding:8px;"><button type="button" class="btn btn-sm btn-danger remove-jenis" title="Hapus"><i class="fa-solid fa-trash"></i></button></td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
                 </div>
+                <div style="margin-top:14px;font-size:.95rem;font-weight:700;">Total Persentase: <span id="totalEvaluasiBadge"><?= $totalBobotSistem ?>%</span></div>
+                <?php if (empty($rubrikMaster)): ?><div style="margin-top:10px;color:var(--warning);font-size:.82rem;"><i class="fa-solid fa-triangle-exclamation"></i> Belum ada rubrik aktif. Buat rubrik melalui menu Rubrik Penilaian agar dapat dihubungkan.</div><?php endif; ?>
             </div>
 
             <!-- RESPONSIVE 2-COLUMN CARDS UNTUK DESKRIPSI & KEBIJAKAN REMEDIAL -->
@@ -1814,6 +1932,37 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
 
             </div>
 
+            <div style="background: var(--surface-hover); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; margin-bottom: 24px;">
+                <h4 style="margin:0 0 6px; color:var(--primary);">Indikator Penilaian & Bank Soal per Sub-CPMK</h4>
+                <p style="margin:0 0 16px; color:var(--text-muted); font-size:.84rem;">Kode CPL, Sub-CPMK, dan indikator tersinkron dari Tab 2. Pilihan jenis soal otomatis mengikuti komponen penilaian yang aktif di atas dan dicetak pada kolom yang sama di dokumen RPS.</p>
+                <?php foreach ($allSubCpmks as $evalIndex => $sub):
+                    $eval = $rencanaEvaluasi[$sub['kode']] ?? [];
+                    $questions = is_array($eval['soal'] ?? null) ? $eval['soal'] : [];
+                    $targetId = 'soal_' . $evalIndex;
+                ?>
+                <div style="background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:14px;">
+                    <div style="display:grid; grid-template-columns:140px 160px 100px 1fr; gap:12px; align-items:start;">
+                        <div><small style="color:var(--text-muted);">CPL Terkait</small><div style="font-weight:700;"><?= htmlspecialchars(implode(', ', $sub['cpl_kodes'] ?? []) ?: '-') ?></div></div>
+                        <div><small style="color:var(--text-muted);">Kode Sub-CPMK</small><div style="font-weight:700;"><?= htmlspecialchars($sub['kode']) ?></div></div>
+                        <div><label style="font-size:.75rem;color:var(--text-muted);">Bobot (%)</label><input type="number" min="0" max="100" step="0.01" class="form-control" name="rencana_evaluasi[<?= htmlspecialchars($sub['kode']) ?>][bobot]" value="<?= htmlspecialchars($eval['bobot'] ?? $sub['bobot']) ?>"></div>
+                        <div><small style="color:var(--text-muted);">Rumusan Indikator</small>
+                            <?php if (!empty($sub['indikators'])): foreach ($sub['indikators'] as $ind): ?><div style="font-size:.84rem; margin-top:3px;">• <?= htmlspecialchars($ind['indikator']) ?></div><?php endforeach; else: ?><div style="font-size:.84rem;"><?= htmlspecialchars($sub['rumusan']) ?></div><?php endif; ?>
+                        </div>
+                    </div>
+                    <div id="<?= $targetId ?>" style="margin-top:12px;">
+                        <?php foreach ($questions as $qIndex => $question): ?>
+                        <div class="question-row" style="display:grid; grid-template-columns:190px 1fr 38px; gap:8px; margin-top:8px;">
+                            <select class="form-control question-type-select" name="rencana_evaluasi[<?= htmlspecialchars($sub['kode']) ?>][soal][<?= $qIndex ?>][jenis]" required data-current="<?= htmlspecialchars($question['jenis'] ?? '') ?>"><option value="">Pilih jenis penilaian</option><?php foreach ($jenisPenilaian as $komponen): $kodeJenis=$komponen['kode']; $labelJenis=$kodeJenis.' - '.($jenisPenilaianMaster[$kodeJenis] ?? $kodeJenis); ?><option value="<?= htmlspecialchars($kodeJenis) ?>" <?= ($question['jenis'] ?? '') === $kodeJenis ? 'selected' : '' ?>><?= htmlspecialchars($labelJenis) ?></option><?php endforeach; ?></select>
+                            <textarea class="form-control" rows="2" name="rencana_evaluasi[<?= htmlspecialchars($sub['kode']) ?>][soal][<?= $qIndex ?>][pertanyaan]" placeholder="Tuliskan soal atau instrumen penilaian"><?= htmlspecialchars($question['pertanyaan'] ?? '') ?></textarea>
+                            <button type="button" class="btn btn-sm btn-danger" onclick="this.closest('.question-row').remove()" title="Hapus soal"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-secondary" style="margin-top:10px;" onclick='addEvaluationQuestion(<?= json_encode($targetId) ?>, <?= json_encode($sub['kode']) ?>)'><i class="fa-solid fa-plus"></i> Tambah Soal</button>
+                </div>
+                <?php endforeach; ?>
+            </div>
+
             <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 18px; flex-wrap: wrap; gap: 12px;">
                 <span style="font-size: 0.84rem; color: var(--text-muted); display: inline-flex; align-items: center; gap: 6px;">
                     <i class="fa-solid fa-circle-info" style="color: var(--primary);"></i> Seluruh deskripsi di atas akan otomatis tercetak rapi pada Dokumen RPS Resmi.
@@ -1826,6 +1975,39 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
     </div>
 
     <script>
+    function currentAssessmentChoices() {
+        return Array.from(document.querySelectorAll('#jenisPenilaianRows .jenis-select')).map(select => {
+            const code = select.value;
+            return code ? {code, label: `${code} - ${(typeof jenisMaster !== 'undefined' && jenisMaster[code]) || code}`} : null;
+        }).filter(Boolean);
+    }
+
+    function refreshQuestionTypeOptions() {
+        const choices = currentAssessmentChoices();
+        document.querySelectorAll('.question-type-select').forEach(select => {
+            const selected = select.value || select.dataset.current || '';
+            select.innerHTML = '<option value="">Pilih jenis penilaian</option>' + choices.map(item => `<option value="${item.code}">${item.label}</option>`).join('');
+            if (choices.some(item => item.code === selected)) select.value = selected;
+            select.dataset.current = select.value;
+        });
+    }
+
+    function addEvaluationQuestion(targetId, subCode) {
+        const target = document.getElementById(targetId);
+        const index = Date.now().toString() + Math.floor(Math.random() * 1000);
+        const row = document.createElement('div');
+        row.className = 'question-row';
+        row.style.cssText = 'display:grid;grid-template-columns:190px 1fr 38px;gap:8px;margin-top:8px;';
+        const type = document.createElement('select');
+        type.className = 'form-control question-type-select'; type.name = `rencana_evaluasi[${subCode}][soal][${index}][jenis]`; type.required = true;
+        type.innerHTML = '<option value="">Pilih jenis penilaian</option>' + currentAssessmentChoices().map(item => `<option value="${item.code}">${item.label}</option>`).join('');
+        const question = document.createElement('textarea');
+        question.className = 'form-control'; question.rows = 2; question.name = `rencana_evaluasi[${subCode}][soal][${index}][pertanyaan]`; question.placeholder = 'Tuliskan soal atau instrumen penilaian';
+        const remove = document.createElement('button');
+        remove.type = 'button'; remove.className = 'btn btn-sm btn-danger'; remove.title = 'Hapus soal'; remove.innerHTML = '<i class="fa-solid fa-trash"></i>'; remove.onclick = () => row.remove();
+        row.append(type, question, remove); target.appendChild(row); type.focus();
+    }
+
     function autoResizePenilaian(el) {
         if (!el) return;
         el.style.height = 'auto';
@@ -1871,6 +2053,54 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
         if (eDesc) autoResizePenilaian(eDesc);
     })();
 
+    const jenisMaster = <?= json_encode($jenisPenilaianMaster, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+    const rubrikMasterData = <?= json_encode($rubrikMaster, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+    const penilaianForm = document.querySelector('input[name="tab"][value="penilaian"]')?.closest('form');
+    const rowsContainer = document.getElementById('jenisPenilaianRows');
+
+    function escapeHtml(value) {
+        return String(value).replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[char]));
+    }
+    function updateTotalEvaluasi() {
+        let sum = 0;
+        document.querySelectorAll('#jenisPenilaianRows .calc-bobot').forEach(inp => sum += parseFloat(inp.value) || 0);
+        sum = Math.round(sum * 100) / 100;
+        const badge = document.getElementById('totalEvaluasiBadge');
+        if (badge) {
+            const valid = Math.abs(sum - 100) < 0.001;
+            badge.style.color = valid ? 'var(--success)' : 'var(--danger)';
+            badge.textContent = sum + '% ' + (valid ? '✓ (Valid)' : '⚠ (Harus 100%)');
+        }
+        return sum;
+    }
+    function refreshJenisOptions() {
+        const selected = Array.from(document.querySelectorAll('.jenis-select')).map(el => el.value).filter(Boolean);
+        document.querySelectorAll('.jenis-select').forEach(select => Array.from(select.options).forEach(option => {
+            option.disabled = option.value !== '' && option.value !== select.value && selected.includes(option.value);
+        }));
+    }
+    function bindJenisRow(row) {
+        row.querySelector('.calc-bobot')?.addEventListener('input', updateTotalEvaluasi);
+        row.querySelector('.jenis-select')?.addEventListener('change', () => { refreshJenisOptions(); refreshQuestionTypeOptions(); });
+        row.querySelector('.remove-jenis')?.addEventListener('click', () => { row.remove(); refreshJenisOptions(); refreshQuestionTypeOptions(); updateTotalEvaluasi(); });
+    }
+    document.querySelectorAll('.jenis-penilaian-row').forEach(bindJenisRow);
+    document.getElementById('addJenisPenilaian')?.addEventListener('click', () => {
+        const index = Date.now();
+        const jenisOptions = Object.entries(jenisMaster).map(([kode, nama]) => `<option value="${escapeHtml(kode)}">${escapeHtml(kode + ' - ' + nama)}</option>`).join('');
+        const rubrikOptions = rubrikMasterData.map(r => `<option value="${Number(r.id)}">${escapeHtml(r.nama + ' (' + r.jenis + ')')}</option>`).join('');
+        const row = document.createElement('tr');
+        row.className = 'jenis-penilaian-row'; row.style.borderBottom = '1px solid var(--border)';
+        row.innerHTML = `<td style="padding:8px"><select class="form-control jenis-select" name="jenis_penilaian[${index}][kode]" required><option value="">Pilih jenis...</option>${jenisOptions}</select></td><td style="padding:8px"><input type="number" min="0.01" max="100" step="0.01" class="form-control calc-bobot" name="jenis_penilaian[${index}][bobot]" required></td><td style="padding:8px"><select class="form-control" name="jenis_penilaian[${index}][rubrik_id]"><option value="">Tanpa rubrik</option>${rubrikOptions}</select></td><td style="padding:8px"><button type="button" class="btn btn-sm btn-danger remove-jenis" title="Hapus"><i class="fa-solid fa-trash"></i></button></td>`;
+        rowsContainer.appendChild(row); bindJenisRow(row); refreshJenisOptions(); refreshQuestionTypeOptions(); row.querySelector('select').focus();
+    });
+    penilaianForm?.addEventListener('submit', event => {
+        if (document.querySelectorAll('.jenis-penilaian-row').length === 0 || Math.abs(updateTotalEvaluasi() - 100) >= 0.001) {
+            event.preventDefault(); alert('Total bobot seluruh jenis penilaian wajib tepat 100%.');
+        }
+    });
+    refreshJenisOptions(); refreshQuestionTypeOptions(); updateTotalEvaluasi();
+
     document.querySelectorAll('.calc-bobot').forEach(input => {
         input.addEventListener('input', () => {
             let sum = 0;
@@ -1895,6 +2125,138 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
      TAB 7: RUBRIK PENILAIAN (SEKSI 8)
      ======================================================================== -->
 <?php if ($activeTab === 'rubrik'): ?>
+    <?php
+    $rubrikUsage = [];
+    foreach ($jenisPenilaian as $komponen) {
+        $rubrikId = (int)($komponen['rubrik_id'] ?? 0);
+        if (!$rubrikId) continue;
+        $kodeJenis = $komponen['kode'] ?? '';
+        $rubrikUsage[$rubrikId][] = [
+            'jenis' => $jenisPenilaianMaster[$kodeJenis] ?? $kodeJenis,
+            'bobot' => (float)($komponen['bobot'] ?? 0)
+        ];
+    }
+    ?>
+    <style>
+    .rubrik-master-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:14px;align-items:start}
+    .rubrik-master-card{border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0;transition:.2s ease}
+    .rubrik-master-card:has(.rubrik-mk-editor[open]){grid-column:1/-1}
+    .rubrik-mk-editor{border-top:1px solid var(--border);padding-top:12px}
+    .rubrik-mk-editor summary{cursor:pointer;font-weight:750;color:#38bdf8;list-style:none;display:flex;align-items:center;gap:7px;padding:3px 0}
+    .rubrik-mk-editor summary::-webkit-details-marker{display:none}
+    .rubrik-mk-editor summary:before{content:'\25B6';font-size:.68rem;transition:transform .15s ease}
+    .rubrik-mk-editor[open] summary:before{transform:rotate(90deg)}
+    .rubrik-mk-panel{margin-top:14px;padding:16px;border:1px solid var(--border);border-radius:10px;background:rgba(2,6,23,.28)}
+    .rubrik-mk-field-label{display:block;font-size:.76rem;font-weight:700;color:var(--text-muted);margin-bottom:6px}
+    .rubrik-mk-input{width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--text-main);padding:9px 11px;font:inherit;line-height:1.35;outline:none;transition:border-color .15s,box-shadow .15s}
+    .rubrik-mk-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,.14)}
+    textarea.rubrik-mk-input{resize:vertical;min-height:72px}
+    .rubrik-mk-table-wrap{overflow:auto;margin-top:14px;border:1px solid var(--border);border-radius:9px;scrollbar-gutter:stable}
+    .rubrik-mk-table{width:100%;min-width:900px;border-collapse:separate;border-spacing:0;font-size:.79rem}
+    .rubrik-mk-table th{padding:10px;background:var(--surface-hover);color:var(--text-muted);text-align:left;vertical-align:top;border-bottom:1px solid var(--border)}
+    .rubrik-mk-table td{padding:9px;vertical-align:top;border-bottom:1px solid var(--border);background:var(--surface)}
+    .rubrik-mk-table tr:last-child td{border-bottom:0}
+    .rubrik-mk-table .criteria-col{width:230px;min-width:230px;position:sticky;left:0;z-index:2}
+    .rubrik-mk-table .weight-col{width:90px;min-width:90px;text-align:center}
+    .rubrik-level-head{display:grid;grid-template-columns:minmax(125px,1fr) 78px;gap:6px;min-width:215px}
+    .rubrik-level-head small{grid-column:1/-1;font-size:.69rem;color:var(--text-muted)}
+    .rubrik-mk-help{display:flex;align-items:center;gap:6px;font-size:.76rem;color:var(--text-muted);margin-top:9px}
+    @media(max-width:700px){.rubrik-master-grid{grid-template-columns:1fr}.rubrik-mk-panel{padding:12px}.rubrik-mk-table{min-width:780px}}
+    </style>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:24px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:20px;">
+            <div>
+                <h3 style="margin:0 0 6px;font-size:1.25rem;"><i class="fa-solid fa-list-check" style="color:var(--primary);margin-right:8px;"></i>8. Rubrik Penilaian RPS</h3>
+                <p style="color:var(--text-muted);margin:0;font-size:.88rem;max-width:760px;">Rubrik dari master disalin saat dipilih. Perubahan di halaman ini hanya berlaku untuk <?= htmlspecialchars($mk['kode']) ?> dan tidak mengubah template global.</p>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <a href="<?= $baseUrl ?>/rps?mk_id=<?= $mk['id'] ?>&tab=penilaian" class="btn btn-secondary"><i class="fa-solid fa-link"></i> Atur Hubungan & Bobot</a>
+                <a href="<?= $baseUrl ?>/rubrik" class="btn btn-primary"><i class="fa-solid fa-table-cells"></i> Kelola Master Rubrik</a>
+            </div>
+        </div>
+
+        <form action="<?= $baseUrl ?>/rps/save-settings" method="POST" id="rubrikMkForm">
+        <input type="hidden" name="mata_kuliah_id" value="<?= $mk['id'] ?>"><input type="hidden" name="tab" value="rubrik">
+        <div class="rubrik-master-grid">
+            <?php foreach ($rubrikMaster as $item):
+                $usages = $rubrikUsage[(int)$item['id']] ?? [];
+                $usedWeight = array_sum(array_column($usages, 'bobot'));
+                $snapshot = $rubrikMk[(string)(int)$item['id']] ?? null;
+            ?>
+            <div class="rubrik-master-card" style="border:1px solid <?= $usages ? 'rgba(16,185,129,.5)' : 'var(--border)' ?>;background:<?= $usages ? 'rgba(16,185,129,.05)' : 'var(--surface-hover)' ?>;">
+                <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;">
+                    <div>
+                        <div style="color:var(--primary);font-weight:800;font-size:.76rem;letter-spacing:.04em;"><?= htmlspecialchars($item['kode_jenis']) ?></div>
+                        <div style="font-weight:750;color:var(--text-main);margin-top:3px;"><?= htmlspecialchars($item['nama']) ?></div>
+                        <div style="font-size:.78rem;color:var(--text-muted);margin-top:5px;line-height:1.45;"><?= htmlspecialchars($item['karakteristik']) ?><br>Contoh: <?= htmlspecialchars($item['contoh_penggunaan']) ?></div>
+                    </div>
+                    <span style="white-space:nowrap;padding:4px 8px;border-radius:999px;font-size:.72rem;font-weight:700;background:<?= $usages ? 'rgba(16,185,129,.15)' : 'rgba(148,163,184,.12)' ?>;color:<?= $usages ? 'var(--success)' : 'var(--text-muted)' ?>;"><?= $usages ? 'DIGUNAKAN' : 'BELUM DIPAKAI' ?></span>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:.78rem;">
+                    <div style="padding:8px;background:var(--surface);border-radius:6px;"><span style="color:var(--text-muted);">Kriteria</span><br><strong><?= (int)$item['total_kriteria'] ?></strong></div>
+                    <div style="padding:8px;background:var(--surface);border-radius:6px;"><span style="color:var(--text-muted);">Level</span><br><strong><?= (int)$item['total_level'] ?></strong></div>
+                    <div style="padding:8px;background:var(--surface);border-radius:6px;"><span style="color:var(--text-muted);">Bobot Rubrik</span><br><strong style="color:var(--success);"><?= (float)$item['total_bobot'] ?>%</strong></div>
+                </div>
+                <?php if ($usages): ?>
+                <div style="font-size:.8rem;padding:9px 10px;border-radius:6px;background:rgba(16,185,129,.1);color:var(--text-main);"><strong>Terhubung:</strong> <?php $labels=[]; foreach($usages as $usage) $labels[]=$usage['jenis'].' ('.$usage['bobot'].'%)'; echo htmlspecialchars(implode(', ', $labels)); ?> <strong>— total <?= $usedWeight ?>%</strong></div>
+                <?php endif; ?>
+                <div style="display:flex;gap:8px;margin-top:auto;">
+                    <a href="<?= $baseUrl ?>/rubrik/detail?id=<?= (int)$item['id'] ?>" class="btn btn-sm btn-secondary" target="_blank"><i class="fa-solid fa-eye"></i> Lihat Template Master</a>
+                </div>
+                <?php if ($usages && $snapshot): ?>
+                <details class="rubrik-mk-editor">
+                    <summary><i class="fa-solid fa-pen-to-square"></i> Edit salinan rubrik untuk MK ini</summary>
+                    <div class="rubrik-mk-panel">
+                        <label class="rubrik-mk-field-label">Nama rubrik pada mata kuliah</label>
+                        <input class="rubrik-mk-input" name="rubrik_mk[<?= (int)$item['id'] ?>][nama]" value="<?= htmlspecialchars($snapshot['nama'] ?? $item['nama']) ?>" required>
+                        <div class="rubrik-mk-table-wrap"><table class="rubrik-mk-table">
+                            <thead><tr><th class="criteria-col">Indikator / Kriteria</th><th class="weight-col">Bobot (%)</th><?php foreach (($snapshot['levels'] ?? []) as $lIndex => $level): ?><th><div class="rubrik-level-head"><input class="rubrik-mk-input" name="rubrik_mk[<?= (int)$item['id'] ?>][levels][<?= $lIndex ?>][nama]" value="<?= htmlspecialchars($level['nama']) ?>" required aria-label="Nama level"><input type="number" step="0.01" class="rubrik-mk-input" name="rubrik_mk[<?= (int)$item['id'] ?>][levels][<?= $lIndex ?>][skor]" value="<?= (float)$level['skor'] ?>" required aria-label="Skor level"><small>Nama level dan skor</small></div></th><?php endforeach; ?></tr></thead>
+                            <tbody><?php foreach (($snapshot['criteria'] ?? []) as $cIndex => $criterion): ?><tr>
+                                <td class="criteria-col"><textarea class="rubrik-mk-input" rows="3" name="rubrik_mk[<?= (int)$item['id'] ?>][criteria][<?= $cIndex ?>][nama]" required><?= htmlspecialchars($criterion['nama']) ?></textarea></td>
+                                <td class="weight-col"><input type="number" min="0" max="100" step="0.01" class="rubrik-mk-input rubrik-mk-bobot" name="rubrik_mk[<?= (int)$item['id'] ?>][criteria][<?= $cIndex ?>][bobot]" value="<?= (float)$criterion['bobot'] ?>" required></td>
+                                <?php foreach (($snapshot['levels'] ?? []) as $lIndex => $level): ?><td><textarea class="rubrik-mk-input" rows="4" name="rubrik_mk[<?= (int)$item['id'] ?>][criteria][<?= $cIndex ?>][descriptors][<?= $lIndex ?>]" placeholder="Deskriptor capaian pada level <?= htmlspecialchars($level['nama']) ?>"><?= htmlspecialchars($criterion['descriptors'][$lIndex] ?? '') ?></textarea></td><?php endforeach; ?>
+                            </tr><?php endforeach; ?></tbody>
+                        </table></div>
+                        <div class="rubrik-mk-help"><i class="fa-solid fa-circle-info"></i> Total bobot kriteria: <strong class="rubrik-mk-total">0%</strong> — wajib 100%.</div>
+                    </div>
+                </details>
+                <?php elseif ($usages): ?>
+                <div style="font-size:.78rem;color:var(--warning);">Simpan kembali tab Sistem Penilaian untuk membuat salinan rubrik khusus mata kuliah ini.</div>
+                <?php endif; ?>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        <?php if (!empty($rubrikMk)): ?><div style="display:flex;justify-content:flex-end;margin-top:18px;"><button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Simpan Rubrik Khusus Mata Kuliah</button></div><?php endif; ?>
+        </form>
+        <script>
+        function updateRubrikMkTotals() {
+            document.querySelectorAll('#rubrikMkForm .rubrik-mk-editor').forEach(editor => {
+                const total = Array.from(editor.querySelectorAll('.rubrik-mk-bobot')).reduce((sum, input) => sum + (parseFloat(input.value) || 0), 0);
+                const badge = editor.querySelector('.rubrik-mk-total');
+                if (badge) {
+                    badge.textContent = (Math.round(total * 100) / 100) + '%';
+                    badge.style.color = Math.abs(total - 100) < 0.001 ? 'var(--success)' : 'var(--danger)';
+                }
+            });
+        }
+        document.querySelectorAll('#rubrikMkForm .rubrik-mk-bobot').forEach(input => input.addEventListener('input', updateRubrikMkTotals));
+        updateRubrikMkTotals();
+        document.getElementById('rubrikMkForm')?.addEventListener('submit', event => {
+            let valid = true;
+            document.querySelectorAll('#rubrikMkForm details').forEach(editor => {
+                const total = Array.from(editor.querySelectorAll('.rubrik-mk-bobot')).reduce((sum, input) => sum + (parseFloat(input.value) || 0), 0);
+                if (Math.abs(total - 100) >= 0.001) valid = false;
+            });
+            if (!valid) {
+                event.preventDefault();
+                alert('Total bobot kriteria pada setiap rubrik wajib tepat 100%.');
+            }
+        });
+        </script>
+    </div>
+<?php endif; ?>
+
+<?php if (false && $activeTab === 'rubrik'): ?>
     <?php
     // Ambil template default untuk referensi reset
     $defaultRubrik = RpsModel::getDefaultRubrikTemplates();
@@ -3213,6 +3575,25 @@ $totalBobotSistem = floatval($rps['bobot_keaktifan'] ?? 5) +
     </script>
 <?php endif; ?>
 
+<?php if(!empty($rpsAssignment)): ?>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  const taId=<?= (int)$rpsAssignment['tahun_akademik_id'] ?>;
+  document.querySelectorAll('a[href*="/rps?mk_id="]').forEach(a=>{const u=new URL(a.href,location.origin);if(!u.searchParams.has('ta_id')){u.searchParams.set('ta_id',taId);a.href=u.toString()}});
+  document.querySelectorAll('a[href*="/rps/cpmk/"],a[href*="/rps/sub_cpmk/"]').forEach(a=>a.style.display='none');
+});
+</script>
+<?php endif; ?>
+<?php if(!$rpsCanEdit): ?>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('form').forEach(form=>{
+    if(form.action.includes('/rps/')) form.querySelectorAll('input,select,textarea,button').forEach(el=>el.disabled=true);
+  });
+  document.querySelectorAll('a[href*="/rps/cpmk/"],a[href*="/rps/sub_cpmk/"],a[href*="/rps/pertemuan/"]').forEach(a=>{a.style.display='none'});
+});
+</script>
+<?php endif; ?>
 <?php
 $content = ob_get_clean();
 require __DIR__ . '/../layouts/main.php';

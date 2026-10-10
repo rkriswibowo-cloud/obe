@@ -55,6 +55,7 @@ $action = $isEdit ? '/obe/public/kelas/update' : '/obe/public/kelas/store';
                     </option>
                 <?php endforeach; ?>
             </select>
+            <small style="display:block;margin-top:6px;color:var(--text-muted)"><i class="fa-solid fa-circle-info"></i> Jika MK dan tahun akademik memiliki pengaturan pengampu, PJMK serta tim teaching akan disinkronkan otomatis saat disimpan.</small>
         </div>
 
         <div style="margin-bottom: 20px;">

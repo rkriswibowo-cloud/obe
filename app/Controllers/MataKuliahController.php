@@ -11,17 +11,21 @@ class MataKuliahController {
     private $kurikulumModel;
     private $prodiModel;
     private $auditModel;
+    private $access;
 
     public function __construct() {
         $this->mkModel = new MataKuliahModel();
         $this->kurikulumModel = new KurikulumModel();
         $this->prodiModel = new ProdiModel();
         $this->auditModel = new AuditLogModel();
+        $this->access = new AccessContext();
     }
 
     public function index() {
-        $selectedProdiId = $_GET['prodi_id'] ?? '';
+        $selectedProdiId = $_GET['prodi_id'] ?? ($this->access->isKaprodi() ? $this->access->primaryManagedProdiId() : '');
         $selectedKurikulumId = $_GET['kurikulum_id'] ?? '';
+        if ($selectedProdiId && !$this->access->isSuperAdmin()) $this->access->assertProdi($selectedProdiId);
+        if ($selectedKurikulumId && !$this->access->isSuperAdmin()) $this->access->assertKurikulum($selectedKurikulumId);
 
         $filters = [
             'prodi_id' => $selectedProdiId,
@@ -38,7 +42,7 @@ class MataKuliahController {
         $totalData = $this->mkModel->countAll($filters);
         $totalPages = ceil($totalData / $limit);
 
-        $prodiList = $this->prodiModel->getAll();
+        $prodiList = $this->access->filterProdiRows($this->prodiModel->getAll());
         $kurikulumList = $this->kurikulumModel->getAll($selectedProdiId ?: null);
         $mkList = $this->mkModel->getAll($filters, $limit, $offset);
 
@@ -46,13 +50,14 @@ class MataKuliahController {
     }
 
     public function create() {
-        $prodiList = $this->prodiModel->getAll();
-        $kurikulumList = $this->kurikulumModel->getAll();
+        $prodiList = $this->access->filterProdiRows($this->prodiModel->getAll());
+        $kurikulumList = $this->access->filterKurikulumRows($this->kurikulumModel->getAll());
         require_once __DIR__ . '/../../views/mata_kuliah/create.php';
     }
 
     public function store() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!$this->access->isSuperAdmin()) $this->access->assertKurikulum($_POST['kurikulum_id'] ?? 0);
             $data = [
                 'kurikulum_id' => $_POST['kurikulum_id'] ?? '',
                 'kode' => strtoupper(trim($_POST['kode'] ?? '')),
@@ -92,14 +97,19 @@ class MataKuliahController {
             exit;
         }
 
-        $prodiList = $this->prodiModel->getAll();
-        $kurikulumList = $this->kurikulumModel->getAll();
+        if (!$this->access->isSuperAdmin()) $this->access->assertMataKuliah($id);
+        $prodiList = $this->access->filterProdiRows($this->prodiModel->getAll());
+        $kurikulumList = $this->access->filterKurikulumRows($this->kurikulumModel->getAll());
         require_once __DIR__ . '/../../views/mata_kuliah/edit.php';
     }
 
     public function update() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = (int)$_POST['id'];
+            if (!$this->access->isSuperAdmin()) {
+                $this->access->assertMataKuliah($id);
+                $this->access->assertKurikulum($_POST['kurikulum_id'] ?? 0);
+            }
             $data = [
                 'kurikulum_id' => $_POST['kurikulum_id'] ?? '',
                 'kode' => strtoupper(trim($_POST['kode'] ?? '')),
@@ -129,6 +139,7 @@ class MataKuliahController {
         $id = $_GET['id'] ?? null;
         $baseUrl = $GLOBALS['config']['base_url'] ?? '/obe/public';
         if ($id) {
+            if (!$this->access->isSuperAdmin()) $this->access->assertMataKuliah($id);
             $mk = $this->mkModel->getById($id);
             if ($this->mkModel->delete($id)) {
                 if ($mk) {

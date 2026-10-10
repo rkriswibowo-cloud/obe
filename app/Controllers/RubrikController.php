@@ -10,17 +10,19 @@ class RubrikController {
 
     public function index() {
         $rubrikList = $this->rubrikModel->getAll();
+        $jenisRubrikMaster = RubrikModel::getJenisMaster();
         require __DIR__ . '/../../views/rubrik/index.php';
     }
 
     public function create() {
+        $jenisRubrikMaster = RubrikModel::getJenisMaster();
         require __DIR__ . '/../../views/rubrik/create.php';
     }
 
     public function store() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $nama = trim($_POST['nama'] ?? '');
-            $jenis = $_POST['jenis'] ?? 'Analitik';
+            $kodeJenis = $_POST['kode_jenis'] ?? 'RB-ANA';
             $status = $_POST['status'] ?? 'ACTIVE';
 
             // Levels: array of ['nama' => ..., 'skor' => ...]
@@ -52,18 +54,20 @@ class RubrikController {
             // Descriptors: descriptors[kIdx][lIdx] = text
             $descriptors = $_POST['deskriptor'] ?? [];
 
-            if (empty($nama) || empty($levels) || empty($kriterias)) {
+            if (empty($nama) || !isset(RubrikModel::getJenisMaster()[$kodeJenis]) || empty($levels) || empty($kriterias)) {
                 $error = "Nama rubrik, minimal 1 level nilai, dan minimal 1 kriteria wajib diisi.";
+                $jenisRubrikMaster = RubrikModel::getJenisMaster();
                 require __DIR__ . '/../../views/rubrik/create.php';
                 return;
             }
 
-            $rubrikId = $this->rubrikModel->create($nama, $jenis, $status, $levels, $kriterias, $descriptors);
+            $rubrikId = $this->rubrikModel->create($nama, $kodeJenis, $status, $levels, $kriterias, $descriptors);
             if ($rubrikId) {
                 header('Location: ' . ($GLOBALS['config']['base_url'] ?? '/obe/public') . '/rubrik/detail?id=' . $rubrikId . '&success=created');
                 exit;
             } else {
                 $error = "Gagal menyimpan rubrik ke database.";
+                $jenisRubrikMaster = RubrikModel::getJenisMaster();
                 require __DIR__ . '/../../views/rubrik/create.php';
             }
         }

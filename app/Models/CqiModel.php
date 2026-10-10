@@ -172,7 +172,7 @@ class CqiModel {
                 c.kode as cpl_kode,
                 c.rumusan as cpl_rumusan,
                 c.target_capaian,
-                ROUND(AVG(an.nilai), 2) as rata_rata_capaian,
+                ROUND(SUM(an.nilai * sc.bobot) / NULLIF(SUM(sc.bobot), 0), 2) as rata_rata_capaian,
                 COUNT(DISTINCT an.mahasiswa_id) as total_mahasiswa_terukur
             FROM cpl c
             JOIN cpmk_cpl cc ON c.id = cc.cpl_id

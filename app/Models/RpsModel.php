@@ -10,6 +10,17 @@ class RpsModel {
         $this->db = Database::getInstance();
     }
 
+    public static function getJenisPenilaianMaster() {
+        return [
+            'AKT' => 'Keaktifan', 'KUI' => 'Kuis', 'TGI' => 'Tugas Individu',
+            'TGK' => 'Tugas Kelompok', 'PRS' => 'Presentasi', 'STK' => 'Studi Kasus',
+            'PRJ' => 'Proyek', 'PRK' => 'Praktikum', 'RSP' => 'Responsi',
+            'LPR' => 'Laporan Praktikum', 'UK' => 'Unjuk Kerja', 'POR' => 'Portofolio',
+            'OBS' => 'Observasi', 'TL' => 'Tes Lisan', 'TT' => 'Tes Tertulis',
+            'UTS' => 'UTS', 'UAS' => 'UAS', 'UPR' => 'Ujian Praktik', 'PRO' => 'Produk/Karya'
+        ];
+    }
+
     public function getByMkId($mkId) {
         $stmt = $this->db->prepare("SELECT * FROM rps WHERE mata_kuliah_id = :mk_id LIMIT 1");
         $stmt->execute(['mk_id' => $mkId]);
@@ -70,6 +81,8 @@ class RpsModel {
                 'bobot_kuis' => 20.00,
                 'bobot_uts' => 30.00,
                 'bobot_uas' => 30.00,
+                'jenis_penilaian_json' => null,
+                'rubrik_mk_json' => null,
                 'sistem_evaluasi_desc' => 'Setiap mahasiswa harus meraih nilai/ predikat 60/C untuk masing-masing CPMK. Jika belum memenuhi maka mahasiswa wajib melakukan asesmen perbaikan maksimal sebanyak dua kali.',
                 'rencana_evaluasi_json' => null,
                 'rubrik_penilaian_json' => null,
@@ -86,13 +99,13 @@ class RpsModel {
             ketersediaan, bentuk_pembelajaran, media_pembelajaran, kelompok_keilmuan,
             prasyarat, dosen_pengampu, tim_teaching_json, tahun_akademik, referensi,
             sistem_penilaian_desc, bobot_keaktifan, bobot_tugas, bobot_kuis, bobot_uts, bobot_uas,
-            sistem_evaluasi_desc, rencana_evaluasi_json, rubrik_penilaian_json
+            sistem_evaluasi_desc, rencana_evaluasi_json, rubrik_penilaian_json, jenis_penilaian_json, rubrik_mk_json
         ) VALUES (
             :mk_id, :versi, :fakultas, :program_studi, :kelas, :sifat, :semester_ke,
             :ketersediaan, :bentuk_pembelajaran, :media_pembelajaran, :kelompok_keilmuan,
             :prasyarat, :dosen_pengampu, :tim_teaching_json, :tahun_akademik, :referensi,
             :sistem_penilaian_desc, :bobot_keaktifan, :bobot_tugas, :bobot_kuis, :bobot_uts, :bobot_uas,
-            :sistem_evaluasi_desc, :rencana_evaluasi_json, :rubrik_penilaian_json
+            :sistem_evaluasi_desc, :rencana_evaluasi_json, :rubrik_penilaian_json, :jenis_penilaian_json, :rubrik_mk_json
         ) ON DUPLICATE KEY UPDATE
             versi = VALUES(versi),
             fakultas = VALUES(fakultas),
@@ -117,7 +130,9 @@ class RpsModel {
             bobot_uas = VALUES(bobot_uas),
             sistem_evaluasi_desc = VALUES(sistem_evaluasi_desc),
             rencana_evaluasi_json = VALUES(rencana_evaluasi_json),
-            rubrik_penilaian_json = VALUES(rubrik_penilaian_json)";
+            rubrik_penilaian_json = VALUES(rubrik_penilaian_json),
+            jenis_penilaian_json = VALUES(jenis_penilaian_json),
+            rubrik_mk_json = VALUES(rubrik_mk_json)";
 
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([
@@ -145,8 +160,39 @@ class RpsModel {
             'bobot_uas' => floatval($data['bobot_uas'] ?? 30.00),
             'sistem_evaluasi_desc' => $data['sistem_evaluasi_desc'] ?? 'Setiap mahasiswa harus meraih nilai/ predikat 60/C untuk masing-masing CPMK.',
             'rencana_evaluasi_json' => !empty($data['rencana_evaluasi_json']) ? $data['rencana_evaluasi_json'] : null,
-            'rubrik_penilaian_json' => !empty($data['rubrik_penilaian_json']) ? $data['rubrik_penilaian_json'] : null
+            'rubrik_penilaian_json' => !empty($data['rubrik_penilaian_json']) ? $data['rubrik_penilaian_json'] : null,
+            'jenis_penilaian_json' => !empty($data['jenis_penilaian_json']) ? $data['jenis_penilaian_json'] : null,
+            'rubrik_mk_json' => !empty($data['rubrik_mk_json']) ? $data['rubrik_mk_json'] : null
         ]);
+    }
+
+    public function saveSemesterArchive(int $assignmentId, int $mkId, int $taId): void {
+        $rps = $this->getByMkId($mkId);
+        $pertemuan = $this->db->prepare("SELECT rp.*,
+            GROUP_CONCAT(sc.id ORDER BY sc.urutan,sc.id) sub_cpmk_ids,
+            GROUP_CONCAT(sc.kode ORDER BY sc.urutan,sc.id SEPARATOR ', ') sub_cpmk_kode,
+            GROUP_CONCAT(sc.rumusan ORDER BY sc.urutan,sc.id SEPARATOR ' | ') sub_cpmk_rumusan
+            FROM rps_pertemuan rp
+            LEFT JOIN rps_pertemuan_sub_cpmk rpsc ON rpsc.rps_pertemuan_id=rp.id
+            LEFT JOIN sub_cpmk sc ON sc.id=rpsc.sub_cpmk_id
+            WHERE rp.mata_kuliah_id=? GROUP BY rp.id ORDER BY rp.pertemuan_ke");
+        $pertemuan->execute([$mkId]);
+        $stmt=$this->db->prepare("INSERT INTO rps_semester_arsip
+            (pengampu_id,mata_kuliah_id,tahun_akademik_id,rps_json,pertemuan_json)
+            VALUES(?,?,?,?,?) ON DUPLICATE KEY UPDATE rps_json=VALUES(rps_json),
+            pertemuan_json=VALUES(pertemuan_json),updated_at=CURRENT_TIMESTAMP");
+        $stmt->execute([$assignmentId,$mkId,$taId,
+            json_encode($rps,JSON_UNESCAPED_UNICODE),
+            json_encode($pertemuan->fetchAll(PDO::FETCH_ASSOC),JSON_UNESCAPED_UNICODE)]);
+    }
+
+    public function getSemesterArchive(int $assignmentId): ?array {
+        $stmt=$this->db->prepare('SELECT * FROM rps_semester_arsip WHERE pengampu_id=? LIMIT 1');
+        $stmt->execute([$assignmentId]);$row=$stmt->fetch(PDO::FETCH_ASSOC);
+        if(!$row)return null;
+        $row['rps']=json_decode($row['rps_json']??'[]',true)?:[];
+        $row['pertemuan']=json_decode($row['pertemuan_json']??'[]',true)?:[];
+        return $row;
     }
 
     /**
@@ -243,10 +289,14 @@ class RpsModel {
 
         // 5. Rincian Pertemuan 1 s.d. 16
         $stmtPertemuan = $this->db->prepare("
-            SELECT rp.*, sc.kode as sub_cpmk_kode, sc.rumusan as sub_cpmk_rumusan
+            SELECT rp.*, GROUP_CONCAT(sc.id ORDER BY sc.urutan, sc.id) AS sub_cpmk_ids,
+                   GROUP_CONCAT(sc.kode ORDER BY sc.urutan, sc.id SEPARATOR ', ') AS sub_cpmk_kode,
+                   GROUP_CONCAT(sc.rumusan ORDER BY sc.urutan, sc.id SEPARATOR ' | ') AS sub_cpmk_rumusan
             FROM rps_pertemuan rp
-            LEFT JOIN sub_cpmk sc ON rp.sub_cpmk_id = sc.id
+            LEFT JOIN rps_pertemuan_sub_cpmk rpsc ON rpsc.rps_pertemuan_id = rp.id
+            LEFT JOIN sub_cpmk sc ON rpsc.sub_cpmk_id = sc.id
             WHERE rp.mata_kuliah_id = ?
+            GROUP BY rp.id
             ORDER BY rp.pertemuan_ke ASC
         ");
         $stmtPertemuan->execute([$mkId]);
@@ -270,7 +320,37 @@ class RpsModel {
             $rencanaEvaluasi = json_decode($rps['rencana_evaluasi_json'], true) ?: [];
         }
 
-        // 8. Rubrik Penilaian
+        // 8. Komponen jenis penilaian dan rubrik yang dihubungkan
+        $jenisPenilaian = [];
+        if (!empty($rps['jenis_penilaian_json'])) {
+            $parsedJenis = json_decode($rps['jenis_penilaian_json'], true);
+            $jenisPenilaian = is_array($parsedJenis) ? $parsedJenis : [];
+        }
+        if (empty($jenisPenilaian)) {
+            $jenisPenilaian = [
+                ['kode' => 'AKT', 'bobot' => (float)($rps['bobot_keaktifan'] ?? 5), 'rubrik_id' => null],
+                ['kode' => 'TGI', 'bobot' => (float)($rps['bobot_tugas'] ?? 15), 'rubrik_id' => null],
+                ['kode' => 'KUI', 'bobot' => (float)($rps['bobot_kuis'] ?? 20), 'rubrik_id' => null],
+                ['kode' => 'UTS', 'bobot' => (float)($rps['bobot_uts'] ?? 30), 'rubrik_id' => null],
+                ['kode' => 'UAS', 'bobot' => (float)($rps['bobot_uas'] ?? 30), 'rubrik_id' => null]
+            ];
+        }
+        $rubrikMaster = $this->db->query("
+            SELECT r.*,
+                   (SELECT COUNT(*) FROM rubrik_kriteria rk WHERE rk.rubrik_id=r.id) AS total_kriteria,
+                   (SELECT COUNT(*) FROM rubrik_level rl WHERE rl.rubrik_id=r.id) AS total_level,
+                   (SELECT COALESCE(SUM(rk.bobot),0) FROM rubrik_kriteria rk WHERE rk.rubrik_id=r.id) AS total_bobot
+            FROM rubrik r
+            WHERE r.status='ACTIVE'
+            ORDER BY FIELD(r.kode_jenis,'RB-ANA','RB-HOL','RB-SKL','RB-CHK','RB-SKR','RB-KUN','RB-CMP','RB-PRF','RB-PEER','RB-SELF'), r.id
+        ")->fetchAll(PDO::FETCH_ASSOC);
+        $rubrikMk = [];
+        if (!empty($rps['rubrik_mk_json'])) {
+            $parsedRubrikMk = json_decode($rps['rubrik_mk_json'], true);
+            $rubrikMk = is_array($parsedRubrikMk) ? $parsedRubrikMk : [];
+        }
+
+        // 9. Rubrik Penilaian
         $defaultRubrik = self::getDefaultRubrikTemplates();
         $rubrik = [];
         if (!empty($rps['rubrik_penilaian_json'])) {
@@ -327,6 +407,10 @@ class RpsModel {
             'pertemuanList' => $pertemuanList,
             'referensiList' => $referensiList,
             'rencanaEvaluasi' => $rencanaEvaluasi,
+            'jenisPenilaian' => $jenisPenilaian,
+            'jenisPenilaianMaster' => self::getJenisPenilaianMaster(),
+            'rubrikMaster' => $rubrikMaster,
+            'rubrikMk' => $rubrikMk,
             'rubrik' => $rubrik,
             'timTeaching' => $timTeaching,
             'detectedKelasTimTeaching' => $detectedKelasTimTeaching,

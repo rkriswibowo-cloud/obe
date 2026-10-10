@@ -12,9 +12,9 @@ $baseUrl = $GLOBALS['config']['base_url'] ?? '/obe/public';
                 <i class="fa-solid fa-arrow-left"></i>
             </a>
             <h2 style="margin: 0; font-size: 1.5rem; font-weight: 700;"><?= htmlspecialchars($rubrik['nama']) ?></h2>
-            <span style="background: <?= $rubrik['jenis'] === 'Analitik' ? 'rgba(99, 102, 241, 0.15)' : 'rgba(245, 158, 11, 0.15)' ?>; 
-                         color: <?= $rubrik['jenis'] === 'Analitik' ? 'var(--primary)' : 'var(--warning)' ?>; 
-                         border: 1px solid <?= $rubrik['jenis'] === 'Analitik' ? 'rgba(99, 102, 241, 0.3)' : 'rgba(245, 158, 11, 0.3)' ?>; 
+            <span style="background: rgba(99, 102, 241, 0.15);
+                         color: var(--primary);
+                         border: 1px solid rgba(99, 102, 241, 0.3);
                          padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">
                 <?= htmlspecialchars($rubrik['jenis']) ?>
             </span>
@@ -159,7 +159,7 @@ $baseUrl = $GLOBALS['config']['base_url'] ?? '/obe/public';
         <div style="text-align: center; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 16px;">
             <h3 style="margin: 0 0 6px 0; font-size: 1.3rem;"><?= htmlspecialchars($rubrik['nama']) ?></h3>
             <p style="color: var(--text-muted); margin: 0; font-size: 0.9rem;">
-                Format: <strong>Rubrik <?= htmlspecialchars($rubrik['jenis']) ?></strong> &bull; Status: Active
+                Format: <strong><?= htmlspecialchars($rubrik['jenis']) ?></strong> &bull; Status: Active
             </p>
         </div>
 
@@ -489,4 +489,3 @@ function buildPreviewTable() {
 $content = ob_get_clean();
 require __DIR__ . '/../layouts/main.php';
 ?>
-

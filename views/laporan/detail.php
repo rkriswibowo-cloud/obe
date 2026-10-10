@@ -9,7 +9,7 @@ $baseUrl = $GLOBALS['config']['base_url'] ?? '/obe/public';
     <div>
         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
             <?php if (isset($_SESSION['role']) && $_SESSION['role'] !== 'Mahasiswa'): ?>
-                <a href="<?= $baseUrl ?>/laporan" class="btn btn-sm btn-secondary" style="padding: 4px 8px;">
+                <a href="<?= $baseUrl ?>/laporan<?= !empty($kurikulumId) ? '?kurikulum_id=' . $kurikulumId : '' ?>" class="btn btn-sm btn-secondary" style="padding: 4px 8px;">
                     <i class="fa-solid fa-arrow-left"></i>
                 </a>
             <?php endif; ?>
@@ -21,8 +21,8 @@ $baseUrl = $GLOBALS['config']['base_url'] ?? '/obe/public';
     </div>
 
     <?php if (isset($_SESSION['role']) && $_SESSION['role'] !== 'Mahasiswa'): ?>
-        <a href="<?= $baseUrl ?>/laporan" class="btn btn-secondary">
-            <i class="fa-solid fa-users"></i> Kembali ke Dashboard Angkatan
+        <a href="<?= $baseUrl ?>/laporan<?= !empty($kurikulumId) ? '?kurikulum_id=' . $kurikulumId : '' ?>" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Kembali ke Dashboard Kurikulum
         </a>
     <?php endif; ?>
 </div>
@@ -53,9 +53,17 @@ $baseUrl = $GLOBALS['config']['base_url'] ?? '/obe/public';
                 </td>
             </tr>
             <tr>
+                <td style="padding: 6px 0; color: var(--text-muted);">Kurikulum</td>
+                <td style="padding: 6px 0; color: var(--text-main); font-weight: 600;">
+                    : <span style="background: rgba(99, 102, 241, 0.12); color: var(--primary); padding: 2px 8px; border-radius: 4px; font-size: 0.85rem;">
+                        <?= htmlspecialchars($kurikulum['nama'] ?? 'Kurikulum Terkait') ?>
+                      </span>
+                </td>
+            </tr>
+            <tr>
                 <td style="padding: 6px 0; color: var(--text-muted);">Angkatan</td>
                 <td style="padding: 6px 0; color: var(--text-main);">
-                    : <?= htmlspecialchars(substr($mahasiswa['username'], 0, 4)) ?>
+                    : <?= htmlspecialchars((string)(AturanKurikulumModel::extractAngkatan($mahasiswa['username'] ?? '') ?? '')) ?>
                 </td>
             </tr>
         </table>

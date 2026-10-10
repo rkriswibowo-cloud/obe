@@ -9,11 +9,13 @@ class CqiController {
     private $cqiModel;
     private $cplModel;
     private $taModel;
+    private $access;
 
     public function __construct() {
         $this->cqiModel = new CqiModel();
         $this->cplModel = new CplModel();
         $this->taModel = new TahunAkademikModel();
+        $this->access = new AccessContext();
     }
 
     public function index() {
@@ -24,10 +26,14 @@ class CqiController {
         ];
 
         $cqiList = $this->cqiModel->getAll($filter);
-        $statusCounts = $this->cqiModel->getCountsByStatus();
+        if (!$this->access->isSuperAdmin()) $cqiList = array_values(array_filter($cqiList, fn($row) => $this->access->canAccessCpl($row['cpl_id'])));
+        $statusCounts = ['TOTAL' => count($cqiList), 'OPEN' => 0, 'IN_PROGRESS' => 0, 'COMPLETED' => 0, 'RE_MEASURED' => 0];
+        foreach ($cqiList as $row) if (isset($statusCounts[$row['status']])) $statusCounts[$row['status']]++;
         $underperformingCpls = $this->cqiModel->getUnderperformingCpls();
+        if (!$this->access->isSuperAdmin()) $underperformingCpls = array_values(array_filter($underperformingCpls, fn($row) => $this->access->canAccessCpl($row['cpl_id'])));
 
         $cplList = $this->cplModel->getAll();
+        if (!$this->access->isSuperAdmin()) $cplList = array_values(array_filter($cplList, fn($row) => $this->access->canAccessCpl($row['id'])));
         $taList = $this->taModel->getAll();
 
         require __DIR__ . '/../../views/cqi/index.php';
@@ -35,9 +41,11 @@ class CqiController {
 
     public function create() {
         $cplList = $this->cplModel->getAll();
+        if (!$this->access->isSuperAdmin()) $cplList = array_values(array_filter($cplList, fn($row) => $this->access->canAccessCpl($row['id'])));
         $taList = $this->taModel->getAll();
 
         $selectedCplId = $_GET['cpl_id'] ?? '';
+        if ($selectedCplId && !$this->access->isSuperAdmin()) $this->access->assertCpl($selectedCplId);
         $selectedCpl = null;
         if ($selectedCplId) {
             $selectedCpl = $this->cplModel->getById($selectedCplId);
@@ -53,6 +61,7 @@ class CqiController {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
 
         $cplId = $_POST['cpl_id'] ?? null;
+        if (!$this->access->isSuperAdmin()) $this->access->assertCpl($cplId);
         if (!$cplId) {
             $_SESSION['error'] = "CPL wajib dipilih.";
             header('Location: ' . ($GLOBALS['config']['base_url'] ?? '/obe/public') . '/cqi/create');
@@ -99,8 +108,10 @@ class CqiController {
             header('Location: ' . ($GLOBALS['config']['base_url'] ?? '/obe/public') . '/cqi');
             exit;
         }
+        if (!$this->access->isSuperAdmin()) $this->access->assertCpl($cqi['cpl_id']);
 
         $cplList = $this->cplModel->getAll();
+        if (!$this->access->isSuperAdmin()) $cplList = array_values(array_filter($cplList, fn($row) => $this->access->canAccessCpl($row['id'])));
         $taList = $this->taModel->getAll();
 
         require __DIR__ . '/../../views/cqi/form.php';
@@ -113,6 +124,12 @@ class CqiController {
         if (!$id) {
             header('Location: ' . ($GLOBALS['config']['base_url'] ?? '/obe/public') . '/cqi');
             exit;
+        }
+        $existing = $this->cqiModel->getById($id);
+        if (!$this->access->isSuperAdmin()) {
+            if (!$existing) $this->access->forbidden();
+            $this->access->assertCpl($existing['cpl_id']);
+            $this->access->assertCpl($_POST['cpl_id'] ?? 0);
         }
 
         $data = [
@@ -145,6 +162,11 @@ class CqiController {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
 
         $id = $_POST['id'] ?? null;
+        $existing = $this->cqiModel->getById($id);
+        if (!$this->access->isSuperAdmin()) {
+            if (!$existing) $this->access->forbidden();
+            $this->access->assertCpl($existing['cpl_id']);
+        }
         $status = $_POST['status'] ?? 'OPEN';
         $notes = trim($_POST['monitoring_evaluasi'] ?? '');
         $reMeasure = !empty($_POST['hasil_re_measurement']) ? floatval($_POST['hasil_re_measurement']) : null;
@@ -162,6 +184,11 @@ class CqiController {
     public function delete() {
         $id = $_GET['id'] ?? null;
         if ($id) {
+            $existing = $this->cqiModel->getById($id);
+            if (!$this->access->isSuperAdmin()) {
+                if (!$existing) $this->access->forbidden();
+                $this->access->assertCpl($existing['cpl_id']);
+            }
             $this->cqiModel->delete($id);
             $_SESSION['success'] = "Catatan CQI berhasil dihapus.";
         }
@@ -169,4 +196,3 @@ class CqiController {
         exit;
     }
 }
-

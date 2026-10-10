@@ -6,6 +6,7 @@ class PemetaanMkCplController {
     private $mkModel;
     private $cplModel;
     private $mkCplModel;
+    private $access;
 
     public function __construct() {
         require_once __DIR__ . '/../Models/KurikulumModel.php';
@@ -17,11 +18,13 @@ class PemetaanMkCplController {
         $this->mkModel = new MataKuliahModel();
         $this->cplModel = new CplModel();
         $this->mkCplModel = new MkCplModel();
+        $this->access = new AccessContext();
     }
 
     public function index() {
         $kurikulum_id = $_GET['kurikulum_id'] ?? null;
-        $kurikulumList = $this->kurikulumModel->getAll();
+        $kurikulumList = $this->access->filterKurikulumRows($this->kurikulumModel->getAll());
+        if ($kurikulum_id && !$this->access->isSuperAdmin()) $this->access->assertKurikulum($kurikulum_id);
         
         // Jika tidak ada kurikulum_id yang dipilih, pilih yang pertama (jika ada)
         if (!$kurikulum_id && count($kurikulumList) > 0) {
@@ -57,6 +60,7 @@ class PemetaanMkCplController {
     public function save() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $kurikulum_id = $_POST['kurikulum_id'] ?? null;
+            if (!$this->access->isSuperAdmin()) $this->access->assertKurikulum($kurikulum_id);
             $mappingData = $_POST['mapping'] ?? []; 
             // format: mapping[mk_id][] = cpl_id
 
@@ -76,7 +80,9 @@ class PemetaanMkCplController {
 
             // Simpan mapping baru
             foreach ($mappingData as $mk_id => $cpl_ids) {
+                if (!$this->access->isSuperAdmin()) $this->access->assertMataKuliah($mk_id);
                 foreach ($cpl_ids as $cpl_id) {
+                    if (!$this->access->isSuperAdmin()) $this->access->assertCpl($cpl_id);
                     $this->mkCplModel->saveMapping($mk_id, $cpl_id);
                 }
             }

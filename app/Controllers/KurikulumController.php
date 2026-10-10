@@ -6,26 +6,30 @@ require_once __DIR__ . '/../Models/ProdiModel.php';
 class KurikulumController {
     private $kurikulumModel;
     private $prodiModel;
+    private $access;
 
     public function __construct() {
         $this->kurikulumModel = new KurikulumModel();
         $this->prodiModel = new ProdiModel();
+        $this->access = new AccessContext();
     }
 
     public function index() {
-        $selectedProdiId = $_GET['prodi_id'] ?? null;
-        $prodiList = $this->prodiModel->getAll();
+        $selectedProdiId = $_GET['prodi_id'] ?? ($this->access->isKaprodi() ? $this->access->primaryManagedProdiId() : null);
+        if ($selectedProdiId && !$this->access->isSuperAdmin()) $this->access->assertProdi($selectedProdiId);
+        $prodiList = $this->access->filterProdiRows($this->prodiModel->getAll());
         $kurikulumList = $this->kurikulumModel->getAll($selectedProdiId);
         require_once __DIR__ . '/../../views/kurikulum/index.php';
     }
 
     public function create() {
-        $prodiList = $this->prodiModel->getAll();
+        $prodiList = $this->access->filterProdiRows($this->prodiModel->getAll());
         require_once __DIR__ . '/../../views/kurikulum/create.php';
     }
 
     public function store() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!$this->access->isSuperAdmin()) $this->access->assertProdi($_POST['prodi_id'] ?? 0);
             $data = [
                 'prodi_id' => $_POST['prodi_id'],
                 'kode' => $_POST['kode'],
@@ -58,13 +62,18 @@ class KurikulumController {
             exit;
         }
 
-        $prodiList = $this->prodiModel->getAll();
+        if (!$this->access->isSuperAdmin()) $this->access->assertKurikulum($id);
+        $prodiList = $this->access->filterProdiRows($this->prodiModel->getAll());
         require_once __DIR__ . '/../../views/kurikulum/edit.php';
     }
 
     public function update() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = $_POST['id'];
+            if (!$this->access->isSuperAdmin()) {
+                $this->access->assertKurikulum($id);
+                $this->access->assertProdi($_POST['prodi_id'] ?? 0);
+            }
             $data = [
                 'prodi_id' => $_POST['prodi_id'],
                 'kode' => $_POST['kode'],
@@ -87,6 +96,7 @@ class KurikulumController {
     public function delete() {
         $id = $_GET['id'] ?? null;
         if ($id) {
+            if (!$this->access->isSuperAdmin()) $this->access->assertKurikulum($id);
             if ($this->kurikulumModel->delete($id)) {
                 $_SESSION['success'] = "Kurikulum berhasil dihapus.";
             } else {

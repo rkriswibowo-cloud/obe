@@ -12,13 +12,13 @@ ob_start();
 
 <?php if(isset($_SESSION['success'])): ?>
     <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success); color: var(--success); padding: 12px 20px; border-radius: var(--radius-sm); margin-bottom: 20px;">
-        <?= $_SESSION['success'] ?>
+        <?= htmlspecialchars($_SESSION['success']) ?>
     </div>
     <?php unset($_SESSION['success']); ?>
 <?php endif; ?>
 <?php if(isset($_SESSION['error'])): ?>
     <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); color: var(--danger); padding: 12px 20px; border-radius: var(--radius-sm); margin-bottom: 20px;">
-        <?= $_SESSION['error'] ?>
+        <?= htmlspecialchars($_SESSION['error']) ?>
     </div>
     <?php unset($_SESSION['error']); ?>
 <?php endif; ?>
@@ -91,19 +91,85 @@ ob_start();
                             $isChecked = isset($mapping[$mk['id']][$cpl['id']]); 
                         ?>
                     <td style="padding: 10px;">
-                        <input type="checkbox" name="mapping[<?= $mk['id'] ?>][]" value="<?= $cpl['id'] ?>" <?= $isChecked ? 'checked' : '' ?> style="transform: scale(1.3); cursor: pointer;">
+                        <input type="checkbox" class="mapping-checkbox" data-cpl-id="<?= (int)$cpl['id'] ?>" name="mapping[<?= $mk['id'] ?>][]" value="<?= $cpl['id'] ?>" <?= $isChecked ? 'checked' : '' ?> style="transform: scale(1.3); cursor: pointer;">
                     </td>
                     <?php endforeach; ?>
                 </tr>
                 <?php endforeach; ?>
             </tbody>
+            <tfoot>
+                <tr style="border-top: 2px solid var(--primary); background: var(--surface-hover);">
+                    <th style="padding: 14px 16px; text-align: left; position: sticky; left: 0; background: var(--surface-hover); z-index: 10; border-right: 1px solid var(--border);">
+                        Total MK Tercentang per CPL
+                    </th>
+                    <?php foreach($cplList as $cpl): ?>
+                    <th style="padding: 14px 10px; color: var(--primary); font-size: 1rem;">
+                        <span class="cpl-column-total" data-cpl-total="<?= (int)$cpl['id'] ?>">0</span>
+                    </th>
+                    <?php endforeach; ?>
+                </tr>
+            </tfoot>
         </table>
+    </div>
+
+    <div class="mapping-total-card" style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding: 16px 18px; margin-bottom: 16px; background: rgba(var(--primary-rgb), 0.08); border: 1px solid rgba(var(--primary-rgb), 0.28); border-radius: var(--radius-md);">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: rgba(var(--primary-rgb), 0.15); color: var(--primary);">
+                <i class="fa-solid fa-square-check"></i>
+            </div>
+            <div>
+                <div style="font-weight: 700; color: var(--text-main);">Ringkasan Pemetaan</div>
+                <div style="font-size: 0.82rem; color: var(--text-muted);">Diperbarui otomatis ketika pilihan berubah</div>
+            </div>
+        </div>
+        <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+            <div style="text-align: right;">
+                <div id="mappedCplTotal" style="font-size: 1.45rem; font-weight: 800; color: var(--primary);">0</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">CPL memiliki pemetaan</div>
+            </div>
+            <div style="text-align: right;">
+                <div id="checkedMappingTotal" style="font-size: 1.45rem; font-weight: 800; color: var(--success);">0</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Total kotak dicentang</div>
+            </div>
+        </div>
     </div>
 
     <div style="display: flex; justify-content: flex-end;">
         <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Simpan Pemetaan</button>
     </div>
 </form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const checkboxes = Array.from(document.querySelectorAll('.mapping-checkbox'));
+    const columnTotals = Array.from(document.querySelectorAll('.cpl-column-total'));
+    const mappedCplTotal = document.getElementById('mappedCplTotal');
+    const checkedMappingTotal = document.getElementById('checkedMappingTotal');
+
+    function updateMappingTotals() {
+        let activeCpl = 0;
+        let checkedTotal = 0;
+
+        columnTotals.forEach(function (totalEl) {
+            const cplId = totalEl.dataset.cplTotal;
+            const count = checkboxes.filter(function (checkbox) {
+                return checkbox.checked && checkbox.dataset.cplId === cplId;
+            }).length;
+            totalEl.textContent = count;
+            checkedTotal += count;
+            if (count > 0) activeCpl++;
+        });
+
+        if (mappedCplTotal) mappedCplTotal.textContent = activeCpl;
+        if (checkedMappingTotal) checkedMappingTotal.textContent = checkedTotal;
+    }
+
+    checkboxes.forEach(function (checkbox) {
+        checkbox.addEventListener('change', updateMappingTotals);
+    });
+    updateMappingTotals();
+});
+</script>
 <?php elseif($kurikulum_id): ?>
     <div style="background: var(--surface); padding: 30px; text-align: center; border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-muted);">
         <i class="fa-solid fa-circle-exclamation fa-3x" style="margin-bottom: 15px; opacity: 0.5;"></i>

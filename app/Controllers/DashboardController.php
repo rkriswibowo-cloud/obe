@@ -9,9 +9,17 @@ class DashboardController {
     }
 
     public function index() {
-        $stats = $this->laporanModel->getStatistikDashboard();
+        $access = new AccessContext();
+        $scopeProdiIds = !$access->isSuperAdmin() && $access->isKaprodi() ? $access->managedProdiIds() : null;
+        $stats = $this->laporanModel->getStatistikDashboard($scopeProdiIds);
         
-        $rekapCpl = $this->laporanModel->getRekapCplAngkatan();
+        $kurikulumId = null;
+        if ($scopeProdiIds) {
+            $stmt = Database::getInstance()->prepare("SELECT id FROM kurikulum WHERE prodi_id IN (" . implode(',', array_fill(0, count($scopeProdiIds), '?')) . ") ORDER BY status='ACTIVE' DESC,tahun_mulai DESC LIMIT 1");
+            $stmt->execute($scopeProdiIds);
+            $kurikulumId = $stmt->fetchColumn() ?: null;
+        }
+        $rekapCpl = $this->laporanModel->getRekapCplAngkatan(null, $kurikulumId);
         
         // Prepare chart payload
         $chartLabels = [];

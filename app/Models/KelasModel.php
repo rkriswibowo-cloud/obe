@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/AturanKurikulumModel.php';
+
 class KelasModel {
     private $db;
 
@@ -6,26 +8,75 @@ class KelasModel {
         $this->db = Database::getInstance();
     }
 
-    public function getAll() {
-        $stmt = $this->db->query("
+    public function getAll($dosenId = null, $kurikulumId = null, $tahunAkademikId = null, $search = null) {
+        $sql = "
             SELECT k.*, mk.nama as mata_kuliah_nama, mk.kode as mata_kuliah_kode,
+                   mk.kurikulum_id, kur.nama as kurikulum_nama, kur.kode as kurikulum_kode,
                    ta.nama as tahun_akademik_nama, u.nama_lengkap as dosen_nama,
                    (SELECT COUNT(*) FROM kelas_mahasiswa km WHERE km.kelas_id = k.id) as jumlah_mahasiswa
             FROM kelas k
             JOIN mata_kuliah mk ON k.mata_kuliah_id = mk.id
+            LEFT JOIN kurikulum kur ON mk.kurikulum_id = kur.id
             JOIN tahun_akademik ta ON k.tahun_akademik_id = ta.id
             JOIN users u ON k.dosen_id = u.id
-            ORDER BY ta.nama DESC, mk.nama ASC, k.nama_kelas ASC
-        ");
+            WHERE 1=1
+        ";
+        $params = [];
+        if ($dosenId !== null) {
+            $sql .= " AND (k.dosen_id = :dosen_id OR EXISTS (
+                SELECT 1 FROM kelas_tim_teaching ktt
+                WHERE ktt.kelas_id = k.id AND ktt.dosen_id = :tim_dosen_id
+            ))";
+            $params['dosen_id'] = (int)$dosenId;
+            $params['tim_dosen_id'] = (int)$dosenId;
+        }
+        if (!empty($kurikulumId)) {
+            $sql .= " AND mk.kurikulum_id = :kurikulum_id";
+            $params['kurikulum_id'] = (int)$kurikulumId;
+        }
+        if (!empty($tahunAkademikId)) {
+            $sql .= " AND k.tahun_akademik_id = :ta_id";
+            $params['ta_id'] = (int)$tahunAkademikId;
+        }
+        if (!empty($search)) {
+            $sql .= " AND (mk.nama LIKE :search1 OR mk.kode LIKE :search2 OR k.nama_kelas LIKE :search3 OR u.nama_lengkap LIKE :search4)";
+            $term = '%' . trim($search) . '%';
+            $params['search1'] = $term;
+            $params['search2'] = $term;
+            $params['search3'] = $term;
+            $params['search4'] = $term;
+        }
+        $sql .= " ORDER BY ta.nama DESC, mk.nama ASC, k.nama_kelas ASC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         return $stmt->fetchAll();
+    }
+
+    public function canManage($kelasId, $dosenId) {
+        $stmt = $this->db->prepare("
+            SELECT COUNT(*) FROM kelas k
+            WHERE k.id = :kelas_id
+              AND (k.dosen_id = :dosen_id OR EXISTS (
+                  SELECT 1 FROM kelas_tim_teaching ktt
+                  WHERE ktt.kelas_id = k.id AND ktt.dosen_id = :tim_dosen_id
+              ))
+        ");
+        $stmt->execute([
+            'kelas_id' => (int)$kelasId,
+            'dosen_id' => (int)$dosenId,
+            'tim_dosen_id' => (int)$dosenId
+        ]);
+        return (int)$stmt->fetchColumn() > 0;
     }
 
     public function getById($id) {
         $stmt = $this->db->prepare("
             SELECT k.*, mk.nama as mata_kuliah_nama, mk.kode as mata_kuliah_kode,
+                   mk.kurikulum_id, kur.nama as kurikulum_nama, kur.kode as kurikulum_kode,
                    ta.nama as tahun_akademik_nama, u.nama_lengkap as dosen_nama
             FROM kelas k
             JOIN mata_kuliah mk ON k.mata_kuliah_id = mk.id
+            LEFT JOIN kurikulum kur ON mk.kurikulum_id = kur.id
             JOIN tahun_akademik ta ON k.tahun_akademik_id = ta.id
             JOIN users u ON k.dosen_id = u.id
             WHERE k.id = :id
@@ -124,6 +175,10 @@ class KelasModel {
     }
 
     public function getMahasiswaBelumTerdaftar($kelas_id) {
+        $kelas = $this->getById($kelas_id);
+        if (!$kelas) {
+            return [];
+        }
         $stmt = $this->db->prepare("
             SELECT u.* 
             FROM users u
@@ -135,10 +190,43 @@ class KelasModel {
             ORDER BY u.username ASC
         ");
         $stmt->execute(['kelas_id' => $kelas_id]);
-        return $stmt->fetchAll();
+        $mahasiswa = $stmt->fetchAll();
+        $aturan = new AturanKurikulumModel();
+        return array_values(array_filter($mahasiswa, static function ($mhs) use ($aturan, $kelas) {
+            $angkatan = AturanKurikulumModel::extractAngkatan($mhs['username'] ?? '');
+            return $angkatan
+                && $aturan->getKurikulumIdByAngkatan($angkatan) === (int)$kelas['kurikulum_id'];
+        }));
     }
 
     public function addPeserta($kelas_id, $mahasiswa_id) {
+        $kelas = $this->getById($kelas_id);
+        if (!$kelas) {
+            throw new InvalidArgumentException('Kelas tidak ditemukan.');
+        }
+
+        $stmtMahasiswa = $this->db->prepare("
+            SELECT u.username
+            FROM users u JOIN roles r ON r.id = u.role_id
+            WHERE u.id = :id AND r.name = 'Mahasiswa'
+        ");
+        $stmtMahasiswa->execute(['id' => $mahasiswa_id]);
+        $username = $stmtMahasiswa->fetchColumn();
+        $angkatan = AturanKurikulumModel::extractAngkatan((string)$username);
+        if (!$username || !$angkatan) {
+            throw new InvalidArgumentException('Peserta harus merupakan mahasiswa dengan format NIM yang valid.');
+        }
+
+        $kurikulumMahasiswa = (new AturanKurikulumModel())->getKurikulumIdByAngkatan($angkatan);
+        if (!$kurikulumMahasiswa || $kurikulumMahasiswa !== (int)$kelas['kurikulum_id']) {
+            throw new InvalidArgumentException('Mahasiswa tidak dapat dimasukkan karena kurikulumnya berbeda dengan mata kuliah kelas.');
+        }
+
+        $maxSemester = AturanKurikulumModel::getMaxSemesterByAngkatan($angkatan);
+        if ($maxSemester !== null && (int)$kelas['tahun_akademik_id'] > $maxSemester) {
+            throw new InvalidArgumentException("Mahasiswa angkatan {$angkatan} saat ini baru menempuh perkuliahan hingga semester {$maxSemester} dan belum dapat dimasukkan ke kelas semester selanjutnya.");
+        }
+
         $stmt = $this->db->prepare("
             INSERT IGNORE INTO kelas_mahasiswa (kelas_id, mahasiswa_id)
             VALUES (:kelas_id, :mahasiswa_id)

@@ -143,7 +143,11 @@ CREATE TABLE `sub_cpmk_indikator` (
 CREATE TABLE `rubrik` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `nama` varchar(100) NOT NULL,
-  `jenis` enum('Analitik','Holistik') DEFAULT 'Analitik',
+  `kode_jenis` varchar(20) NOT NULL,
+  `jenis` varchar(100) NOT NULL DEFAULT 'Rubrik Analitik',
+  `karakteristik` varchar(255) DEFAULT NULL,
+  `contoh_penggunaan` varchar(255) DEFAULT NULL,
+  `deskripsi` text DEFAULT NULL,
   `status` enum('ACTIVE','ARCHIVED') DEFAULT 'ACTIVE',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

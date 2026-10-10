@@ -1,5 +1,5 @@
 <?php
-$title = 'Dashboard - Sistem Informasi OBE & Pengukuran CPL';
+$title = 'Dashboard - SIP-OKE : Sistem Informasi Pengukuran Outcome Kompetensi dan Evaluasi';
 ob_start();
 $baseUrl = $GLOBALS['config']['base_url'] ?? '/obe/public';
 $avgCpl = isset($stats['avg_cpl']) ? floatval($stats['avg_cpl']) : 0;
@@ -11,10 +11,10 @@ $avgCpl = isset($stats['avg_cpl']) ? floatval($stats['avg_cpl']) : 0;
     <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 15px;">
         <div>
             <h2 style="margin: 0; font-size: 1.6rem; font-weight: 700; color: var(--text-main);">
-                <i class="fa-solid fa-graduation-cap" style="color: var(--primary); margin-right: 8px;"></i>Dashboard Sistem OBE
+                <i class="fa-solid fa-graduation-cap" style="color: var(--primary); margin-right: 8px;"></i>Dashboard SIP-OKE
             </h2>
             <p style="color: var(--text-muted); margin: 6px 0 0 0; font-size: 0.92rem;">
-                Platform Penjaminan Mutu Pembelajaran & Pengukuran Ketercapaian Capaian Pembelajaran Lulusan (CPL).
+                <strong>SIP-OKE</strong> : Sistem Informasi Pengukuran Outcome Kompetensi dan Evaluasi &mdash; Penjaminan Mutu &amp; Ketercapaian CPL.
             </p>
         </div>
         <div style="display: flex; gap: 10px; align-items: center;">
@@ -29,7 +29,7 @@ $avgCpl = isset($stats['avg_cpl']) ? floatval($stats['avg_cpl']) : 0;
     
     <!-- KPI Summary Grid -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px;">
-        <div style="background: var(--surface); padding: 22px; border-radius: var(--radius-md); border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+        <div class="dashboard-kpi-card" style="background: var(--surface); padding: 22px; border-radius: var(--radius-md); border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
             <div>
                 <div style="color: var(--text-muted); font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Total CPL Terdaftar</div>
                 <div style="font-size: 2.2rem; font-weight: 800; color: var(--primary); margin-top: 4px; line-height: 1;">
@@ -42,7 +42,7 @@ $avgCpl = isset($stats['avg_cpl']) ? floatval($stats['avg_cpl']) : 0;
             </div>
         </div>
 
-        <div style="background: var(--surface); padding: 22px; border-radius: var(--radius-md); border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+        <div class="dashboard-kpi-card" style="background: var(--surface); padding: 22px; border-radius: var(--radius-md); border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
             <div>
                 <div style="color: var(--text-muted); font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Mata Kuliah (MK)</div>
                 <div style="font-size: 2.2rem; font-weight: 800; color: var(--secondary); margin-top: 4px; line-height: 1;">
@@ -55,7 +55,7 @@ $avgCpl = isset($stats['avg_cpl']) ? floatval($stats['avg_cpl']) : 0;
             </div>
         </div>
 
-        <div style="background: var(--surface); padding: 22px; border-radius: var(--radius-md); border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+        <div class="dashboard-kpi-card" style="background: var(--surface); padding: 22px; border-radius: var(--radius-md); border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
             <div>
                 <div style="color: var(--text-muted); font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">MK dgn RPS Aktif</div>
                 <div style="font-size: 2.2rem; font-weight: 800; color: var(--warning); margin-top: 4px; line-height: 1;">
@@ -68,7 +68,7 @@ $avgCpl = isset($stats['avg_cpl']) ? floatval($stats['avg_cpl']) : 0;
             </div>
         </div>
 
-        <div style="background: var(--surface); padding: 22px; border-radius: var(--radius-md); border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+        <div class="dashboard-kpi-card" style="background: var(--surface); padding: 22px; border-radius: var(--radius-md); border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
             <div>
                 <div style="color: var(--text-muted); font-size: 0.82rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Rata-rata Capaian CPL</div>
                 <div style="font-size: 2.2rem; font-weight: 800; color: <?= $avgCpl >= 70 ? 'var(--success)' : ($avgCpl > 0 ? 'var(--warning)' : 'var(--text-muted)') ?>; margin-top: 4px; line-height: 1;">
@@ -86,7 +86,7 @@ $avgCpl = isset($stats['avg_cpl']) ? floatval($stats['avg_cpl']) : 0;
     </div>
 
     <!-- MAIN CARD: ALUR SISTEM PENGUKURAN CPL -->
-    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);">
+    <div id="alurCplSection" class="dashboard-main-card" style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);">
         
         <!-- Card Header with Gradient Accent -->
         <div style="padding: 24px 28px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(59, 130, 246, 0.04) 100%); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
@@ -116,7 +116,7 @@ $avgCpl = isset($stats['avg_cpl']) ? floatval($stats['avg_cpl']) : 0;
         </div>
 
         <!-- Golden Architectural Rule Callout -->
-        <div style="padding: 18px 28px; background: rgba(15, 17, 26, 0.65); border-bottom: 1px solid var(--border);">
+        <div class="dashboard-rule-panel" style="padding: 18px 28px; background: rgba(15, 17, 26, 0.65); border-bottom: 1px solid var(--border);">
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
                 <div style="display: flex; gap: 12px; align-items: flex-start;">
                     <div style="color: var(--primary); font-size: 1.1rem; margin-top: 2px;"><i class="fa-solid fa-bullseye"></i></div>
@@ -391,7 +391,7 @@ $avgCpl = isset($stats['avg_cpl']) ? floatval($stats['avg_cpl']) : 0;
         </div>
 
         <!-- Traceability & Audit Trail Callout Box -->
-        <div style="margin: 0 28px 28px 28px; padding: 20px; border-radius: var(--radius-md); background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.2); display: flex; gap: 16px; align-items: flex-start;">
+        <div class="dashboard-trace-card" style="margin: 0 28px 28px 28px; padding: 20px; border-radius: var(--radius-md); background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.2); display: flex; gap: 16px; align-items: flex-start;">
             <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(99, 102, 241, 0.2); display: flex; align-items: center; justify-content: center; color: #a5b4fc; font-size: 1.2rem; flex-shrink: 0;">
                 <i class="fa-solid fa-magnifying-glass-chart"></i>
             </div>
@@ -407,7 +407,7 @@ $avgCpl = isset($stats['avg_cpl']) ? floatval($stats['avg_cpl']) : 0;
                 <p style="margin: 6px 0 0 0; font-size: 0.84rem; color: var(--text-muted); line-height: 1.6;">
                     <strong style="color: #e2e8f0;">Nilai akhir mata kuliah (A, B, C) tidak otomatis menjadi nilai CPL.</strong> Nilai CPL diperoleh murni dari bukti asesmen yang dipetakan presisi terhadap Sub-CPMK dan dinilai dengan rubrik. Sistem menjamin penelusuran balik akuntabel:
                 </p>
-                <div style="margin-top: 8px; padding: 10px 14px; background: rgba(15, 17, 26, 0.85); border-radius: var(--radius-sm); border-left: 3px solid var(--primary); font-family: monospace; font-size: 0.8rem; color: #e0e7ff;">
+                <div class="dashboard-trace-path" style="margin-top: 8px; padding: 10px 14px; background: rgba(15, 17, 26, 0.85); border-radius: var(--radius-sm); border-left: 3px solid var(--primary); font-family: monospace; font-size: 0.8rem; color: #e0e7ff;">
                     "Skor CPL Mahasiswa = 78 &rarr; Berasal dari MK apa &rarr; CPMK apa &rarr; Sub-CPMK apa &rarr; Instrumen Asesmen apa &rarr; Skor Rubrik apa?"
                 </div>
             </div>
@@ -435,6 +435,60 @@ $avgCpl = isset($stats['avg_cpl']) ? floatval($stats['avg_cpl']) : 0;
 </div>
 
 <style>
+.dashboard-kpi-card,
+.dashboard-main-card,
+.obe-pipeline-card {
+    box-shadow: var(--shadow-card);
+}
+
+.dashboard-kpi-card {
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.dashboard-kpi-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(var(--primary-rgb), 0.38) !important;
+    box-shadow: var(--shadow-md);
+}
+
+[data-theme="light"] .dashboard-main-card {
+    border-color: #d4d4d8 !important;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.09) !important;
+}
+
+[data-theme="light"] .dashboard-kpi-card,
+[data-theme="light"] .obe-pipeline-card {
+    background: #ffffff !important;
+    border-color: #d4d4d8 !important;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.08);
+}
+
+[data-theme="light"] .obe-pipeline-card:hover {
+    background: #f8fafc !important;
+    border-color: rgba(var(--primary-rgb), 0.5) !important;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+}
+
+[data-theme="light"] .dashboard-rule-panel {
+    background: #f8fafc !important;
+}
+
+[data-theme="light"] .dashboard-rule-panel > div > div > div:last-child > div:first-child,
+[data-theme="light"] .dashboard-trace-card h5,
+[data-theme="light"] .dashboard-trace-card p strong {
+    color: var(--text-main) !important;
+}
+
+[data-theme="light"] .dashboard-trace-card {
+    background: rgba(var(--primary-rgb), 0.06) !important;
+    border-color: rgba(var(--primary-rgb), 0.25) !important;
+}
+
+[data-theme="light"] .dashboard-trace-path {
+    background: #f8fafc !important;
+    color: #1e293b !important;
+}
+
 .obe-pipeline-card:hover {
     transform: translateY(-3px);
     border-color: rgba(99, 102, 241, 0.45) !important;

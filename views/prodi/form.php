@@ -71,20 +71,38 @@ $action = $isEdit ? ($baseUrl . '/prodi/update') : ($baseUrl . '/prodi/store');
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; border-top: 1px solid var(--border); padding-top: 18px;">
+                <div>
+                    <label style="display:block;font-size:.85rem;font-weight:600;color:var(--text-main);margin-bottom:6px">Dekan Fakultas</label>
+                    <select name="dekan_user_id" id="dekanUserSelect" onchange="syncDekanPreview()" style="width:100%;padding:10px 12px;font-size:.9rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-hover);color:var(--text-main)">
+                        <option value="">Pilih dosen sebagai Dekan...</option>
+                        <?php foreach ($dosenList as $dosen): ?>
+                            <option value="<?= (int)$dosen['id'] ?>" data-nidn="<?= htmlspecialchars($dosen['nidn'] ?? '',ENT_QUOTES) ?>" data-nuptk="<?= htmlspecialchars($dosen['nuptk'] ?? '',ENT_QUOTES) ?>" <?= $isEdit && (int)($prodi['dekan_user_id']??0)===(int)$dosen['id']?'selected':'' ?>><?= htmlspecialchars($dosen['nama_lengkap']) ?><?= !empty($dosen['homebase'])?' — '.htmlspecialchars($dosen['homebase']):'' ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div>
+                    <label style="display:block;font-size:.85rem;font-weight:600;color:var(--text-main);margin-bottom:6px">NIDN/NUPTK Dekan</label>
+                    <input type="text" id="dekanIdentityPreview" value="" placeholder="Terisi otomatis dari data dosen" disabled style="width:100%;padding:10px 12px;font-size:.9rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-hover);color:var(--text-muted);font-family:monospace;box-sizing:border-box">
+                </div>
                 <!-- Nama Kaprodi -->
                 <div>
                     <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 6px;">
                         Ketua Program Studi (Kaprodi)
                     </label>
-                    <input type="text" name="nama_kaprodi" value="<?= $isEdit ? htmlspecialchars($prodi['nama_kaprodi'] ?? '') : '' ?>" placeholder="Contoh: Dr. Budi Santoso, M.Kom." style="width: 100%; padding: 10px 12px; font-size: 0.9rem; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-hover); color: var(--text-main);">
+                    <select name="kaprodi_user_id" id="kaprodiUserSelect" onchange="syncKaprodiPreview()" style="width:100%;padding:10px 12px;font-size:.9rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-hover);color:var(--text-main)">
+                        <option value="">Pilih dosen sebagai Kaprodi...</option>
+                        <?php foreach ($dosenList as $dosen): ?>
+                            <option value="<?= (int)$dosen['id'] ?>" data-nidn="<?= htmlspecialchars($dosen['nidn'] ?? '',ENT_QUOTES) ?>" data-nuptk="<?= htmlspecialchars($dosen['nuptk'] ?? '',ENT_QUOTES) ?>" <?= $isEdit && (int)($prodi['kaprodi_user_id']??0)===(int)$dosen['id']?'selected':'' ?>><?= htmlspecialchars($dosen['nama_lengkap']) ?><?= !empty($dosen['homebase'])?' — '.htmlspecialchars($dosen['homebase']):'' ?></option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
 
                 <!-- NIDN Kaprodi -->
                 <div>
                     <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 6px;">
-                        NIDN Kaprodi
+                        NIDN/NUPTK Kaprodi
                     </label>
-                    <input type="text" name="nidn_kaprodi" value="<?= $isEdit ? htmlspecialchars($prodi['nidn_kaprodi'] ?? '') : '' ?>" placeholder="Contoh: 0708056701" maxlength="30" style="width: 100%; padding: 10px 12px; font-size: 0.9rem; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-hover); color: var(--text-main); font-family: monospace;">
+                    <input type="text" id="kaprodiIdentityPreview" value="" placeholder="Terisi otomatis dari data dosen" disabled style="width:100%;padding:10px 12px;font-size:.9rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface-hover);color:var(--text-muted);font-family:monospace;box-sizing:border-box">
                 </div>
             </div>
 
@@ -117,6 +135,25 @@ $action = $isEdit ? ($baseUrl . '/prodi/update') : ($baseUrl . '/prodi/store');
         </form>
     </div>
 </div>
+
+<script>
+function syncDekanPreview(){
+    const select=document.getElementById('dekanUserSelect');
+    const option=select.options[select.selectedIndex];
+    const nidn=option?.dataset.nidn||'';
+    const nuptk=option?.dataset.nuptk||'';
+    document.getElementById('dekanIdentityPreview').value=nuptk ? `NUPTK: ${nuptk}` : (nidn ? `NIDN: ${nidn}` : 'Identitas belum diisi pada data dosen');
+}
+syncDekanPreview();
+function syncKaprodiPreview(){
+    const select=document.getElementById('kaprodiUserSelect');
+    const option=select.options[select.selectedIndex];
+    const nidn=option?.dataset.nidn||'';
+    const nuptk=option?.dataset.nuptk||'';
+    document.getElementById('kaprodiIdentityPreview').value=nuptk ? `NUPTK: ${nuptk}` : (nidn ? `NIDN: ${nidn}` : 'Identitas belum diisi pada data dosen');
+}
+syncKaprodiPreview();
+</script>
 
 <?php 
 $content = ob_get_clean();

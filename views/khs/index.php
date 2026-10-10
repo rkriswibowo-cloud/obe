@@ -79,8 +79,19 @@ ob_start();
                     <span><i class="fa-solid fa-id-card"></i> NIM: <strong><?= htmlspecialchars($mahasiswa['username']) ?></strong></span>
                     <span>•</span>
                     <span><i class="fa-solid fa-graduation-cap"></i> Program Studi Sistem Informasi</span>
+                    <?php if (!empty($kurikulumMhs)): ?>
+                        <span>•</span>
+                        <span class="badge" style="background: rgba(99, 102, 241, 0.12); color: var(--primary); padding: 2px 8px; border-radius: 6px; font-weight: 600;">
+                            <i class="fa-solid fa-book" style="margin-right: 3px;"></i> <?= htmlspecialchars($kurikulumMhs['nama']) ?>
+                        </span>
+                    <?php endif; ?>
                     <span>•</span>
-                    <span class="badge" style="background: rgba(16, 185, 129, 0.12); color: #10b981; padding: 2px 8px; border-radius: 6px; font-weight: 600;">Status: Aktif</span>
+                    <?php 
+                    $studiInfo = AturanKurikulumModel::getStatusStudiByAngkatan($angkatan);
+                    ?>
+                    <span class="badge" style="background: <?= $studiInfo['bg_color'] ?>; color: <?= $studiInfo['badge_color'] ?>; padding: 2px 8px; border-radius: 6px; font-weight: 600;">
+                        <i class="fa-solid fa-graduation-cap" style="margin-right: 3px;"></i> <?= htmlspecialchars($studiInfo['badge']) ?>
+                    </span>
                 </div>
             </div>
         </div>
@@ -94,6 +105,15 @@ ob_start();
             </div>
         </div>
     </div>
+
+    <?php if (!empty($khsData['ignored_enrollment_count'])): ?>
+        <div role="alert" style="margin: -4px 0 20px; padding: 12px 16px; border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 10px; background: rgba(245, 158, 11, 0.1); color: #b45309; font-size: 0.85rem;">
+            <i class="fa-solid fa-triangle-exclamation" style="margin-right: 6px;"></i>
+            <strong><?= (int)$khsData['ignored_enrollment_count'] ?> pendaftaran kelas tidak ditampilkan</strong>
+            karena berasal dari kurikulum lain. KHS dan IPK hanya dihitung dari
+            <strong><?= htmlspecialchars($kurikulumMhs['nama'] ?? 'kurikulum sesuai aturan angkatan') ?></strong>.
+        </div>
+    <?php endif; ?>
 
     <!-- Ringkasan KPI Cards (IPK & Capaian CPL Terintegrasi) -->
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
@@ -175,12 +195,15 @@ ob_start();
     </div>
 
     <!-- Navigation Tabs -->
-    <div style="display: flex; gap: 8px; border-bottom: 1px solid var(--border); margin-bottom: 20px;">
+    <div style="display: flex; gap: 8px; border-bottom: 1px solid var(--border); margin-bottom: 20px; flex-wrap: wrap;">
         <button type="button" class="tab-btn active" onclick="switchKhsTab('tab-khs', this)" style="padding: 10px 18px; border: none; background: transparent; color: var(--text-main); font-weight: 600; font-size: 0.92rem; cursor: pointer; border-bottom: 2px solid var(--primary); transition: all 0.2s;">
             <i class="fa-solid fa-list-check" style="margin-right: 6px;"></i> Kartu Hasil Studi (KHS)
         </button>
         <button type="button" class="tab-btn" onclick="switchKhsTab('tab-cpl', this)" style="padding: 10px 18px; border: none; background: transparent; color: var(--text-muted); font-weight: 500; font-size: 0.92rem; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s;">
             <i class="fa-solid fa-spider" style="margin-right: 6px;"></i> Radar & Rekap CPL Mahasiswa
+        </button>
+        <button type="button" class="tab-btn" onclick="switchKhsTab('tab-sub-cpmk', this)" style="padding: 10px 18px; border: none; background: transparent; color: var(--text-muted); font-weight: 500; font-size: 0.92rem; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s;">
+            <i class="fa-solid fa-magnifying-glass-chart" style="margin-right: 6px;"></i> Rincian Nilai Sub-CPMK
         </button>
         <button type="button" class="tab-btn" onclick="switchKhsTab('tab-trace', this)" style="padding: 10px 18px; border: none; background: transparent; color: var(--text-muted); font-weight: 500; font-size: 0.92rem; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s;">
             <i class="fa-solid fa-network-wired" style="margin-right: 6px;"></i> Matriks Traceability (MK ke CPL)
@@ -190,12 +213,21 @@ ob_start();
     <!-- TAB 1: KARTU HASIL STUDI (KHS) -->
     <div id="tab-khs" class="tab-pane active">
         <!-- Navigasi Semester 1 - 8 & Ringkasan IPS -->
-        <?php if (!empty($khsData['per_semester'])): ?>
+        <?php if (!empty($khsData['per_semester']) || !empty($daftarTahunAkademik)): ?>
             <div style="margin-bottom: 22px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
-                    <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.04em;">
-                        <i class="fa-solid fa-graduation-cap" style="color: var(--primary); margin-right: 6px;"></i> Progres Studi Per Semester (Semester 1 s/d 8)
-                    </span>
+                    <div>
+                        <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.04em;">
+                            <i class="fa-solid fa-graduation-cap" style="color: var(--primary); margin-right: 6px;"></i> Progres Studi Per Semester (Semester 1 s/d 8)
+                        </span>
+                        <?php 
+                        $maxSemMhs = AturanKurikulumModel::getMaxSemesterByAngkatan($angkatan);
+                        $statusMhs = AturanKurikulumModel::getStatusStudiByAngkatan($angkatan);
+                        ?>
+                        <span style="font-size: 0.75rem; font-weight: 600; color: <?= $statusMhs['badge_color'] ?>; background: <?= $statusMhs['bg_color'] ?>; padding: 2px 8px; border-radius: 6px; margin-left: 8px;">
+                            <?= htmlspecialchars($statusMhs['badge']) ?>
+                        </span>
+                    </div>
                     <a href="<?= ($GLOBALS['config']['base_url'] ?? '/obe/public') ?>/khs?id=<?= $selectedMhsId ?>" style="font-size: 0.82rem; color: var(--primary); text-decoration: none; font-weight: 600; padding: 4px 10px; border-radius: 6px; background: rgba(var(--primary-rgb), 0.08);">
                         <i class="fa-solid fa-arrows-rotate" style="margin-right: 4px;"></i> Tampilkan Semua (Kumulatif 1-8)
                     </a>
@@ -204,28 +236,50 @@ ob_start();
                     <?php 
                     $semIdx = 1;
                     foreach ($daftarTahunAkademik as $ta): 
+                        $currentSemNum = $semIdx++;
                         $taData = $khsData['per_semester'][$ta['id']] ?? null;
                         $isSelected = ($filterTaId == $ta['id']);
+                        $isBelumDitempuh = ($currentSemNum > $maxSemMhs);
                     ?>
-                        <a href="<?= ($GLOBALS['config']['base_url'] ?? '/obe/public') ?>/khs?id=<?= $selectedMhsId ?>&ta_id=<?= $ta['id'] ?>" 
-                           style="display: block; text-decoration: none; padding: 10px 12px; border-radius: 10px; border: 1.5px solid <?= $isSelected ? 'var(--primary)' : 'var(--border)' ?>; background: <?= $isSelected ? 'rgba(var(--primary-rgb), 0.12)' : 'var(--surface)' ?>; transition: all 0.2s; box-shadow: <?= $isSelected ? '0 0 0 2px rgba(var(--primary-rgb), 0.2)' : 'none' ?>;">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-size: 0.82rem; font-weight: 700; color: <?= $isSelected ? 'var(--primary)' : 'var(--text-main)' ?>;">
-                                    Semester <?= $semIdx++ ?>
-                                </span>
-                                <?php if ($taData): ?>
-                                    <span style="font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; background: rgba(16, 185, 129, 0.15); color: #10b981; font-weight: 700;">
-                                        IPS <?= number_format($taData['ips'], 2) ?>
+                        <?php if ($isBelumDitempuh): ?>
+                            <div style="display: block; padding: 10px 12px; border-radius: 10px; border: 1.5px dashed var(--border); background: var(--surface); opacity: 0.55; cursor: not-allowed;" title="Angkatan <?= htmlspecialchars((string)$angkatan) ?> saat ini baru menempuh hingga semester <?= $maxSemMhs ?>, belum menempuh perkuliahan Semester <?= $currentSemNum ?>">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted);">
+                                        Semester <?= $currentSemNum ?>
                                     </span>
-                                <?php else: ?>
-                                    <span style="font-size: 0.7rem; color: var(--text-muted);">-</span>
-                                <?php endif; ?>
+                                    <span style="font-size: 0.65rem; padding: 1.5px 5px; border-radius: 4px; background: rgba(148, 163, 184, 0.15); color: var(--text-muted); font-weight: 600;">
+                                        <i class="fa-solid fa-lock" style="font-size: 0.55rem;"></i> Belum
+                                    </span>
+                                </div>
+                                <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; display: flex; justify-content: space-between;">
+                                    <span style="font-style: italic;">Belum ditempuh</span>
+                                </div>
                             </div>
-                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; display: flex; justify-content: space-between;">
-                                <span><?= $taData ? $taData['total_sks'] . ' SKS' : '0 SKS' ?></span>
-                                <span style="font-size: 0.7rem;"><?= $taData ? count($taData['mata_kuliah']) . ' MK' : '' ?></span>
-                            </div>
-                        </a>
+                        <?php else: ?>
+                            <a href="<?= ($GLOBALS['config']['base_url'] ?? '/obe/public') ?>/khs?id=<?= $selectedMhsId ?>&ta_id=<?= $ta['id'] ?>" 
+                               style="display: block; text-decoration: none; padding: 10px 12px; border-radius: 10px; border: 1.5px solid <?= $isSelected ? 'var(--primary)' : 'var(--border)' ?>; background: <?= $isSelected ? 'rgba(var(--primary-rgb), 0.12)' : 'var(--surface)' ?>; transition: all 0.2s; box-shadow: <?= $isSelected ? '0 0 0 2px rgba(var(--primary-rgb), 0.2)' : 'none' ?>;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-size: 0.82rem; font-weight: 700; color: <?= $isSelected ? 'var(--primary)' : 'var(--text-main)' ?>;">
+                                        Semester <?= $currentSemNum ?>
+                                    </span>
+                                    <?php if ($taData): ?>
+                                        <span style="font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; background: rgba(16, 185, 129, 0.15); color: #10b981; font-weight: 700;">
+                                            IPS <?= number_format($taData['ips'], 2) ?>
+                                        </span>
+                                    <?php elseif ($currentSemNum == $maxSemMhs): ?>
+                                        <span style="font-size: 0.68rem; padding: 2px 5px; border-radius: 4px; background: rgba(2, 132, 199, 0.15); color: #0284c7; font-weight: 600;">
+                                            Berjalan
+                                        </span>
+                                    <?php else: ?>
+                                        <span style="font-size: 0.7rem; color: var(--text-muted);">-</span>
+                                    <?php endif; ?>
+                                </div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; display: flex; justify-content: space-between;">
+                                    <span><?= $taData ? $taData['total_sks'] . ' SKS' : '0 SKS' ?></span>
+                                    <span style="font-size: 0.7rem;"><?= $taData ? count($taData['mata_kuliah']) . ' MK' : '' ?></span>
+                                </div>
+                            </a>
+                        <?php endif; ?>
                     <?php endforeach; ?>
                 </div>
             </div>
@@ -253,8 +307,9 @@ ob_start();
                             <th style="padding: 12px 14px; text-align: center;">SKS</th>
                             <th style="padding: 12px 14px; text-align: center;">Nilai Angka</th>
                             <th style="padding: 12px 14px; text-align: center;">Nilai Huruf</th>
-                            <th style="padding: 12px 14px; text-align: center;">Bobot Mutu</th>
-                            <th style="padding: 12px 14px; text-align: center;">SKS x Bobot</th>
+                            <th style="padding: 12px 14px; text-align: center;">Angka Mutu (AM)</th>
+                            <th style="padding: 12px 14px; text-align: center;">Predikat</th>
+                            <th style="padding: 12px 14px; text-align: center;">SKS x AM</th>
                             <th style="padding: 12px 14px; text-align: center;">Status</th>
                         </tr>
                     </thead>
@@ -286,12 +341,15 @@ ob_start();
                                         <?= $mk['nilai_angka'] !== null ? number_format($mk['nilai_angka'], 2) : '-' ?>
                                     </td>
                                     <td style="padding: 12px 14px; text-align: center;">
-                                        <span style="display: inline-block; min-width: 28px; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 0.85rem; <?= $mk['nilai_huruf'] === 'A' || $mk['nilai_huruf'] === 'A-' ? 'background: rgba(16, 185, 129, 0.15); color: #10b981;' : ($mk['nilai_huruf'] === 'B+' || $mk['nilai_huruf'] === 'B' ? 'background: rgba(59, 130, 246, 0.15); color: #3b82f6;' : ($mk['nilai_huruf'] === 'C+' || $mk['nilai_huruf'] === 'C' ? 'background: rgba(245, 158, 11, 0.15); color: #f59e0b;' : 'background: rgba(239, 68, 68, 0.15); color: #ef4444;')) ?>">
+                                        <span style="display: inline-block; min-width: 28px; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 0.85rem; <?= in_array($mk['nilai_huruf'], ['A']) ? 'background: rgba(16, 185, 129, 0.15); color: #10b981;' : (in_array($mk['nilai_huruf'], ['AB', 'B']) ? 'background: rgba(59, 130, 246, 0.15); color: #3b82f6;' : (in_array($mk['nilai_huruf'], ['BC', 'C']) ? 'background: rgba(245, 158, 11, 0.15); color: #f59e0b;' : 'background: rgba(239, 68, 68, 0.15); color: #ef4444;')) ?>">
                                             <?= $mk['nilai_huruf'] ?>
                                         </span>
                                     </td>
-                                    <td style="padding: 12px 14px; text-align: center;">
+                                    <td style="padding: 12px 14px; text-align: center; font-weight: 600;">
                                         <?= number_format($mk['bobot'], 2) ?>
+                                    </td>
+                                    <td style="padding: 12px 14px; text-align: center; font-size: 0.82rem; font-weight: 600; color: var(--text-muted);">
+                                        <?= htmlspecialchars($mk['predikat'] ?? '-') ?>
                                     </td>
                                     <td style="padding: 12px 14px; text-align: center; font-weight: 600;">
                                         <?= number_format($mk['sks_x_bobot'], 2) ?>
@@ -315,8 +373,20 @@ ob_start();
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="11" style="padding: 30px; text-align: center; color: var(--text-muted);">
-                                    Belum ada mata kuliah yang diambil atau terdaftar di kelas.
+                                <td colspan="11" style="padding: 36px 20px; text-align: center; color: var(--text-muted);">
+                                    <div style="font-size: 1.6rem; opacity: 0.35; margin-bottom: 8px;">
+                                        <i class="fa-solid fa-calendar-xmark"></i>
+                                    </div>
+                                    <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-main); margin-bottom: 4px;">
+                                        Belum Ada Mata Kuliah yang Ditempuh
+                                    </div>
+                                    <div style="font-size: 0.82rem; max-width: 500px; margin: 0 auto; line-height: 1.4;">
+                                        <?php if (!empty($filterTaId) && !empty($angkatan)): ?>
+                                            Mahasiswa angkatan <strong><?= htmlspecialchars((string)$angkatan) ?></strong> saat ini baru menempuh hingga <strong>Semester <?= $maxSemMhs ?></strong> dan otomatis belum menempuh perkuliahan untuk semester ini.
+                                        <?php else: ?>
+                                            Belum ada mata kuliah yang terdaftar di kelas untuk periode ini.
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endif; ?>
@@ -348,10 +418,173 @@ ob_start();
                     </div>
                 </div>
             </div>
+
+            <!-- TABEL PEDOMAN PENILAIAN RESMI (ACUAN SISTEM) -->
+            <div style="margin-top: 24px; padding: 18px 20px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface);">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+                    <span style="font-size: 0.92rem; font-weight: 700; color: var(--text-main); display: inline-flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-scale-balanced" style="color: var(--primary);"></i>
+                        Pedoman Aturan Penilaian Akademik
+                    </span>
+                    <span style="font-size: 0.78rem; color: var(--text-muted); background: var(--surface-hover); padding: 3px 10px; border-radius: 6px; border: 1px solid var(--border);">
+                        Standar Penilaian Resmi Universitas Anwar Medika
+                    </span>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; text-align: center;">
+                        <thead>
+                            <tr style="background: var(--table-header-bg); border-bottom: 2px solid var(--border);">
+                                <th style="padding: 10px 12px; width: 6%;">No</th>
+                                <th style="padding: 10px 12px; text-align: left; width: 22%;">Predikat</th>
+                                <th style="padding: 10px 12px; width: 18%;">Nilai (dalam huruf)</th>
+                                <th style="padding: 10px 12px; width: 22%;">Nilai (dalam angka)</th>
+                                <th style="padding: 10px 12px; width: 16%;">Angka Mutu (AM)</th>
+                                <th style="padding: 10px 12px; width: 16%;">Status Kelulusan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="border-bottom: 1px solid var(--border);">
+                                <td style="padding: 8px 12px; color: var(--text-muted);">1</td>
+                                <td style="padding: 8px 12px; text-align: left; font-weight: 700; color: #10b981;">Istimewa</td>
+                                <td style="padding: 8px 12px; font-weight: 700;"><span style="display: inline-block; padding: 2px 10px; border-radius: 4px; background: rgba(16, 185, 129, 0.15); color: #10b981;">A</span></td>
+                                <td style="padding: 8px 12px; font-weight: 600;">76 - 100</td>
+                                <td style="padding: 8px 12px; font-weight: 700;">4.0</td>
+                                <td style="padding: 8px 12px;"><span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; font-weight: 600; padding: 2px 8px; border-radius: 4px;">Lulus</span></td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid var(--border);">
+                                <td style="padding: 8px 12px; color: var(--text-muted);">2</td>
+                                <td style="padding: 8px 12px; text-align: left; font-weight: 700; color: #3b82f6;">Baik Sekali</td>
+                                <td style="padding: 8px 12px; font-weight: 700;"><span style="display: inline-block; padding: 2px 10px; border-radius: 4px; background: rgba(59, 130, 246, 0.15); color: #3b82f6;">AB</span></td>
+                                <td style="padding: 8px 12px; font-weight: 600;">70 - 75</td>
+                                <td style="padding: 8px 12px; font-weight: 700;">3.5</td>
+                                <td style="padding: 8px 12px;"><span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; font-weight: 600; padding: 2px 8px; border-radius: 4px;">Lulus</span></td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid var(--border);">
+                                <td style="padding: 8px 12px; color: var(--text-muted);">3</td>
+                                <td style="padding: 8px 12px; text-align: left; font-weight: 700; color: #3b82f6;">Baik</td>
+                                <td style="padding: 8px 12px; font-weight: 700;"><span style="display: inline-block; padding: 2px 10px; border-radius: 4px; background: rgba(59, 130, 246, 0.15); color: #3b82f6;">B</span></td>
+                                <td style="padding: 8px 12px; font-weight: 600;">65 - 69</td>
+                                <td style="padding: 8px 12px; font-weight: 700;">3.0</td>
+                                <td style="padding: 8px 12px;"><span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; font-weight: 600; padding: 2px 8px; border-radius: 4px;">Lulus</span></td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid var(--border);">
+                                <td style="padding: 8px 12px; color: var(--text-muted);">4</td>
+                                <td style="padding: 8px 12px; text-align: left; font-weight: 700; color: #f59e0b;">Cukup Baik</td>
+                                <td style="padding: 8px 12px; font-weight: 700;"><span style="display: inline-block; padding: 2px 10px; border-radius: 4px; background: rgba(245, 158, 11, 0.15); color: #f59e0b;">BC</span></td>
+                                <td style="padding: 8px 12px; font-weight: 600;">60 - 64</td>
+                                <td style="padding: 8px 12px; font-weight: 700;">2.5</td>
+                                <td style="padding: 8px 12px;"><span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; font-weight: 600; padding: 2px 8px; border-radius: 4px;">Lulus</span></td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid var(--border);">
+                                <td style="padding: 8px 12px; color: var(--text-muted);">5</td>
+                                <td style="padding: 8px 12px; text-align: left; font-weight: 700; color: #f59e0b;">Cukup</td>
+                                <td style="padding: 8px 12px; font-weight: 700;"><span style="display: inline-block; padding: 2px 10px; border-radius: 4px; background: rgba(245, 158, 11, 0.15); color: #f59e0b;">C</span></td>
+                                <td style="padding: 8px 12px; font-weight: 600;">50 - 59</td>
+                                <td style="padding: 8px 12px; font-weight: 700;">2.0</td>
+                                <td style="padding: 8px 12px;"><span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; font-weight: 600; padding: 2px 8px; border-radius: 4px;">Lulus</span></td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid var(--border);">
+                                <td style="padding: 8px 12px; color: var(--text-muted);">6</td>
+                                <td style="padding: 8px 12px; text-align: left; font-weight: 700; color: #ef4444;">Kurang</td>
+                                <td style="padding: 8px 12px; font-weight: 700;"><span style="display: inline-block; padding: 2px 10px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #ef4444;">D</span></td>
+                                <td style="padding: 8px 12px; font-weight: 600;">40 - 49</td>
+                                <td style="padding: 8px 12px; font-weight: 700;">1.0</td>
+                                <td style="padding: 8px 12px;"><span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; font-weight: 600; padding: 2px 8px; border-radius: 4px;">Mengulang</span></td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 12px; color: var(--text-muted);">7</td>
+                                <td style="padding: 8px 12px; text-align: left; font-weight: 700; color: #ef4444;">Kurang Sekali</td>
+                                <td style="padding: 8px 12px; font-weight: 700;"><span style="display: inline-block; padding: 2px 10px; border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #ef4444;">E</span></td>
+                                <td style="padding: 8px 12px; font-weight: 600;">0 - 39</td>
+                                <td style="padding: 8px 12px; font-weight: 700;">0.0</td>
+                                <td style="padding: 8px 12px;"><span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; font-weight: 600; padding: 2px 8px; border-radius: 4px;">Mengulang</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- TAB 2: RADAR & REKAPITULASI CPL MAHASISWA -->
+    <!-- TAB 2: RINCIAN NILAI SUB-CPMK -->
+    <div id="tab-sub-cpmk" class="tab-pane" style="display: none;">
+        <div class="card" style="padding: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:18px;">
+                <div>
+                    <h4 style="margin:0;color:var(--text-main);font-size:1.05rem;"><i class="fa-solid fa-route" style="color:var(--primary);margin-right:6px;"></i>Trace Nilai Mata Kuliah hingga Sub-CPMK</h4>
+                    <p style="margin:5px 0 0;color:var(--text-muted);font-size:.83rem;">Nilai aktual, instrumen, dan rubrik dibaca dari snapshot RPS mata kuliah.</p>
+                </div>
+                <span style="font-size:.76rem;color:var(--success);background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);padding:5px 9px;border-radius:999px;font-weight:700;"><i class="fa-solid fa-eye"></i> Read-only</span>
+            </div>
+
+            <?php if (!empty($rincianSubCpmk)): ?>
+                <?php foreach ($rincianSubCpmk as $semester): ?>
+                    <section style="margin-bottom:22px;">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;color:var(--text-main);font-weight:700;">
+                            <i class="fa-solid fa-calendar-days" style="color:var(--primary);"></i>
+                            <?= htmlspecialchars($semester['ta_nama']) ?>
+                            <span style="font-size:.72rem;color:var(--text-muted);font-weight:500;">(<?= count($semester['mata_kuliah']) ?> mata kuliah)</span>
+                        </div>
+                        <?php foreach ($semester['mata_kuliah'] as $mkDetail): ?>
+                            <details style="margin-bottom:10px;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface);">
+                                <summary style="padding:12px 15px;cursor:pointer;background:var(--table-header-bg);color:var(--text-main);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+                                    <span><strong style="color:var(--primary);font-family:monospace;"><?= htmlspecialchars($mkDetail['mk_kode']) ?></strong><strong> — <?= htmlspecialchars($mkDetail['mk_nama']) ?></strong></span>
+                                    <span style="font-size:.75rem;color:var(--text-muted);">Semester <?= (int)$mkDetail['mk_semester'] ?> · Kelas <?= htmlspecialchars($mkDetail['nama_kelas']) ?> · <?= count($mkDetail['sub_cpmk']) ?> Sub-CPMK</span>
+                                </summary>
+                                <div style="overflow-x:auto;">
+                                    <table class="table" style="width:100%;border-collapse:collapse;font-size:.82rem;">
+                                        <thead><tr style="background:var(--surface-hover);border-bottom:1px solid var(--border);text-align:left;">
+                                            <th style="padding:10px 12px;">CPMK / Sub-CPMK</th>
+                                            <th style="padding:10px 12px;min-width:260px;">Rumusan Sub-CPMK</th>
+                                            <th style="padding:10px 12px;text-align:center;">Bobot</th>
+                                            <th style="padding:10px 12px;text-align:center;">Nilai</th>
+                                            <th style="padding:10px 12px;min-width:190px;">Jenis Penilaian</th>
+                                            <th style="padding:10px 12px;min-width:240px;">Rubrik Penilaian</th>
+                                        </tr></thead>
+                                        <tbody>
+                                        <?php foreach ($mkDetail['sub_cpmk'] as $sub): ?>
+                                            <tr style="border-bottom:1px solid var(--border);vertical-align:top;">
+                                                <td style="padding:11px 12px;white-space:nowrap;"><div style="font-weight:700;color:var(--text-main);"><?= htmlspecialchars($sub['cpmk_kode']) ?></div><div style="font-weight:700;color:var(--primary);margin-top:3px;"><?= htmlspecialchars($sub['kode']) ?></div></td>
+                                                <td style="padding:11px 12px;color:var(--text-main);line-height:1.45;"><?= htmlspecialchars($sub['rumusan']) ?></td>
+                                                <td style="padding:11px 12px;text-align:center;font-weight:600;"><?= number_format($sub['bobot'], 2) ?>%</td>
+                                                <td style="padding:11px 12px;text-align:center;"><span style="display:inline-flex;min-width:48px;justify-content:center;padding:5px 8px;border-radius:7px;background:rgba(var(--primary-rgb),.12);color:var(--primary);font-weight:800;"><?= number_format($sub['nilai'], 2) ?></span></td>
+                                                <td style="padding:11px 12px;">
+                                                    <?php if (!empty($sub['instruments'])): ?>
+                                                        <div style="display:flex;flex-wrap:wrap;gap:5px;">
+                                                        <?php foreach ($sub['instruments'] as $instrument): ?>
+                                                            <span title="<?= htmlspecialchars(implode(' | ', $instrument['pertanyaan'])) ?>" style="display:inline-flex;gap:4px;align-items:center;padding:3px 7px;border-radius:6px;background:var(--surface-hover);border:1px solid var(--border);color:var(--text-main);font-size:.74rem;"><strong><?= htmlspecialchars($instrument['kode']) ?></strong> <?= htmlspecialchars($instrument['nama']) ?></span>
+                                                        <?php endforeach; ?>
+                                                        </div>
+                                                    <?php else: ?>
+                                                        <span style="color:var(--warning);font-size:.76rem;"><i class="fa-solid fa-triangle-exclamation"></i> Belum dipetakan di RPS</span>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td style="padding:11px 12px;">
+                                                    <?php $rubrikShown = []; foreach ($sub['instruments'] as $instrument) { if (!empty($instrument['rubrik'])) $rubrikShown[$instrument['rubrik']] = $instrument; } ?>
+                                                    <?php if ($rubrikShown): ?>
+                                                        <?php foreach ($rubrikShown as $rubrikNama => $instrument): ?>
+                                                            <div style="margin-bottom:5px;padding:5px 8px;border-left:3px solid var(--success);background:rgba(16,185,129,.07);color:var(--text-main);border-radius:4px;"><strong><?= htmlspecialchars($rubrikNama) ?></strong><div style="font-size:.71rem;color:var(--text-muted);margin-top:2px;"><?= htmlspecialchars($instrument['rubrik_jenis'] ?? '') ?></div></div>
+                                                        <?php endforeach; ?>
+                                                    <?php elseif (!empty($sub['instruments'])): ?>
+                                                        <span style="color:var(--text-muted);font-size:.76rem;">Instrumen belum memiliki rubrik</span>
+                                                    <?php else: ?><span style="color:var(--text-muted);">—</span><?php endif; ?>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </details>
+                        <?php endforeach; ?>
+                    </section>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <div style="padding:38px 20px;text-align:center;color:var(--text-muted);"><i class="fa-solid fa-clipboard-question" style="font-size:2rem;opacity:.45;margin-bottom:10px;"></i><div style="font-weight:700;color:var(--text-main);">Belum ada nilai Sub-CPMK</div><div style="font-size:.82rem;margin-top:4px;">Belum tersedia nilai untuk mahasiswa atau semester yang dipilih.</div></div>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- TAB 3: RADAR & REKAPITULASI CPL MAHASISWA -->
     <div id="tab-cpl" class="tab-pane" style="display: none;">
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 20px; margin-bottom: 24px;">
             <!-- Radar Spider Chart Canvas -->

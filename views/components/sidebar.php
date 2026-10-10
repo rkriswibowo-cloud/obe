@@ -1,14 +1,31 @@
 <?php
 $currentUri = $_SERVER['REQUEST_URI'] ?? '';
 $baseUrl = $config['base_url'] ?? '/obe/public';
+$sidebarAccess = new AccessContext();
+$sidebarRole = $_SESSION['role'] ?? '';
+$sidebarIsKaprodi = $sidebarAccess->isKaprodi();
+$sidebarAllowed = $sidebarAccess->isSuperAdmin()
+    ? ['*']
+    : ($sidebarIsKaprodi
+        ? ['dashboard','tahun-akademik','dosen','mahasiswa','prodi','kurikulum','aturan-kurikulum','profil-lulusan','cpl','mata-kuliah','rubrik','pemetaan-mk-cpl','pengampu-mk','rps','kelas','asesmen','laporan','laporan-semester','khs','transkrip','rpl','cqi']
+        : ($sidebarRole === 'Admin Prodi'
+            ? ['dashboard','tahun-akademik','dosen','mahasiswa','prodi','kurikulum','aturan-kurikulum','profil-lulusan','cpl','mata-kuliah','rubrik','import','pemetaan-mk-cpl','rps','kelas','asesmen','laporan','laporan-semester','khs','transkrip','rpl','cqi']
+            : ($sidebarRole === 'Dosen'
+            ? ['dashboard','rps','rubrik','kelas','asesmen','laporan','laporan-semester','khs','transkrip']
+            : ($sidebarRole === 'Mahasiswa' ? ['dashboard','laporan','khs','transkrip','rpl'] : []))));
+$sidebarMenuAllowed = static function (string $path) use ($sidebarAllowed): bool {
+    return in_array('*', $sidebarAllowed, true) || in_array($path, $sidebarAllowed, true);
+};
 
-function isNavActive($path, $currentUri) {
-    if (empty($path)) return false;
-    $parsed = parse_url($path, PHP_URL_PATH);
-    if ($parsed === '/obe/public' || $parsed === '/obe/public/') {
-        return $currentUri === $parsed || $currentUri === $parsed . 'dashboard';
+if (!function_exists('isNavActive')) {
+    function isNavActive($path, $currentUri) {
+        if (empty($path)) return false;
+        $parsed = parse_url($path, PHP_URL_PATH);
+        if ($parsed === '/obe/public' || $parsed === '/obe/public/') {
+            return $currentUri === $parsed || $currentUri === $parsed . 'dashboard';
+        }
+        return strpos($currentUri, $parsed) !== false;
     }
-    return strpos($currentUri, $parsed) !== false;
 }
 
 // Deteksi kategori aktif
@@ -17,6 +34,7 @@ $isMasterActive = isNavActive($baseUrl . '/tahun-akademik', $currentUri)
     || isNavActive($baseUrl . '/mahasiswa', $currentUri)
     || isNavActive($baseUrl . '/prodi', $currentUri)
     || isNavActive($baseUrl . '/kurikulum', $currentUri)
+    || isNavActive($baseUrl . '/aturan-kurikulum', $currentUri)
     || isNavActive($baseUrl . '/profil-lulusan', $currentUri)
     || isNavActive($baseUrl . '/cpl', $currentUri)
     || isNavActive($baseUrl . '/mata-kuliah', $currentUri)
@@ -28,11 +46,15 @@ $isPembelajaranActive = isNavActive($baseUrl . '/pemetaan-mk-cpl', $currentUri)
     || isNavActive($baseUrl . '/kelas', $currentUri)
     || isNavActive($baseUrl . '/asesmen', $currentUri);
 
+$isLaporanSemesterActive = isNavActive($baseUrl . '/laporan-semester', $currentUri);
 $isEvaluasiActive = isNavActive($baseUrl . '/laporan', $currentUri)
+    || $isLaporanSemesterActive
     || isNavActive($baseUrl . '/khs', $currentUri)
-    || isNavActive($baseUrl . '/cqi', $currentUri);
+    || isNavActive($baseUrl . '/transkrip', $currentUri)
+    || isNavActive($baseUrl . '/cqi', $currentUri)
+    || isNavActive($baseUrl . '/rpl', $currentUri);
 
-$isSistemActive = isNavActive($baseUrl . '/audit-log', $currentUri);
+$isSistemActive = isNavActive($baseUrl . '/audit-log', $currentUri) || isNavActive($baseUrl . '/user-management', $currentUri);
 
 // Ambil daftar semester dari database secara dinamis
 $listTahunAkademik = [];
@@ -58,6 +80,19 @@ try {
     $activeSemesterNama = '2026/2027 Ganjil';
 }
 ?>
+<?php
+$allSidebarPaths = ['tahun-akademik','dosen','mahasiswa','prodi','kurikulum','aturan-kurikulum','profil-lulusan','cpl','mata-kuliah','rubrik','import','pemetaan-mk-cpl','pengampu-mk','rps','kelas','asesmen','laporan','laporan-semester','khs','transkrip','rpl','cqi','audit-log','user-management'];
+$hiddenSidebarPaths = array_values(array_filter($allSidebarPaths, fn($item) => !$sidebarMenuAllowed($item)));
+?>
+<?php if ($hiddenSidebarPaths): ?>
+<style>
+<?php foreach ($hiddenSidebarPaths as $hiddenPath): ?>
+#appSidebar .sidebar-nav-item:has(>a[href$="/<?= $hiddenPath ?>"]),
+#appSidebar .sidebar-nav-item:has(>a[href*="/<?= $hiddenPath ?>?"]){display:none!important}
+<?php endforeach; ?>
+<?php if (!$sidebarAccess->isSuperAdmin()): ?>#appSidebar .sidebar-group[data-group="sistem"]{display:none!important}<?php endif; ?>
+</style>
+<?php endif; ?>
 <aside class="sidebar" id="appSidebar">
     <!-- Search Bar with '/' Shortcut -->
     <div class="sidebar-search-box">
@@ -146,7 +181,7 @@ try {
                     <span>MASTER DATA</span>
                 </span>
                 <span class="sidebar-group-meta">
-                    <span class="sidebar-group-badge">10</span>
+                    <span class="sidebar-group-badge">11</span>
                     <i class="fa-solid fa-chevron-down group-chevron"></i>
                 </span>
             </button>
@@ -180,6 +215,12 @@ try {
                         <a href="<?= $baseUrl ?>/kurikulum" class="sidebar-link" title="Kurikulum">
                             <i class="fa-solid fa-book"></i>
                             <span>Kurikulum</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item <?= isNavActive($baseUrl . '/aturan-kurikulum', $currentUri) ? 'active' : '' ?>" data-label="aturan kurikulum angkatan mapping rule pengaturan">
+                        <a href="<?= $baseUrl ?>/aturan-kurikulum" class="sidebar-link" title="Aturan Kurikulum">
+                            <i class="fa-solid fa-scale-balanced"></i>
+                            <span>Aturan Kurikulum</span>
                         </a>
                     </li>
                     <li class="sidebar-nav-item <?= isNavActive($baseUrl . '/profil-lulusan', $currentUri) ? 'active' : '' ?>" data-label="profil lulusan graduate profile peran profesi pl">
@@ -224,7 +265,7 @@ try {
                     <span>PEMBELAJARAN</span>
                 </span>
                 <span class="sidebar-group-meta">
-                    <span class="sidebar-group-badge">4</span>
+                    <span class="sidebar-group-badge"><?= in_array($_SESSION['role'] ?? '', ['Super Admin', 'Admin Prodi', 'Dosen', 'Kaprodi'], true) ? '5' : '4' ?></span>
                     <i class="fa-solid fa-chevron-down group-chevron"></i>
                 </span>
             </button>
@@ -234,6 +275,12 @@ try {
                         <a href="<?= $baseUrl ?>/pemetaan-mk-cpl" class="sidebar-link" title="Pemetaan MK-CPL">
                             <i class="fa-solid fa-link"></i>
                             <span>Pemetaan MK-CPL</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item <?= isNavActive($baseUrl . '/pengampu-mk', $currentUri) ? 'active' : '' ?>" data-label="pengampu mata kuliah pjmk tim teaching dosen">
+                        <a href="<?= $baseUrl ?>/pengampu-mk" class="sidebar-link" title="Pengampu Mata Kuliah">
+                            <i class="fa-solid fa-chalkboard-user"></i>
+                            <span>Pengampu Mata Kuliah</span>
                         </a>
                     </li>
                     <li class="sidebar-nav-item <?= isNavActive($baseUrl . '/rps', $currentUri) ? 'active' : '' ?>" data-label="rps rencana pembelajaran semester silabus cpmk">
@@ -266,22 +313,42 @@ try {
                     <span>CAPAIAN & EVALUASI</span>
                 </span>
                 <span class="sidebar-group-meta">
-                    <span class="sidebar-group-badge">3</span>
+                    <span class="sidebar-group-badge">4</span>
                     <i class="fa-solid fa-chevron-down group-chevron"></i>
                 </span>
             </button>
             <div class="sidebar-group-content">
                 <ul class="sidebar-nav">
-                    <li class="sidebar-nav-item <?= isNavActive($baseUrl . '/laporan', $currentUri) ? 'active' : '' ?>" data-label="laporan cpl spider chart radar ketercapaian rekap">
+                    <li class="sidebar-nav-item <?= isNavActive($baseUrl . '/laporan', $currentUri) && !$isLaporanSemesterActive ? 'active' : '' ?>" data-label="laporan cpl spider chart radar ketercapaian rekap">
                         <a href="<?= $baseUrl ?>/laporan" class="sidebar-link" title="Laporan CPL">
                             <i class="fa-solid fa-chart-pie"></i>
                             <span>Laporan CPL</span>
                         </a>
                     </li>
-                    <li class="sidebar-nav-item <?= isNavActive($baseUrl . '/khs', $currentUri) ? 'active' : '' ?>" data-label="khs kartu hasil studi ipk ips portofolio cpl nilai mahasiswa transcript">
+                    <?php if (in_array($_SESSION['role'] ?? '', ['Super Admin', 'Admin Prodi', 'Dosen', 'Kaprodi'], true)): ?>
+                    <li class="sidebar-nav-item <?= $isLaporanSemesterActive ? 'active' : '' ?>" data-label="laporan semester periode pengukuran cpl">
+                        <a href="<?= $baseUrl ?>/laporan-semester" class="sidebar-link" title="Laporan Pengukuran Semester">
+                            <i class="fa-solid fa-calendar-check"></i>
+                            <span>Laporan Semester</span>
+                        </a>
+                    </li>
+                    <?php endif; ?>
+                    <li class="sidebar-nav-item <?= isNavActive($baseUrl . '/khs', $currentUri) ? 'active' : '' ?>" data-label="khs kartu hasil studi ipk ips portofolio cpl nilai mahasiswa">
                         <a href="<?= $baseUrl ?>/khs" class="sidebar-link" title="KHS & Portofolio CPL">
                             <i class="fa-solid fa-graduation-cap"></i>
                             <span>KHS & Portofolio CPL</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item <?= isNavActive($baseUrl . '/transkrip', $currentUri) ? 'active' : '' ?>" data-label="transkrip akademik cetak nilai ijazah kelulusan skpi cpl capaian mahasiswa">
+                        <a href="<?= $baseUrl ?>/transkrip" class="sidebar-link" title="Transkrip Mahasiswa & Capaian CPL">
+                            <i class="fa-solid fa-file-invoice"></i>
+                            <span>Transkrip Mahasiswa</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item <?= isNavActive($baseUrl . '/rpl', $currentUri) ? 'active' : '' ?>" data-label="rpl rekognisi pembelajaran lampau konversi sks mahasiswa">
+                        <a href="<?= $baseUrl ?>/rpl" class="sidebar-link" title="Konversi SKS RPL">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                            <span>Konversi SKS RPL</span>
                         </a>
                     </li>
                     <li class="sidebar-nav-item <?= isNavActive($baseUrl . '/cqi', $currentUri) ? 'active' : '' ?>" data-label="cqi tindak lanjut perbaikan mutu continuous quality improvement">
@@ -302,12 +369,13 @@ try {
                     <span>SISTEM & AUDIT</span>
                 </span>
                 <span class="sidebar-group-meta">
-                    <span class="sidebar-group-badge">1</span>
+                    <span class="sidebar-group-badge"><?= ($_SESSION['role']??'')==='Super Admin'?'2':'1' ?></span>
                     <i class="fa-solid fa-chevron-down group-chevron"></i>
                 </span>
             </button>
             <div class="sidebar-group-content">
                 <ul class="sidebar-nav">
+                    <?php if (($_SESSION['role']??'')==='Super Admin'): ?><li class="sidebar-nav-item <?= isNavActive($baseUrl.'/user-management',$currentUri)?'active':'' ?>" data-label="manajemen user akun login role password"><a href="<?= $baseUrl ?>/user-management" class="sidebar-link" title="Manajemen User"><i class="fa-solid fa-users-gear"></i><span>Manajemen User</span></a></li><?php endif; ?>
                     <li class="sidebar-nav-item <?= isNavActive($baseUrl . '/audit-log', $currentUri) ? 'active' : '' ?>" data-label="audit log trail riwayat aktivitas keamanan sistem">
                         <a href="<?= $baseUrl ?>/audit-log" class="sidebar-link" title="Audit Log">
                             <i class="fa-solid fa-clock-rotate-left"></i>
@@ -529,10 +597,58 @@ try {
     // 6. User Pill Dropdown
     window.toggleUserDropdown = function(e) {
         if (e) e.stopPropagation();
+        const notifMenu = document.getElementById('notifDropdownMenu');
+        if (notifMenu) notifMenu.style.display = 'none';
+        const palMenu = document.getElementById('paletteDropdownMenu');
+        if (palMenu) palMenu.style.display = 'none';
+
         const menu = document.getElementById('userPillMenu');
         if (menu) {
             menu.style.display = (menu.style.display === 'none' || menu.style.display === '') ? 'block' : 'none';
         }
+    };
+
+    // 7. Notification Bell Dropdown
+    window.toggleNotifDropdown = function(e) {
+        if (e) e.stopPropagation();
+        const userMenu = document.getElementById('userPillMenu');
+        if (userMenu) userMenu.style.display = 'none';
+        const palMenu = document.getElementById('paletteDropdownMenu');
+        if (palMenu) palMenu.style.display = 'none';
+
+        const notifMenu = document.getElementById('notifDropdownMenu');
+        if (notifMenu) {
+            notifMenu.style.display = (notifMenu.style.display === 'none' || notifMenu.style.display === '') ? 'block' : 'none';
+        }
+    };
+
+    // 8. Tandai Semua Notifikasi Dibaca
+    window.markAllNotifRead = function(e) {
+        if (e) e.stopPropagation();
+        const badge = document.getElementById('notifBadgeCount');
+        const pulse = document.getElementById('notifPulseDot');
+        const pill = document.getElementById('notifPillCount');
+        const markBtn = document.getElementById('notifMarkReadBtn');
+        const unreadDots = document.querySelectorAll('.notif-unread-dot');
+        const unreadItems = document.querySelectorAll('.notif-item.unread');
+
+        if (badge) badge.style.display = 'none';
+        if (pulse) pulse.style.display = 'none';
+        if (pill) pill.style.display = 'none';
+        if (markBtn) markBtn.style.display = 'none';
+        unreadDots.forEach(function(dot) { dot.style.display = 'none'; });
+        unreadItems.forEach(function(item) { item.classList.remove('unread'); });
+
+        const baseUrl = '<?= $config['base_url'] ?? '/obe/public' ?>';
+        fetch(baseUrl + '/notifikasi/mark-read', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '<?= $_SESSION['csrf_token'] ?? '' ?>',
+                'Content-Type': 'application/json'
+            }
+        }).catch(function(err) {
+            console.log('Error marking notifications read:', err);
+        });
     };
 
     // Tutup dropdown saat klik di luar
@@ -547,6 +663,12 @@ try {
         const userMenu = document.getElementById('userPillMenu');
         if (userWrapper && userMenu && !userWrapper.contains(e.target)) {
             userMenu.style.display = 'none';
+        }
+
+        const notifWrapper = document.getElementById('notifDropdownWrapper');
+        const notifMenu = document.getElementById('notifDropdownMenu');
+        if (notifWrapper && notifMenu && !notifWrapper.contains(e.target)) {
+            notifMenu.style.display = 'none';
         }
     });
 

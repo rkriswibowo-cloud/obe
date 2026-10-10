@@ -1,3 +1,15 @@
+<?php
+// views/components/topbar.php
+require_once __DIR__ . '/../../app/Models/NotificationModel.php';
+$notifModel = new NotificationModel();
+$notifUserId = $_SESSION['user_id'] ?? null;
+$unreadNotifCount = $notifModel->getUnreadCount($notifUserId);
+$recentNotifs = $notifModel->getLatest($notifUserId, 6);
+$topbarAccess = new AccessContext();
+$topbarRoleLabel = $topbarAccess->isKaprodi() && !$topbarAccess->isSuperAdmin()
+    ? 'Dosen / Kaprodi'
+    : ($_SESSION['role'] ?? 'Admin');
+?>
 <div class="topbar">
     <div class="topbar-left">
         <!-- Sidebar Toggle Collapse / Expand Button -->
@@ -5,26 +17,29 @@
             <i class="fa-solid fa-bars-staggered"></i>
         </button>
 
-        <!-- Brand Squircle Logo -->
-        <a href="<?= $config['base_url'] ?? '/obe/public' ?>/dashboard" class="brand-squircle-link" title="Sistem Informasi OBE & CPL">
+        <!-- Brand Squircle Logo & Name -->
+        <a href="<?= $config['base_url'] ?? '/obe/public' ?>/dashboard" class="brand-squircle-link" title="SIP-OKE : Sistem Informasi Pengukuran Outcome Kompetensi dan Evaluasi">
             <div class="brand-squircle">
                 <i class="fa-solid fa-graduation-cap"></i>
             </div>
+            <div class="brand-text-wrapper">
+                <span class="brand-title">SIP-OKE</span>
+                <span class="brand-subtitle-line">Sistem Informasi Pengukuran</span>
+                <span class="brand-subtitle-line">Outcome Kompetensi dan Evaluasi</span>
+            </div>
         </a>
 
-        <span class="topbar-divider-slash">/</span>
-
-        <!-- User / Account Pill Selector (matching screenshot) -->
+        <!-- User / Account Pill Profile Dropdown -->
         <div class="user-pill-dropdown-wrapper" id="userPillWrapper">
             <button type="button" class="user-pill-btn" id="userPillBtn" onclick="window.toggleUserDropdown(event)" title="Informasi Akun" aria-label="Akun Pengguna">
                 <span class="user-avatar-circle">
                     <i class="fa-regular fa-user"></i>
                 </span>
                 <span class="user-email-text">
-                    <?= htmlspecialchars($_SESSION['email'] ?? ($_SESSION['nama_lengkap'] ? strtolower(str_replace(' ', '', $_SESSION['nama_lengkap'])) . '@gmail.com' : 'cansaas@gmail.com')) ?>
+                    <?= htmlspecialchars($_SESSION['nama_lengkap'] ?? $_SESSION['email'] ?? 'Administrator') ?>
                 </span>
                 <span class="user-plan-badge">
-                    <?= htmlspecialchars($_SESSION['role'] ?? 'Free') ?>
+                    <?= htmlspecialchars($topbarRoleLabel) ?>
                 </span>
                 <i class="fa-solid fa-chevron-down pill-chevron"></i>
             </button>
@@ -50,13 +65,77 @@
                 </a>
             </div>
         </div>
+
+        <!-- Notification Bell & Dropdown (di sebelah kanan profil) -->
+        <div class="notif-dropdown-wrapper" id="notifDropdownWrapper">
+            <button type="button" class="notif-bell-btn" id="notifBellBtn" onclick="window.toggleNotifDropdown(event)" title="Notifikasi Sistem (<?= $unreadNotifCount ?> Belum Dibaca)" aria-label="Notifikasi">
+                <i class="fa-regular fa-bell"></i>
+                <?php if ($unreadNotifCount > 0): ?>
+                    <span class="notif-badge-count" id="notifBadgeCount"><?= $unreadNotifCount > 9 ? '9+' : $unreadNotifCount ?></span>
+                    <span class="notif-pulse-dot" id="notifPulseDot"></span>
+                <?php endif; ?>
+            </button>
+
+            <div class="notif-dropdown-menu" id="notifDropdownMenu" style="display: none;">
+                <div class="notif-header">
+                    <div class="notif-header-title">
+                        <span>Notifikasi</span>
+                        <?php if ($unreadNotifCount > 0): ?>
+                            <span class="notif-badge-pill" id="notifPillCount"><?= $unreadNotifCount ?> Baru</span>
+                        <?php endif; ?>
+                    </div>
+                    <?php if ($unreadNotifCount > 0): ?>
+                        <button type="button" class="notif-mark-read-btn" id="notifMarkReadBtn" onclick="window.markAllNotifRead(event)" title="Tandai semua sudah dibaca">
+                            <i class="fa-solid fa-check-double"></i> Tandai Dibaca
+                        </button>
+                    <?php endif; ?>
+                </div>
+
+                <div class="notif-list-container">
+                    <?php if (!empty($recentNotifs)): ?>
+                        <?php foreach ($recentNotifs as $n): ?>
+                            <a href="<?= !empty($n['tautan']) ? ($config['base_url'] ?? '/obe/public') . $n['tautan'] : 'javascript:void(0)' ?>" class="notif-item <?= empty($n['is_read']) ? 'unread' : '' ?>">
+                                <div class="notif-icon-box notif-type-<?= htmlspecialchars($n['tipe'] ?? 'info') ?>">
+                                    <i class="<?= htmlspecialchars($n['icon'] ?? 'fa-solid fa-bell') ?>"></i>
+                                </div>
+                                <div class="notif-content">
+                                    <div class="notif-title-row">
+                                        <span class="notif-title"><?= htmlspecialchars($n['judul']) ?></span>
+                                        <?php if (empty($n['is_read'])): ?>
+                                            <span class="notif-unread-dot"></span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="notif-desc"><?= htmlspecialchars($n['pesan']) ?></div>
+                                    <div class="notif-time">
+                                        <i class="fa-regular fa-clock" style="font-size: 0.68rem; margin-right: 3px;"></i>
+                                        <?= date('d M Y, H:i', strtotime($n['created_at'])) ?>
+                                    </div>
+                                </div>
+                            </a>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <div class="notif-empty-state">
+                            <i class="fa-regular fa-bell-slash" style="font-size: 1.8rem; opacity: 0.35; margin-bottom: 8px;"></i>
+                            <div>Belum ada notifikasi baru</div>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <div class="notif-footer">
+                    <a href="<?= $config['base_url'] ?? '/obe/public' ?>/audit-log" class="notif-footer-link">
+                        <span>Lihat Riwayat Log & Aktivitas</span>
+                        <i class="fa-solid fa-arrow-right" style="font-size: 0.72rem; margin-left: 4px;"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="topbar-right" style="display: flex; align-items: center; gap: 12px;">
-        <!-- Accent Palette Switcher Dropdown -->
+        <!-- Accent Palette Switcher Dropdown (Gradient / Palet) -->
         <div class="palette-dropdown-wrapper" id="paletteDropdownWrapper">
             <button type="button" id="paletteToggleBtn" class="palette-toggle-btn" onclick="window.togglePaletteDropdown(event)" title="Pilih Tema Palet Warna" aria-label="Palette Selector">
-                <span class="palette-dot-preview" id="paletteActiveDot" style="background-color: #0284c7;"></span>
+                <span class="palette-dot-preview" id="paletteActiveDot" style="background-color: #3368A0;"></span>
                 <i class="fa-solid fa-palette" style="font-size: 0.85rem; opacity: 0.85;"></i>
                 <span id="paletteActiveName" style="font-size: 0.82rem; font-weight: 600;">Slate Blue</span>
                 <i class="fa-solid fa-chevron-down" style="font-size: 0.65rem; opacity: 0.6; margin-left: 2px;"></i>
@@ -65,7 +144,7 @@
                 <div class="palette-dropdown-header">Warna Aksen</div>
                 <div class="palette-options-list">
                     <button type="button" class="palette-option active" data-pal="slate" onclick="window.applyPalette('slate')">
-                        <span class="palette-swatch" style="background: #0284c7;"></span>
+                        <span class="palette-swatch" style="background: #3368A0;"></span>
                         <span class="palette-name">Slate Blue (Utama)</span>
                         <i class="fa-solid fa-check palette-check"></i>
                     </button>
@@ -110,15 +189,5 @@
             </span>
             <span id="themeToggleText" style="font-size: 0.82rem; letter-spacing: 0.3px;">Dark</span>
         </button>
-
-        <!-- Notification Bell -->
-        <span class="topbar-action-icon" title="Notifikasi">
-            <i class="fa-regular fa-bell"></i>
-        </span>
-
-        <!-- Quick Logout Link -->
-        <a href="<?= $config['base_url'] ?? '/obe/public' ?>/logout" class="topbar-logout-link" title="Keluar">
-            <i class="fa-solid fa-sign-out-alt"></i>
-        </a>
     </div>
 </div>

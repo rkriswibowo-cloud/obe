@@ -4,12 +4,26 @@
 // Didesain persis menyerupai format dokumen universitas "RPS PSSI Teori Rev 3.0.pdf"
 
 $baseUrl = $GLOBALS['config']['base_url'] ?? '/obe/public';
+$rubrikNamaById = [];
+foreach (($rubrikMaster ?? []) as $rubrikItem) {
+    $rubrikNamaById[(int)$rubrikItem['id']] = $rubrikItem['nama'];
+}
 
 // Siapkan Logo Universitas Anwar Medika
 $logoFile = __DIR__ . '/../../public/assets/images/logo_uam.png';
 $logoSrc = file_exists($logoFile) 
     ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoFile)) 
     : ($baseUrl . '/assets/images/logo_uam.png');
+
+// Susun daftar prodi pada header dari isian Identitas RPS.
+$headerProdiRaw = trim($rps['program_studi'] ?? 'S1 Sistem Informasi');
+$headerProdiList = preg_split(
+    '/(?:\r?\n|\s*[,;|]\s*|\s+(?=(?:D[1-4]|S[1-3])\s))/iu',
+    $headerProdiRaw,
+    -1,
+    PREG_SPLIT_NO_EMPTY
+);
+$headerProdiList = $headerProdiList ?: [$headerProdiRaw];
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -142,6 +156,7 @@ $logoSrc = file_exists($logoFile)
            ========================================================================== */
         .paper-container {
             width: 210mm;
+            max-width: 100%;
             min-height: 297mm;
             margin: 24px auto;
             background: #ffffff;
@@ -160,6 +175,43 @@ $logoSrc = file_exists($logoFile)
         .paper-container div,
         .paper-container li {
             font-family: "Bookman Old Style", "Bookman", "URW Bookman", serif;
+        }
+
+        /* Responsive Table Wrapper for Screen & Print */
+        .doc-table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 12px;
+        }
+
+        /* Screen Responsiveness */
+        @media screen and (max-width: 220mm) {
+            .paper-container {
+                width: 96% !important;
+                margin: 16px auto !important;
+                padding: 14mm 10mm !important;
+            }
+        }
+        @media screen and (max-width: 768px) {
+            .paper-container {
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 14px 8px !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+            }
+            .no-print-toolbar {
+                padding: 8px 12px !important;
+                flex-direction: column !important;
+                gap: 8px !important;
+                align-items: flex-start !important;
+            }
+            .toolbar-actions {
+                width: 100% !important;
+                justify-content: space-between !important;
+                flex-wrap: wrap !important;
+            }
         }
 
         /* Institutional Header Grid (Sesuai Format Resmi RPS) */
@@ -182,27 +234,31 @@ $logoSrc = file_exists($logoFile)
         }
         .doc-header-left {
             width: 50%;
-            padding: 4px 12px !important;
+            padding: 3px 12px !important;
         }
         .doc-header-left-wrap {
             display: flex;
             align-items: center;
             justify-content: flex-start;
-            gap: 16px;
+            gap: 14px;
+            width: 100%;
         }
         .doc-header-logo {
-            height: 44px;
-            max-width: 135px;
+            width: 125px;
+            height: 60px;
             object-fit: contain;
             display: inline-block;
             vertical-align: middle;
+            flex: 0 0 125px;
         }
         .doc-header-prodi-title {
-            font-size: 13pt;
+            font-size: 9pt;
             font-weight: bold;
             color: #000000;
             font-family: "Bookman Old Style", "Bookman", "URW Bookman", serif;
-            letter-spacing: 0.2px;
+            letter-spacing: 0;
+            line-height: 1.18;
+            text-align: left;
             white-space: nowrap;
         }
         .doc-header-main-title {
@@ -263,6 +319,9 @@ $logoSrc = file_exists($logoFile)
             padding: 5px 6px;
             vertical-align: top;
             color: #000000;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+            word-break: break-word;
         }
         .rps-table th {
             background-color: #f2f2f2;
@@ -272,6 +331,45 @@ $logoSrc = file_exists($logoFile)
         .text-center { text-align: center; }
         .text-right { text-align: right; }
         .text-bold { font-weight: bold; }
+
+        /* Dedicated Styles for Rencana Evaluasi Penilaian (kolom dinamis) */
+        .rps-table-eval {
+            table-layout: fixed !important;
+            width: 100% !important;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+            border: 1px solid #000000;
+        }
+        .rps-table-eval th,
+        .rps-table-eval td {
+            border: 1px solid #000000;
+            padding: 4px 3px !important;
+            vertical-align: top;
+            color: #000000;
+            overflow-wrap: anywhere !important;
+            word-wrap: break-word !important;
+            word-break: break-word !important;
+            hyphens: auto;
+        }
+        .rps-table-eval th {
+            background-color: #f2f2f2 !important;
+            font-weight: bold;
+            text-align: center;
+            font-size: 7.5pt !important;
+            line-height: 1.25;
+            padding: 5px 2px !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .rps-table-eval td {
+            font-size: 7.5pt !important;
+            line-height: 1.3;
+        }
+        .rps-table-eval .eval-rumusan-col {
+            font-size: 7.5pt !important;
+            line-height: 1.3;
+            text-align: left;
+        }
 
         .note-text {
             font-size: 8.5pt;
@@ -372,6 +470,14 @@ $logoSrc = file_exists($logoFile)
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
+            .rps-table-eval {
+                table-layout: fixed !important;
+                width: 100% !important;
+            }
+            .doc-table-wrapper {
+                overflow: visible !important;
+                margin-bottom: 12px;
+            }
         }
     </style>
 </head>
@@ -409,9 +515,11 @@ $logoSrc = file_exists($logoFile)
                 <td rowspan="2" class="doc-header-left">
                     <div class="doc-header-left-wrap">
                         <img src="<?= $logoSrc ?>" alt="Logo Universitas Anwar Medika" class="doc-header-logo">
-                        <span class="doc-header-prodi-title">
-                            <?= htmlspecialchars(strpos($rps['program_studi'] ?? '', 'S1 ') === 0 && strpos($rps['program_studi'] ?? '', 'S1 - ') === false ? 'S1 - ' . substr($rps['program_studi'], 3) : ($rps['program_studi'] ?? 'S1 - Sistem Informasi')) ?>
-                        </span>
+                        <div class="doc-header-prodi-title">
+                            <?php foreach ($headerProdiList as $headerProdi): ?>
+                                <div><?= htmlspecialchars(strtoupper(trim($headerProdi))) ?></div>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
                 </td>
                 <td colspan="3" class="doc-header-main-title">
@@ -588,6 +696,7 @@ $logoSrc = file_exists($logoFile)
                     Belum ada data CPL yang didefinisikan untuk kurikulum mata kuliah ini.
                 </div>
             <?php else: ?>
+            <div class="doc-table-wrapper">
             <table class="rps-table">
                 <thead>
                     <tr>
@@ -639,6 +748,7 @@ $logoSrc = file_exists($logoFile)
                     </tr>
                 </tbody>
             </table>
+            </div>
             <?php endif; ?>
         </div>
 
@@ -647,7 +757,8 @@ $logoSrc = file_exists($logoFile)
              ==================================================================== -->
         <div class="page-break"></div>
         <div class="section-title">2c. INDIKATOR PENILAIAN</div>
-        <table class="rps-table">
+        <div class="doc-table-wrapper">
+        <table class="rps-table" style="table-layout: fixed;">
             <thead>
                 <tr>
                     <th style="width: 12%;">Kode CPL</th>
@@ -666,7 +777,7 @@ $logoSrc = file_exists($logoFile)
                     $sumBobotIndikator += $bobot;
                 ?>
                     <tr>
-                        <td class="text-center text-bold">CPL 04</td>
+                        <td class="text-center text-bold"><?= htmlspecialchars(implode(', ', $sub['cpl_kodes'] ?? []) ?: 'CPL 04') ?></td>
                         <td class="text-center text-bold"><?= htmlspecialchars($sub['kode']) ?></td>
                         <td>
                             <?php if (!empty($sub['indikators'])): ?>
@@ -690,6 +801,7 @@ $logoSrc = file_exists($logoFile)
                 </tr>
             </tbody>
         </table>
+        </div>
 
         <!-- ====================================================================
              3. PETA ANALISIS CAPAIAN PEMBELAJARAN
@@ -698,58 +810,24 @@ $logoSrc = file_exists($logoFile)
         <div class="section-title">3. PETA ANALISIS CAPAIAN PEMBELAJARAN</div>
         <div class="peta-container">
             <div class="peta-grid">
-                <!-- Node CPMK -->
-                <div class="peta-node peta-node-cpmk">
-                    <div style="font-size: 10pt; text-transform: uppercase; margin-bottom: 4px; color: #0284c7;">
-                        Capaian Pembelajaran Mata Kuliah (CPMK)
-                    </div>
-                    <div>
-                        Mahasiswa mampu merancang arsitektur dan perencanaan strategis sistem informasi, mengidentifikasi risiko, serta mengukur KPI yang selaras dengan tujuan organisasi.
-                    </div>
-                </div>
-
-                <div class="peta-arrow">▲</div>
-
-                <!-- Sub-CPMK 07 -->
-                <div class="peta-node peta-node-sub" style="border-left: 5px solid #059669;">
-                    <strong>[SUB-CPMK 07]</strong> Mahasiswa mampu mengukur kinerja sistem informasi melalui indikator kinerja kunci (KPI) dan mengevaluasi keselarasan dengan tujuan strategis organisasi. <em>(C3, A3, P4)</em>
-                </div>
-
-                <div class="peta-arrow">▲</div>
-
-                <!-- Sub-CPMK 06 & 05 (Row) -->
-                <div style="display: flex; gap: 12px; width: 100%; max-width: 650px;">
-                    <div class="peta-node" style="flex: 1; text-align: left; border-left: 5px solid #d97706;">
-                        <strong>[SUB-CPMK 06]</strong> Mahasiswa mampu mengidentifikasi, menganalisis, dan mengelola risiko yang terkait dengan implementasi strategi sistem informasi. <em>(C3, A3, P4)</em>
-                    </div>
-                    <div class="peta-node" style="flex: 1; text-align: left; border-left: 5px solid #2563eb;">
-                        <strong>[SUB-CPMK 05]</strong> Mahasiswa mampu menyusun rencana strategis sistem informasi yang mencakup roadmap implementasi dan prioritas proyek. <em>(C4, A3, P4)</em>
-                    </div>
-                </div>
-
-                <div class="peta-arrow">▲</div>
-
-                <!-- Sub-CPMK 04 & 03 (Row) -->
-                <div style="display: flex; gap: 12px; width: 100%; max-width: 650px;">
-                    <div class="peta-node" style="flex: 1; text-align: left; border-left: 5px solid #7c3aed;">
-                        <strong>[SUB-CPMK 04]</strong> Mahasiswa mampu menyusun arsitektur sistem informasi yang mendukung kebutuhan organisasi, termasuk infrastruktur teknologi dan aplikasi. <em>(C3, A3, P4)</em>
-                    </div>
-                    <div class="peta-node" style="flex: 1; text-align: left; border-left: 5px solid #db2777;">
-                        <strong>[SUB-CPMK 03]</strong> Mahasiswa mampu merumuskan visi dan misi sistem informasi yang selaras dengan strategi organisasi. <em>(C3, A3, P4)</em>
-                    </div>
-                </div>
-
-                <div class="peta-arrow">▲</div>
-
-                <!-- Sub-CPMK 02 & 01 (Row) -->
-                <div style="display: flex; gap: 12px; width: 100%; max-width: 650px;">
-                    <div class="peta-node" style="flex: 1; text-align: left; border-left: 5px solid #0891b2;">
-                        <strong>[SUB-CPMK 02]</strong> Mahasiswa mampu melakukan analisis lingkungan internal dan eksternal organisasi misalnya SWOT untuk mengidentifikasi kebutuhan sistem informasi. <em>(C3, A3, P4)</em>
-                    </div>
-                    <div class="peta-node" style="flex: 1; text-align: left; border-left: 5px solid #4b5563;">
-                        <strong>[SUB-CPMK 01]</strong> Mahasiswa memahami konsep dasar, definisi, tujuan, dan kerangka kerja perencanaan strategis sistem informasi. <em>(C3, A3, P2)</em>
-                    </div>
-                </div>
+                <?php if (empty($cpmks)): ?>
+                    <div style="padding: 14px; font-style: italic;">Belum ada data CPMK dan Sub-CPMK.</div>
+                <?php else: ?>
+                    <?php foreach (array_reverse($cpmks) as $cpmkIndex => $cpmk): ?>
+                        <div class="peta-node peta-node-cpmk">
+                            <div style="font-size: 10pt; text-transform: uppercase; margin-bottom: 4px; color: #0284c7;">Capaian Pembelajaran Mata Kuliah (CPMK)</div>
+                            <div><strong>[<?= htmlspecialchars($cpmk['kode']) ?>]</strong> <?= htmlspecialchars($cpmk['rumusan']) ?></div>
+                        </div>
+                        <?php foreach (array_reverse($cpmk['sub_cpmks'] ?? []) as $sub): ?>
+                            <div class="peta-arrow">&#9650;</div>
+                            <div class="peta-node peta-node-sub" style="border-left: 5px solid #0284c7;">
+                                <strong>[<?= htmlspecialchars($sub['kode']) ?>]</strong> <?= htmlspecialchars($sub['rumusan']) ?>
+                                <?php if (!empty($sub['level_taksonomi'])): ?><em>(<?= htmlspecialchars($sub['level_taksonomi']) ?>)</em><?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
+                        <?php if ($cpmkIndex < count($cpmks) - 1): ?><div class="peta-arrow">&#9650;</div><?php endif; ?>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -774,7 +852,8 @@ $logoSrc = file_exists($logoFile)
              ==================================================================== -->
         <div class="page-break"></div>
         <div class="section-title">5. RINCIAN AKTIVITAS PEMBELAJARAN</div>
-        <table class="rps-table">
+        <div class="doc-table-wrapper">
+        <table class="rps-table" style="table-layout: fixed;">
             <thead>
                 <tr>
                     <th style="width: 8%;">Sesi dan Tanggal</th>
@@ -815,6 +894,7 @@ $logoSrc = file_exists($logoFile)
                 <?php endif; ?>
             </tbody>
         </table>
+        </div>
 
         <!-- Keterangan Mode -->
         <div style="border: 1px solid #000; padding: 8px 12px; margin-bottom: 14px; font-size: 8.5pt; line-height: 1.4;">
@@ -837,13 +917,14 @@ $logoSrc = file_exists($logoFile)
                     <td style="width: 25%; font-weight: bold;">Sistem Penilaian</td>
                     <td style="width: 75%;">
                         <p style="margin: 0 0 6px 0;"><?= htmlspecialchars($rps['sistem_penilaian_desc'] ?? 'Sistem penilaian dilakukan pada CPMK masing-masing sesuai dengan rubrik yang dibuat.') ?></p>
-                        <strong>Penilaian Teori:</strong>
+                        <strong>Komponen Penilaian:</strong>
                         <ul style="margin: 4px 0 0 0; padding-left: 20px;">
-                            <li>Keaktifan (<?= floatval($rps['bobot_keaktifan'] ?? 5) ?>%)</li>
-                            <li>Tugas (<?= floatval($rps['bobot_tugas'] ?? 15) ?>%)</li>
-                            <li>Kuis/Pretes/ Postes (<?= floatval($rps['bobot_kuis'] ?? 20) ?>%)</li>
-                            <li>UTS (<?= floatval($rps['bobot_uts'] ?? 30) ?>%)</li>
-                            <li>UAS (<?= floatval($rps['bobot_uas'] ?? 30) ?>%)</li>
+                            <?php foreach (($jenisPenilaian ?? []) as $komponen):
+                                $kodeJenis = $komponen['kode'] ?? '';
+                                $rubrikId = (int)($komponen['rubrik_id'] ?? 0);
+                            ?>
+                            <li><?= htmlspecialchars(($jenisPenilaianMaster[$kodeJenis] ?? $kodeJenis) . ' [' . $kodeJenis . ']') ?> (<?= (float)($komponen['bobot'] ?? 0) ?>%)<?= $rubrikId && isset($rubrikNamaById[$rubrikId]) ? ' — Rubrik: ' . htmlspecialchars($rubrikNamaById[$rubrikId]) : '' ?></li>
+                            <?php endforeach; ?>
                         </ul>
                     </td>
                 </tr>
@@ -862,74 +943,106 @@ $logoSrc = file_exists($logoFile)
         <div class="page-break"></div>
         <table class="doc-header-table" style="margin-top: 10px;">
             <tr>
-                <td style="width: 25%;" class="doc-header-prodi">
-                    <?= htmlspecialchars($rps['program_studi'] ?? 'S1 - Sistem Informasi') ?>
+                <td rowspan="2" class="doc-header-left">
+                    <div class="doc-header-left-wrap">
+                        <img src="<?= $logoSrc ?>" alt="Logo Universitas Anwar Medika" class="doc-header-logo">
+                        <div class="doc-header-prodi-title">
+                            <?php foreach ($headerProdiList as $headerProdi): ?>
+                                <div><?= htmlspecialchars(strtoupper(trim($headerProdi))) ?></div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
                 </td>
-                <td style="width: 55%;" class="doc-header-title">
+                <td colspan="3" class="doc-header-main-title">
                     Rencana Evaluasi Penilaian Mahasiswa
                 </td>
-                <td style="width: 20%;" class="doc-header-ver">
-                    Versi/Revisi <?= htmlspecialchars($rps['versi'] ?? '3/0') ?>
-                </td>
+            </tr>
+            <tr class="doc-header-subrow">
+                <td class="doc-ver-lbl">Versi/Revisi</td>
+                <td class="doc-ver-val"><?= htmlspecialchars($rps['versi'] ?? '3/0') ?></td>
+                <td class="doc-ver-pad">&nbsp;</td>
             </tr>
         </table>
 
         <div class="section-title">INDIKATOR PENILAIAN</div>
-        <table class="rps-table">
-            <thead>
-                <tr>
-                    <th style="width: 8%;">Kode CPL</th>
-                    <th style="width: 10%;">Kode Sub-CPMK</th>
-                    <th style="width: 6%;">Bobot (%)</th>
-                    <th style="width: 32%;">Rumusan Indikator</th>
-                    <th style="width: 9%;">Keaktifan (<?= floatval($rps['bobot_keaktifan'] ?? 5) ?>%)</th>
-                    <th style="width: 11%;">Tugas (<?= floatval($rps['bobot_tugas'] ?? 15) ?>%)</th>
-                    <th style="width: 10%;">Kuis/Pretes/ Postes (<?= floatval($rps['bobot_kuis'] ?? 20) ?>%)</th>
-                    <th style="width: 7%;">UTS (<?= floatval($rps['bobot_uts'] ?? 30) ?>%)</th>
-                    <th style="width: 7%;">UAS (<?= floatval($rps['bobot_uas'] ?? 30) ?>%)</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php 
-                $evalData = [
-                    'SUB-CPMK 01' => ['bobot' => '6%', 'tugas' => "Bentuk tugas:\nMengerjakan soal terkait Kerangka Kerja Strategis SI", 'kuis' => '', 'uts' => '5 Soal', 'uas' => '5 Soal'],
-                    'SUB-CPMK 02' => ['bobot' => '6%', 'tugas' => '', 'kuis' => "Bentuk Kuis:\nMahasiswa mengerjakan 25 Soal terkait Metode Proyek", 'uts' => '5 Soal', 'uas' => '5 Soal'],
-                    'SUB-CPMK 03' => ['bobot' => '6%', 'tugas' => '', 'kuis' => '', 'uts' => '5 Soal', 'uas' => '5 Soal'],
-                    'SUB-CPMK 04' => ['bobot' => '6%', 'tugas' => '', 'kuis' => '', 'uts' => '5 Soal', 'uas' => '5 Soal'],
-                    'SUB-CPMK 05' => ['bobot' => '13%', 'tugas' => "Bentuk tugas:\nMengerjakan soal terkait roadmap implementasi SI", 'kuis' => '', 'uts' => '5 Soal', 'uas' => '5 Soal'],
-                    'SUB-CPMK 06' => ['bobot' => '13%', 'tugas' => '', 'kuis' => '', 'uts' => '5 Soal', 'uas' => '5 Soal'],
-                    'SUB-CPMK 07' => ['bobot' => '13%', 'tugas' => '', 'kuis' => '', 'uts' => '5 Soal', 'uas' => '5 Soal']
-                ];
-
-                $indicatorOffset = 1;
-                foreach ($allSubCpmks as $sub): 
-                    $subKode = $sub['kode'];
-                    $customEval = $rencanaEvaluasi[$subKode] ?? ($evalData[$subKode] ?? ['bobot' => $sub['bobot'].'%', 'tugas' => '', 'kuis' => '', 'uts' => '5 Soal', 'uas' => '5 Soal']);
-                ?>
+        <?php
+        $printAssessmentComponents = array_values(array_filter($jenisPenilaian ?? [], static function ($item) use ($jenisPenilaianMaster) {
+            return isset($jenisPenilaianMaster[$item['kode'] ?? '']) && (float)($item['bobot'] ?? 0) > 0;
+        }));
+        $assessmentColumnWidth = $printAssessmentComponents ? (53 / count($printAssessmentComponents)) : 53;
+        ?>
+        <div class="doc-table-wrapper">
+            <table class="rps-table rps-table-eval">
+                <thead>
                     <tr>
-                        <td class="text-center text-bold">CPL 01</td>
-                        <td class="text-center text-bold"><?= htmlspecialchars($subKode) ?></td>
-                        <td class="text-center text-bold"><?= htmlspecialchars($customEval['bobot'] ?? ($sub['bobot'].'%')) ?></td>
-                        <td>
-                            <?php if (!empty($sub['indikators'])): ?>
-                                <?php foreach ($sub['indikators'] as $ind): ?>
-                                    <div style="margin-bottom: 4px;">
-                                        <strong><?= $indicatorOffset++ ?>.</strong> <?= htmlspecialchars($ind['indikator']) ?>
-                                    </div>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <?= htmlspecialchars($sub['rumusan']) ?>
-                            <?php endif; ?>
-                        </td>
-                        <td class="text-center"><?= htmlspecialchars($customEval['keaktifan'] ?? '') ?></td>
-                        <td class="text-center" style="font-size: 8.5pt;"><?= nl2br(htmlspecialchars($customEval['tugas'] ?? '')) ?></td>
-                        <td class="text-center" style="font-size: 8.5pt;"><?= nl2br(htmlspecialchars($customEval['kuis'] ?? '')) ?></td>
-                        <td class="text-center text-bold"><?= htmlspecialchars($customEval['uts'] ?? '5 Soal') ?></td>
-                        <td class="text-center text-bold"><?= htmlspecialchars($customEval['uas'] ?? '5 Soal') ?></td>
+                        <th style="width: 7%;">Kode<br>CPL</th>
+                        <th style="width: 9%;">Kode<br>Sub-CPMK</th>
+                        <th style="width: 5.5%;">Bobot<br>(%)</th>
+                        <th style="width: 25.5%;">Rumusan Indikator</th>
+                        <?php foreach ($printAssessmentComponents as $assessment):
+                            $assessmentCode = $assessment['kode'];
+                        ?>
+                        <th style="width:<?= $assessmentColumnWidth ?>%;"><?= htmlspecialchars($jenisPenilaianMaster[$assessmentCode]) ?><br><small><?= htmlspecialchars($assessmentCode) ?> — <?= (float)$assessment['bobot'] ?>%</small></th>
+                        <?php endforeach; ?>
                     </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    <?php 
+                    $indicatorOffset = 1;
+                    foreach ($allSubCpmks as $sub): 
+                        $subKode = $sub['kode'];
+                        $customEval = $rencanaEvaluasi[$subKode] ?? ['bobot' => $sub['bobot'], 'soal' => []];
+                        $componentQuestions = array_fill_keys(array_column($printAssessmentComponents, 'kode'), []);
+                        foreach (($customEval['soal'] ?? []) as $question) {
+                            $rawType = trim($question['jenis'] ?? '');
+                            $type = mb_strtolower($rawType);
+                            $text = trim($question['pertanyaan'] ?? '');
+                            if ($text === '') continue;
+                            $component = null;
+                            foreach ($printAssessmentComponents as $assessment) {
+                                $code = $assessment['kode'];
+                                $name = mb_strtolower($jenisPenilaianMaster[$code] ?? '');
+                                if (mb_strtolower($code) === $type || ($name !== '' && strpos($type, $name) !== false)) { $component = $code; break; }
+                            }
+                            if ($component === null) {
+                                $aliases = ['aktif'=>'AKT','kuis'=>'KUI','pretes'=>'KUI','postes'=>'KUI','individu'=>'TGI','tugas'=>'TGI','kelompok'=>'TGK','presentasi'=>'PRS','kasus'=>'STK','proyek'=>'PRJ','praktikum'=>'PRK','responsi'=>'RSP','laporan'=>'LPR','unjuk'=>'UK','portofolio'=>'POR','observasi'=>'OBS','lisan'=>'TL','tertulis'=>'TT','uts'=>'UTS','uas'=>'UAS','ujian praktik'=>'UPR','produk'=>'PRO','karya'=>'PRO'];
+                                foreach ($aliases as $needle => $code) if (strpos($type, $needle) !== false && isset($componentQuestions[$code])) { $component = $code; break; }
+                            }
+                            if ($component !== null && isset($componentQuestions[$component])) $componentQuestions[$component][] = ($rawType !== '' ? $rawType . ': ' : '') . $text;
+                        }
+                        $componentValue = static function ($key) use ($customEval, $componentQuestions) {
+                            if (!empty($componentQuestions[$key])) {
+                                $lines = [];
+                                foreach ($componentQuestions[$key] as $index => $text) $lines[] = ($index + 1) . '. ' . $text;
+                                return implode("\n", $lines);
+                            }
+                            $legacyKeys = ['AKT'=>'keaktifan','KUI'=>'kuis','TGI'=>'tugas','TGK'=>'tugas','UTS'=>'uts','UAS'=>'uas'];
+                            return $customEval[$key] ?? $customEval[mb_strtolower($key)] ?? (isset($legacyKeys[$key]) ? ($customEval[$legacyKeys[$key]] ?? '') : '');
+                        };
+                    ?>
+                        <tr>
+                            <td class="text-center text-bold"><?= htmlspecialchars(implode(', ', $sub['cpl_kodes'] ?? []) ?: '-') ?></td>
+                            <td class="text-center text-bold"><?= htmlspecialchars($subKode) ?></td>
+                            <td class="text-center text-bold"><?= htmlspecialchars($customEval['bobot'] ?? ($sub['bobot'].'%')) ?></td>
+                            <td class="eval-rumusan-col">
+                                <?php if (!empty($sub['indikators'])): ?>
+                                    <?php foreach ($sub['indikators'] as $ind): ?>
+                                        <div style="margin-bottom: 4px;">
+                                            <strong><?= $indicatorOffset++ ?>.</strong> <?= htmlspecialchars($ind['indikator']) ?>
+                                        </div>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <?= htmlspecialchars($sub['rumusan']) ?>
+                                <?php endif; ?>
+                            </td>
+                            <?php foreach ($printAssessmentComponents as $assessment): ?>
+                            <td><?= nl2br(htmlspecialchars($componentValue($assessment['kode']))) ?></td>
+                            <?php endforeach; ?>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
 
         <!-- ====================================================================
              8. RUBRIK PENILAIAN
@@ -937,20 +1050,86 @@ $logoSrc = file_exists($logoFile)
         <div class="page-break"></div>
         <table class="doc-header-table" style="margin-top: 10px;">
             <tr>
-                <td style="width: 25%;" class="doc-header-prodi">
-                    <?= htmlspecialchars($rps['program_studi'] ?? 'S1 - Sistem Informasi') ?>
+                <td rowspan="2" class="doc-header-left">
+                    <div class="doc-header-left-wrap">
+                        <img src="<?= $logoSrc ?>" alt="Logo Universitas Anwar Medika" class="doc-header-logo">
+                        <div class="doc-header-prodi-title">
+                            <?php foreach ($headerProdiList as $headerProdi): ?>
+                                <div><?= htmlspecialchars(strtoupper(trim($headerProdi))) ?></div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
                 </td>
-                <td style="width: 55%;" class="doc-header-title">
+                <td colspan="3" class="doc-header-main-title">
                     Rubrik Penilaian Pembelajaran (OBE)
                 </td>
-                <td style="width: 20%;" class="doc-header-ver">
-                    Versi/Revisi <?= htmlspecialchars($rps['versi'] ?? '3/0') ?>
-                </td>
+            </tr>
+            <tr class="doc-header-subrow">
+                <td class="doc-ver-lbl">Versi/Revisi</td>
+                <td class="doc-ver-val"><?= htmlspecialchars($rps['versi'] ?? '3/0') ?></td>
+                <td class="doc-ver-pad">&nbsp;</td>
             </tr>
         </table>
 
         <div class="section-title">8. RUBRIK PENILAIAN PEMBELAJARAN</div>
 
+        <?php
+        $documentRubrikUsage = [];
+        foreach (($jenisPenilaian ?? []) as $komponen) {
+            $linkedId = (int)($komponen['rubrik_id'] ?? 0);
+            if (!$linkedId) continue;
+            $kodeKomponen = $komponen['kode'] ?? '';
+            $documentRubrikUsage[$linkedId][] = [
+                'jenis' => $jenisPenilaianMaster[$kodeKomponen] ?? $kodeKomponen,
+                'bobot' => (float)($komponen['bobot'] ?? 0)
+            ];
+        }
+        // rubrikMaster sudah hanya berisi status ACTIVE. Cetak hanya yang dipilih
+        // pada komponen penilaian dan sudah memiliki salinan khusus mata kuliah.
+        $selectedRubrikRows = array_values(array_filter($rubrikMaster ?? [], static function ($item) use ($documentRubrikUsage, $rubrikMk) {
+            $id = (int)$item['id'];
+            return isset($documentRubrikUsage[$id]) && isset($rubrikMk[(string)$id]);
+        }));
+        ?>
+        <?php if ($selectedRubrikRows): ?>
+        <table class="rps-table" style="margin-bottom:16px;">
+            <thead><tr><th>Kode</th><th>Instrumen Rubrik</th><th>Karakteristik</th><th>Komponen & Bobot Penilaian</th><th>Kriteria / Level</th></tr></thead>
+            <tbody>
+            <?php foreach ($selectedRubrikRows as $masterRubrik):
+                $usageLabels = [];
+                foreach ($documentRubrikUsage[(int)$masterRubrik['id']] as $usage) $usageLabels[] = $usage['jenis'] . ' (' . $usage['bobot'] . '%)';
+                $courseRubrik = $rubrikMk[(string)(int)$masterRubrik['id']];
+            ?>
+                <tr>
+                    <td style="font-weight:bold;text-align:center;"><?= htmlspecialchars($masterRubrik['kode_jenis']) ?></td>
+                    <td><strong><?= htmlspecialchars($courseRubrik['nama'] ?? $masterRubrik['nama']) ?></strong><br><small><?= htmlspecialchars($masterRubrik['jenis']) ?></small></td>
+                    <td><?= htmlspecialchars($masterRubrik['karakteristik']) ?><br><small>Contoh: <?= htmlspecialchars($masterRubrik['contoh_penggunaan']) ?></small></td>
+                    <td><?= htmlspecialchars(implode(', ', $usageLabels)) ?></td>
+                    <td style="text-align:center;"><?= $courseRubrik ? count($courseRubrik['criteria'] ?? []) : (int)$masterRubrik['total_kriteria'] ?> / <?= $courseRubrik ? count($courseRubrik['levels'] ?? []) : (int)$masterRubrik['total_level'] ?></td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+        <?php foreach ($selectedRubrikRows as $index => $masterRubrik):
+            $courseRubrik = $rubrikMk[(string)(int)$masterRubrik['id']];
+        ?>
+        <div class="page-break"></div>
+        <div style="margin-bottom:16px;">
+            <div style="font-weight:bold;font-size:10pt;margin-bottom:6px;">8.<?= $index + 1 ?> <?= htmlspecialchars($courseRubrik['nama']) ?></div>
+            <table class="rps-table">
+                <thead><tr><th style="width:22%;">Indikator/Kriteria</th><th style="width:8%;">Bobot</th><?php foreach (($courseRubrik['levels'] ?? []) as $level): ?><th><?= htmlspecialchars($level['nama']) ?><br><small>Skor <?= (float)$level['skor'] ?></small></th><?php endforeach; ?></tr></thead>
+                <tbody><?php foreach (($courseRubrik['criteria'] ?? []) as $criterion): ?><tr>
+                    <td><strong><?= htmlspecialchars($criterion['nama']) ?></strong></td><td style="text-align:center;"><?= (float)$criterion['bobot'] ?>%</td>
+                    <?php foreach (($courseRubrik['levels'] ?? []) as $levelIndex => $level): ?><td><?= nl2br(htmlspecialchars($criterion['descriptors'][$levelIndex] ?? '-')) ?></td><?php endforeach; ?>
+                </tr><?php endforeach; ?></tbody>
+            </table>
+        </div>
+        <?php endforeach; ?>
+        <?php else: ?>
+        <div style="border:1px dashed #64748b;padding:16px;text-align:center;color:#475569;margin-bottom:20px;">Belum ada rubrik yang dihubungkan. Hubungkan rubrik pada tab Sistem Penilaian & Evaluasi.</div>
+        <?php endif; ?>
+
+        <?php if (false): // Template rubrik lama dinonaktifkan; master terbaru digunakan di atas. ?>
         <?php 
         $subRubrikIndex = 1;
         $hasActiveRubrik = false;
@@ -1209,6 +1388,7 @@ $logoSrc = file_exists($logoFile)
             <div style="border: 1px dashed #64748b; padding: 20px; text-align: center; color: #475569; font-style: italic; background: #f8fafc; border-radius: 4px; margin-bottom: 20px;">
                 Mata kuliah ini tidak menetapkan instrumen rubrik penilaian terpisah pada lampiran dokumen RPS ini. Instrumen asesmen dan rubrik penilaian disesuaikan secara langsung pada penugasan berkala di sistem pembelajaran (LMS).
             </div>
+        <?php endif; ?>
         <?php endif; ?>
 
     </div>
