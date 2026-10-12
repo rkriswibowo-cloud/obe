@@ -47,14 +47,88 @@ class RplModel {
         $stmt=$this->db->prepare('SELECT rpl_mahasiswa_id FROM rpl_konversi WHERE id=?');$stmt->execute([(int)$conversionId]);return (int)$stmt->fetchColumn();
     }
     public function addConversion($rplId,$d,$userId) {
-        $mk=$this->db->prepare('SELECT mk.*,rs.minimal_nilai_angka,rs.minimal_persentase_ekuivalensi FROM mata_kuliah mk JOIN rpl_mata_kuliah_setting rs ON rs.mata_kuliah_id=mk.id AND rs.is_active=1 JOIN rpl_mahasiswa rm ON rm.kurikulum_id=mk.kurikulum_id WHERE rm.id=? AND mk.id=?');$mk->execute([(int)$rplId,(int)$d['mata_kuliah_id']]);$target=$mk->fetch(PDO::FETCH_ASSOC);
-        if(!$target) throw new RuntimeException('Mata kuliah tidak diizinkan untuk RPL atau tidak sesuai kurikulum.');
-        if((float)$d['nilai_angka'] < (float)$target['minimal_nilai_angka']) throw new RuntimeException('Nilai konversi di bawah batas minimum MK.');
-        if((float)$d['persentase_ekuivalensi'] < (float)$target['minimal_persentase_ekuivalensi']) throw new RuntimeException('Persentase ekuivalensi di bawah batas minimum MK.');
-        $grade=$this->grade((float)$d['nilai_angka']); $sks=(int)$target['sks_teori']+(int)$target['sks_praktek'];
-        $s=$this->db->prepare('INSERT INTO rpl_konversi(rpl_mahasiswa_id,mata_kuliah_id,kode_asal,nama_asal,institusi_asal,sks_asal,nilai_asal,nilai_angka,nilai_huruf,bobot_mutu,persentase_ekuivalensi,sks_diakui,dasar_rekognisi,catatan_pengaju,dibuat_oleh,status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,"DIAJUKAN")');
-        return $s->execute([(int)$rplId,(int)$d['mata_kuliah_id'],$d['kode_asal'],$d['nama_asal'],$d['institusi_asal'],(int)$d['sks_asal'],$d['nilai_asal'],(float)$d['nilai_angka'],$grade[0],$grade[1],(float)$d['persentase_ekuivalensi'],$sks,$d['dasar_rekognisi'],$d['catatan_pengaju'],$userId]);
+        $rplId = (int)$rplId;
+        $mkIds = [];
+        if (isset($d['mata_kuliah_ids']) && is_array($d['mata_kuliah_ids'])) {
+            $mkIds = array_filter(array_map('intval', $d['mata_kuliah_ids']));
+        } elseif (!empty($d['mata_kuliah_id'])) {
+            if (is_array($d['mata_kuliah_id'])) {
+                $mkIds = array_filter(array_map('intval', $d['mata_kuliah_id']));
+            } else {
+                $mkIds = [(int)$d['mata_kuliah_id']];
+            }
+        }
+        if (empty($mkIds)) {
+            throw new RuntimeException('Pilih minimal satu mata kuliah tujuan konversi.');
+        }
+
+        $namaAsal = trim($d['nama_asal'] ?? '');
+        if ($namaAsal === '') {
+            throw new InvalidArgumentException('Nama mata kuliah / pembelajaran asal wajib diisi.');
+        }
+        $nilaiAngka = (float)($d['nilai_angka'] ?? 0);
+        $ekuivalensi = (float)($d['persentase_ekuivalensi'] ?? 0);
+        $sksAsal = (int)($d['sks_asal'] ?? 0);
+        $grade = $this->grade($nilaiAngka);
+
+        $checkStmt = $this->db->prepare('SELECT mk.*, rs.minimal_nilai_angka, rs.minimal_persentase_ekuivalensi FROM mata_kuliah mk JOIN rpl_mata_kuliah_setting rs ON rs.mata_kuliah_id=mk.id AND rs.is_active=1 JOIN rpl_mahasiswa rm ON rm.kurikulum_id=mk.kurikulum_id WHERE rm.id=? AND mk.id=?');
+        $existStmt = $this->db->prepare('SELECT id FROM rpl_konversi WHERE rpl_mahasiswa_id=? AND mata_kuliah_id=?');
+        $insStmt = $this->db->prepare('INSERT INTO rpl_konversi(rpl_mahasiswa_id,mata_kuliah_id,kode_asal,nama_asal,institusi_asal,sks_asal,nilai_asal,nilai_angka,nilai_huruf,bobot_mutu,persentase_ekuivalensi,sks_diakui,dasar_rekognisi,catatan_pengaju,dibuat_oleh,status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,"DIAJUKAN")');
+
+        $this->db->beginTransaction();
+        try {
+            $inserted = 0;
+            foreach ($mkIds as $targetMkId) {
+                $existStmt->execute([$rplId, $targetMkId]);
+                if ($existStmt->fetch()) {
+                    continue; // Skip jika sudah pernah diajukan
+                }
+
+                $checkStmt->execute([$rplId, $targetMkId]);
+                $target = $checkStmt->fetch(PDO::FETCH_ASSOC);
+                if (!$target) {
+                    throw new RuntimeException("Mata kuliah (#$targetMkId) tidak diizinkan untuk RPL atau tidak sesuai kurikulum.");
+                }
+                if ($nilaiAngka < (float)$target['minimal_nilai_angka']) {
+                    throw new RuntimeException("Nilai konversi untuk {$target['kode']} - {$target['nama']} di bawah batas minimum ({$target['minimal_nilai_angka']}).");
+                }
+                if ($ekuivalensi < (float)$target['minimal_persentase_ekuivalensi']) {
+                    throw new RuntimeException("Persentase ekuivalensi untuk {$target['kode']} - {$target['nama']} di bawah batas minimum ({$target['minimal_persentase_ekuivalensi']}%).");
+                }
+
+                $sksDiakui = (int)$target['sks_teori'] + (int)$target['sks_praktek'];
+                $insStmt->execute([
+                    $rplId,
+                    $targetMkId,
+                    trim($d['kode_asal'] ?? ''),
+                    $namaAsal,
+                    trim($d['institusi_asal'] ?? ''),
+                    $sksAsal,
+                    trim($d['nilai_asal'] ?? ''),
+                    $nilaiAngka,
+                    $grade[0],
+                    $grade[1],
+                    $ekuivalensi,
+                    $sksDiakui,
+                    $d['dasar_rekognisi'] ?? 'PENDIDIKAN_FORMAL',
+                    trim($d['catatan_pengaju'] ?? ''),
+                    $userId
+                ]);
+                $inserted++;
+            }
+
+            if ($inserted === 0) {
+                throw new RuntimeException('Semua mata kuliah yang dipilih sudah pernah diajukan sebelumnya.');
+            }
+
+            $this->db->commit();
+            return $inserted;
+        } catch (Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
     }
+
     public function updateConversion($id,$rplId,$d) {
         $q=$this->db->prepare('SELECT rk.mata_kuliah_id,rs.minimal_nilai_angka,rs.minimal_persentase_ekuivalensi FROM rpl_konversi rk JOIN rpl_mata_kuliah_setting rs ON rs.mata_kuliah_id=rk.mata_kuliah_id WHERE rk.id=? AND rk.rpl_mahasiswa_id=?');
         $q->execute([(int)$id,(int)$rplId]);$current=$q->fetch(PDO::FETCH_ASSOC);
