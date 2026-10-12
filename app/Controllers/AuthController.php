@@ -26,6 +26,7 @@ class AuthController {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['nama_lengkap'] = $user['nama_lengkap'];
+            $_SESSION['email'] = !empty($user['email']) ? $user['email'] : ($user['username'] . '@obe.ac.id');
             $_SESSION['role_id'] = $user['role_id'];
             $_SESSION['role'] = $user['role_name'];
             $_SESSION['prodi_id'] = isset($user['prodi_id']) ? (int)$user['prodi_id'] : null;

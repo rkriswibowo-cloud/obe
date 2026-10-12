@@ -46,19 +46,26 @@ class UserModel {
     }
 
     public function createAccount($data) {
-        $stmt = $this->db->prepare('INSERT INTO users (username, password, nama_lengkap, role_id, prodi_id) VALUES (?, ?, ?, ?, ?)');
+        $stmt = $this->db->prepare('INSERT INTO users (username, password, nama_lengkap, email, role_id, prodi_id) VALUES (?, ?, ?, ?, ?, ?)');
         return $stmt->execute([
             $data['username'],
             password_hash($data['password'], PASSWORD_BCRYPT),
             $data['nama_lengkap'],
+            !empty($data['email']) ? $data['email'] : null,
             $data['role_id'],
             $data['prodi_id'],
         ]);
     }
 
     public function updateAccount($id, $data) {
-        $sql = 'UPDATE users SET username = ?, nama_lengkap = ?, role_id = ?, prodi_id = ?';
-        $params = [$data['username'], $data['nama_lengkap'], $data['role_id'], $data['prodi_id']];
+        $sql = 'UPDATE users SET username = ?, nama_lengkap = ?, email = ?, role_id = ?, prodi_id = ?';
+        $params = [
+            $data['username'],
+            $data['nama_lengkap'],
+            !empty($data['email']) ? $data['email'] : null,
+            $data['role_id'],
+            $data['prodi_id'],
+        ];
         if ($data['password'] !== '') {
             if (strlen($data['password']) < 6) {
                 throw new InvalidArgumentException('Password baru minimal 6 karakter.');
