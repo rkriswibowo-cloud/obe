@@ -739,6 +739,14 @@ switch ($path) {
         require_once __DIR__ . '/../app/Controllers/RplController.php';
         (new RplController())->storeProfile();
         break;
+    case '/rpl/profile/update':
+        require_once __DIR__ . '/../app/Controllers/RplController.php';
+        (new RplController())->updateProfile();
+        break;
+    case '/rpl/profile/delete':
+        require_once __DIR__ . '/../app/Controllers/RplController.php';
+        (new RplController())->deleteProfile();
+        break;
     case '/rpl/detail':
         require_once __DIR__ . '/../app/Controllers/RplController.php';
         (new RplController())->detail();

@@ -31,6 +31,42 @@ class RplModel {
         $s=$this->db->prepare('INSERT INTO rpl_mahasiswa(mahasiswa_id,kurikulum_id) VALUES(?,?) ON DUPLICATE KEY UPDATE kurikulum_id=VALUES(kurikulum_id),status="AKTIF"');
         $s->execute([(int)$mahasiswaId,(int)$kurikulumId]); return $this->getByStudent($mahasiswaId);
     }
+    public function updateProfile($id, $kurikulumId, $status = 'AKTIF') {
+        $id = (int)$id;
+        $kurikulumId = (int)$kurikulumId;
+        $status = in_array($status, ['AKTIF', 'SELESAI', 'NONAKTIF'], true) ? $status : 'AKTIF';
+        $curr = $this->getProfile($id);
+        if (!$curr) throw new RuntimeException('Data mahasiswa RPL tidak ditemukan.');
+
+        $kurikulumChanged = ((int)$curr['kurikulum_id'] !== $kurikulumId);
+        $s = $this->db->prepare('UPDATE rpl_mahasiswa SET kurikulum_id=?, status=? WHERE id=?');
+        $s->execute([$kurikulumId, $status, $id]);
+
+        if ($kurikulumChanged) {
+            // Rebuild plan jika kurikulum diubah
+            $this->rebuildPlan($id);
+        }
+        return $this->getProfile($id);
+    }
+    public function deleteProfile($id) {
+        $id = (int)$id;
+        $curr = $this->getProfile($id);
+        if (!$curr) throw new RuntimeException('Data mahasiswa RPL tidak ditemukan.');
+
+        $this->db->beginTransaction();
+        try {
+            // Hapus rencana studi dan konversi terkait jika ada
+            $this->db->prepare('DELETE FROM rpl_rencana_studi WHERE rpl_mahasiswa_id=?')->execute([$id]);
+            $this->db->prepare('DELETE FROM rpl_konversi WHERE rpl_mahasiswa_id=?')->execute([$id]);
+            $s = $this->db->prepare('DELETE FROM rpl_mahasiswa WHERE id=?');
+            $s->execute([$id]);
+            $this->db->commit();
+            return $curr;
+        } catch (Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
     public function getProfiles() {
         return $this->db->query("SELECT rm.*,u.username nim,u.nama_lengkap,k.nama kurikulum_nama,COALESCE(SUM(CASE WHEN rk.status='DISETUJUI' THEN rk.sks_diakui ELSE 0 END),0) sks_diakui,COUNT(CASE WHEN rk.status='DIAJUKAN' THEN 1 END) menunggu FROM rpl_mahasiswa rm JOIN users u ON u.id=rm.mahasiswa_id JOIN kurikulum k ON k.id=rm.kurikulum_id LEFT JOIN rpl_konversi rk ON rk.rpl_mahasiswa_id=rm.id GROUP BY rm.id ORDER BY u.nama_lengkap")->fetchAll(PDO::FETCH_ASSOC);
     }

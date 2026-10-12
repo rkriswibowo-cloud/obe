@@ -13,6 +13,35 @@ class RplController {
         $profiles=$this->model->getProfiles();$students=$this->model->getStudents();$kurikulum=(new KurikulumModel())->getAll();if(!$this->access->isSuperAdmin()&&$this->access->isKaprodi()){$profiles=array_values(array_filter($profiles,fn($x)=>$this->access->canAccessRplProfile($x['id'])));$students=array_values(array_filter($students,fn($x)=>$this->access->canAccessMahasiswa($x['id'])));$kurikulum=$this->access->filterKurikulumRows($kurikulum);}require __DIR__.'/../../views/rpl/index.php';
     }
     public function storeProfile(){if(!$this->admin())$this->forbidden();try{$p=$this->model->createProfile($_POST['mahasiswa_id']??0,$_POST['kurikulum_id']??0);$this->model->rebuildPlan($p['id']);$this->audit->log('RPL','CREATE_PROFILE','Menetapkan mahasiswa RPL: '.$p['nim']);$_SESSION['success']='Mahasiswa berhasil ditetapkan sebagai mahasiswa RPL.';}catch(Throwable $e){$_SESSION['error']=$e->getMessage();}header('Location: '.$this->base().'/rpl');exit;}
+    public function updateProfile(){
+        if(!$this->admin())$this->forbidden();
+        $id=(int)($_POST['id']??0);
+        $kurikulumId=(int)($_POST['kurikulum_id']??0);
+        $status=trim($_POST['status']??'AKTIF');
+        if(!$this->access->isSuperAdmin()&&$this->access->isKaprodi())$this->access->assertRplProfile($id);
+        try{
+            $p=$this->model->updateProfile($id,$kurikulumId,$status);
+            $this->audit->log('RPL','UPDATE_PROFILE','Memperbarui data mahasiswa RPL: '.$p['nim']);
+            $_SESSION['success']='Data mahasiswa RPL berhasil diperbarui.';
+        }catch(Throwable $e){
+            $_SESSION['error']='Gagal memperbarui: '.$e->getMessage();
+        }
+        header('Location: '.$this->base().'/rpl');exit;
+    }
+    public function deleteProfile(){
+        if(!$this->admin())$this->forbidden();
+        $id=(int)($_POST['id']??0);
+        if(!$this->access->isSuperAdmin()&&$this->access->isKaprodi())$this->access->assertRplProfile($id);
+        try{
+            $p=$this->model->deleteProfile($id);
+            $this->audit->log('RPL','DELETE_PROFILE','Menghapus data mahasiswa RPL: '.($p['nim']??$id));
+            $_SESSION['success']='Data mahasiswa RPL berhasil dihapus.';
+        }catch(Throwable $e){
+            $_SESSION['error']='Gagal menghapus: '.$e->getMessage();
+        }
+        header('Location: '.$this->base().'/rpl');exit;
+    }
+
     public function detail(){
         $id=(int)($_GET['id']??0);$profile=$this->model->getProfile($id);if(!$profile){http_response_code(404);echo'Mahasiswa RPL tidak ditemukan.';return;}if(($_SESSION['role']??'')==='Mahasiswa'&&(int)$profile['mahasiswa_id']!==(int)$_SESSION['user_id'])$this->forbidden();if(!$this->access->isSuperAdmin()&&$this->access->isKaprodi())$this->access->assertRplProfile($id);$this->showProfile($profile);
     }
