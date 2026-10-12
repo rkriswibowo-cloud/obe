@@ -747,6 +747,18 @@ switch ($path) {
         require_once __DIR__ . '/../app/Controllers/RplController.php';
         (new RplController())->printPlan();
         break;
+    case '/rpl/plan/update-scheme':
+        require_once __DIR__ . '/../app/Controllers/RplController.php';
+        (new RplController())->updateScheme();
+        break;
+    case '/rpl/plan/move-course':
+        require_once __DIR__ . '/../app/Controllers/RplController.php';
+        (new RplController())->moveCourse();
+        break;
+    case '/rpl/plan/rebuild':
+        require_once __DIR__ . '/../app/Controllers/RplController.php';
+        (new RplController())->rebuildPlanAction();
+        break;
     case '/rpl/conversion/store':
         require_once __DIR__ . '/../app/Controllers/RplController.php';
         (new RplController())->addConversion();

@@ -138,4 +138,48 @@ class RplModel {
         if($n>=40)return['D',1.0,'Kurang'];
         return['E',0.0,'Kurang Sekali'];
     }
+
+    public function setSemesterScheme($rplId, $scheme) {
+        $scheme = (int)$scheme;
+        if (!in_array($scheme, [3, 4], true)) {
+            throw new InvalidArgumentException('Skema semester hanya boleh 3 atau 4 semester.');
+        }
+        $profile = $this->getProfile($rplId);
+        if (!$profile) throw new RuntimeException('Profil RPL tidak ditemukan.');
+
+        $this->db->beginTransaction();
+        try {
+            $this->db->prepare('UPDATE rpl_mahasiswa SET skema_semester=? WHERE id=?')->execute([$scheme, (int)$rplId]);
+            // Jika ada MK yang berada di semester > skema baru, pindahkan ke semester terakhir skema baru
+            $this->db->prepare('UPDATE rpl_rencana_studi SET semester_rpl=? WHERE rpl_mahasiswa_id=? AND semester_rpl > ?')->execute([$scheme, (int)$rplId, $scheme]);
+            $this->db->commit();
+            return true;
+        } catch (Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
+
+    public function movePlanCourse($rplId, $planId, $targetSemester) {
+        $rplId = (int)$rplId;
+        $planId = (int)$planId;
+        $targetSemester = (int)$targetSemester;
+        $profile = $this->getProfile($rplId);
+        if (!$profile) throw new RuntimeException('Profil RPL tidak ditemukan.');
+        $maxSemester = (int)($profile['skema_semester'] ?? 4);
+        if ($maxSemester < 1) $maxSemester = 4;
+        if ($targetSemester < 1 || $targetSemester > $maxSemester) {
+            throw new InvalidArgumentException("Semester tujuan harus antara 1 sampai $maxSemester.");
+        }
+
+        $stmt = $this->db->prepare('SELECT id FROM rpl_rencana_studi WHERE id=? AND rpl_mahasiswa_id=?');
+        $stmt->execute([$planId, $rplId]);
+        if (!$stmt->fetch()) {
+            throw new RuntimeException('Mata kuliah dalam rencana studi tidak ditemukan.');
+        }
+
+        $upd = $this->db->prepare('UPDATE rpl_rencana_studi SET semester_rpl=? WHERE id=? AND rpl_mahasiswa_id=?');
+        return $upd->execute([$targetSemester, $planId, $rplId]);
+    }
 }
+

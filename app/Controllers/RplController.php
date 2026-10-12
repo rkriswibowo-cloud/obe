@@ -28,6 +28,47 @@ class RplController {
     public function addConversion(){if(!$this->admin())$this->forbidden();$id=(int)($_POST['rpl_mahasiswa_id']??0);try{$this->model->addConversion($id,$_POST,$_SESSION['user_id']??null);$this->audit->log('RPL','SUBMIT_CONVERSION','Mengajukan konversi RPL profil #'.$id);$_SESSION['success']='Konversi diajukan kepada Kaprodi.';}catch(Throwable $e){$_SESSION['error']='Gagal mengajukan: '.$e->getMessage();}header('Location: '.$this->base().'/rpl/detail?id='.$id);exit;}
     public function decide(){if(!$this->access->isSuperAdmin()&&!$this->access->isKaprodi())$this->forbidden();$profileId=$this->model->getProfileIdByConversion($_POST['id']??0);if(!$this->access->isSuperAdmin())$this->access->assertRplProfile($profileId);try{$id=$this->model->decide($_POST['id']??0,$_POST['status']??'',trim($_POST['catatan']??''),$_SESSION['user_id']??null);$this->audit->log('RPL','DECISION',($_POST['status']??'').' konversi #'.($_POST['id']??''));$_SESSION['success']='Keputusan Kaprodi berhasil disimpan.';}catch(Throwable $e){$_SESSION['error']=$e->getMessage();$id=(int)($_POST['rpl_mahasiswa_id']??0);}header('Location: '.$this->base().'/rpl/detail?id='.$id);exit;}
     public function updateConversion(){if(($_SESSION['role']??'')!=='Super Admin')$this->forbidden();$rplId=(int)($_POST['rpl_mahasiswa_id']??0);try{$this->model->updateConversion($_POST['id']??0,$rplId,$_POST);$this->audit->log('RPL','UPDATE_CONVERSION','Mengubah konversi #'.($_POST['id']??''));$_SESSION['success']='Data konversi berhasil diperbarui.';}catch(Throwable $e){$_SESSION['error']='Gagal memperbarui konversi: '.$e->getMessage();}header('Location: '.$this->base().'/rpl/detail?id='.$rplId.'#hasil-konversi');exit;}
-    public function deleteConversion(){if(($_SESSION['role']??'')!=='Super Admin')$this->forbidden();$rplId=(int)($_POST['rpl_mahasiswa_id']??0);try{$this->model->deleteConversion($_POST['id']??0,$rplId);$this->audit->log('RPL','DELETE_CONVERSION','Menghapus konversi #'.($_POST['id']??''));$_SESSION['success']='Data konversi berhasil dihapus.';}catch(Throwable $e){$_SESSION['error']='Gagal menghapus konversi: '.$e->getMessage();}header('Location: '.$this->base().'/rpl/detail?id='.$rplId.'#hasil-konversi');exit;}
+    public function updateScheme(){
+        if(!$this->admin()&&!$this->access->isKaprodi())$this->forbidden();
+        $id=(int)($_POST['rpl_mahasiswa_id']??0);
+        $scheme=(int)($_POST['skema_semester']??0);
+        if(!$this->access->isSuperAdmin())$this->access->assertRplProfile($id);
+        try{
+            $this->model->setSemesterScheme($id,$scheme);
+            $this->audit->log('RPL','UPDATE_SCHEME',"Mengubah skema semester profil #$id menjadi $scheme semester");
+            $_SESSION['success']="Skema masa studi berhasil diatur menjadi $scheme semester.";
+        }catch(Throwable $e){
+            $_SESSION['error']='Gagal mengatur skema: '.$e->getMessage();
+        }
+        header('Location: '.$this->base().'/rpl/detail?id='.$id.'#rencana-studi');exit;
+    }
+    public function moveCourse(){
+        if(!$this->admin()&&!$this->access->isKaprodi())$this->forbidden();
+        $id=(int)($_POST['rpl_mahasiswa_id']??0);
+        $planId=(int)($_POST['plan_id']??0);
+        $target=(int)($_POST['target_semester']??0);
+        if(!$this->access->isSuperAdmin())$this->access->assertRplProfile($id);
+        try{
+            $this->model->movePlanCourse($id,$planId,$target);
+            $this->audit->log('RPL','MOVE_COURSE',"Memindahkan MK rencana studi #$planId ke semester $target (profil #$id)");
+            $_SESSION['success']="Mata kuliah berhasil dipindahkan ke Semester RPL $target.";
+        }catch(Throwable $e){
+            $_SESSION['error']='Gagal memindahkan mata kuliah: '.$e->getMessage();
+        }
+        header('Location: '.$this->base().'/rpl/detail?id='.$id.'#rencana-studi');exit;
+    }
+    public function rebuildPlanAction(){
+        if(!$this->admin()&&!$this->access->isKaprodi())$this->forbidden();
+        $id=(int)($_POST['rpl_mahasiswa_id']??0);
+        if(!$this->access->isSuperAdmin())$this->access->assertRplProfile($id);
+        try{
+            $this->model->rebuildPlan($id);
+            $this->audit->log('RPL','REBUILD_PLAN',"Mereset ulang pembagian rencana studi profil #$id");
+            $_SESSION['success']='Rencana studi berhasil di-generate ulang otomatis.';
+        }catch(Throwable $e){
+            $_SESSION['error']='Gagal reset rencana studi: '.$e->getMessage();
+        }
+        header('Location: '.$this->base().'/rpl/detail?id='.$id.'#rencana-studi');exit;
+    }
     private function forbidden(){http_response_code(403);echo'403 Forbidden';exit;}
 }
