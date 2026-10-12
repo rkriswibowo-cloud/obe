@@ -25,11 +25,15 @@ $base = $GLOBALS['config']['base_url'] ?? '/obe/public';
 .um-dialog-head{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border)}
 .um-dialog-head h3{margin:0;font-size:1.02rem}
 .um-dialog form{padding:20px}
-.um-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.um-field{display:flex;flex-direction:column;gap:6px;font-size:.8rem;font-weight:650;min-width:0}
+.um-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.um-field{display:flex;flex-direction:column;gap:7px;min-width:0}
 .um-field.full{grid-column:1/-1}
-.um-field .form-control{box-sizing:border-box;width:100%;min-height:42px;padding:9px 12px}
-.um-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.um-field label{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:.82rem;font-weight:700;color:var(--text-main);margin:0}
+.um-label-left{display:inline-flex;align-items:center;gap:4px}
+.um-field label span.req{color:#ef4444;font-weight:700;line-height:1}
+.um-field .form-control{box-sizing:border-box;width:100%;min-height:42px;padding:9px 13px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--input-bg,var(--surface));color:var(--text-main);font-size:.85rem;transition:border-color .15s ease,box-shadow .15s ease}
+.um-field .form-control:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(var(--primary-rgb),.12);outline:0}
+.um-footer{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
 @media(max-width:650px){
     .um-head{align-items:flex-start;flex-direction:column}
     .um-head .btn{width:100%;justify-content:center}
@@ -37,6 +41,8 @@ $base = $GLOBALS['config']['base_url'] ?? '/obe/public';
     .um-search{width:100%;max-width:none;flex-basis:auto}
     .um-grid{grid-template-columns:1fr}
     .um-field.full{grid-column:auto}
+    .um-footer{flex-direction:column-reverse}
+    .um-footer .btn{width:100%;justify-content:center}
 }
 </style>
 
@@ -126,43 +132,66 @@ $base = $GLOBALS['config']['base_url'] ?? '/obe/public';
     <form method="post" action="<?= $base ?>/user-management/save">
         <input type="hidden" name="id" id="umId">
         <div class="um-grid">
-            <label class="um-field">
-                Username <span style="color:#ef4444">*</span>
+            <div class="um-field">
+                <label for="umUsername">
+                    <span class="um-label-left">Username <span class="req">*</span></span>
+                </label>
                 <input class="form-control" name="username" id="umUsername" required placeholder="Contoh: admin">
-            </label>
-            <label class="um-field">
-                Nama Lengkap <span style="color:#ef4444">*</span>
+            </div>
+
+            <div class="um-field">
+                <label for="umName">
+                    <span class="um-label-left">Nama Lengkap <span class="req">*</span></span>
+                </label>
                 <input class="form-control" name="nama_lengkap" id="umName" required placeholder="Contoh: Administrator">
-            </label>
-            <label class="um-field full">
-                Alamat Email
+            </div>
+
+            <div class="um-field full">
+                <label for="umEmail">
+                    <span class="um-label-left">Alamat Email</span>
+                    <small style="color:var(--text-muted);font-weight:400;font-size:.74rem">Opsional / default @obe.ac.id</small>
+                </label>
                 <input class="form-control" type="email" name="email" id="umEmail" placeholder="Contoh: user@kampus.ac.id">
-            </label>
-            <label class="um-field">
-                Role <span style="color:#ef4444">*</span>
+            </div>
+
+            <div class="um-field">
+                <label for="umRole">
+                    <span class="um-label-left">Role Pengguna <span class="req">*</span></span>
+                </label>
                 <select class="form-control" name="role_id" id="umRole" required>
                     <?php foreach($roles as $r): ?>
                         <option value="<?= (int)$r['id'] ?>"><?= htmlspecialchars($r['name']) ?></option>
                     <?php endforeach; ?>
                 </select>
-            </label>
-            <label class="um-field">
-                Program Studi
+            </div>
+
+            <div class="um-field">
+                <label for="umProdi">
+                    <span class="um-label-left">Program Studi</span>
+                </label>
                 <select class="form-control" name="prodi_id" id="umProdi">
                     <option value="">Tidak terikat prodi</option>
                     <?php foreach($prodi as $p): ?>
                         <option value="<?= (int)$p['id'] ?>"><?= htmlspecialchars($p['jenjang'].' '.$p['nama']) ?></option>
                     <?php endforeach; ?>
                 </select>
-            </label>
-            <label class="um-field full">
-                Password <small id="passwordHint" style="color:var(--text-muted);font-weight:400">Minimal 6 karakter</small>
+            </div>
+
+            <div class="um-field full">
+                <label for="umPassword">
+                    <span class="um-label-left">Password</span>
+                    <small id="passwordHint" style="color:var(--text-muted);font-weight:400;font-size:.74rem">Minimal 6 karakter</small>
+                </label>
                 <input class="form-control" type="password" name="password" id="umPassword" placeholder="••••••••">
-            </label>
+            </div>
         </div>
         <div class="um-footer">
-            <button type="button" class="btn btn-secondary" onclick="userDialog.close()">Batal</button>
-            <button class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Simpan</button>
+            <button type="button" class="btn btn-secondary" onclick="userDialog.close()">
+                <i class="fa-solid fa-xmark"></i> Batal
+            </button>
+            <button class="btn btn-primary">
+                <i class="fa-solid fa-floppy-disk"></i> Simpan
+            </button>
         </div>
     </form>
 </dialog>
