@@ -1,9 +1,16 @@
+<?php
+require_once __DIR__ . '/../../app/Support/Branding.php';
+$layoutBranding = Branding::all();
+$layoutBaseUrl = $config['base_url'] ?? '/obe/public';
+$layoutFaviconUrl = Branding::assetUrl($layoutBranding['favicon'] ?? null, $layoutBaseUrl);
+?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $title ?? 'SIP-OKE : Sistem Informasi Pengukuran Outcome Kompetensi dan Evaluasi' ?></title>
+    <?php if ($layoutFaviconUrl): ?><link rel="icon" href="<?= htmlspecialchars($layoutFaviconUrl) ?>"><?php endif; ?>
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- FontAwesome -->

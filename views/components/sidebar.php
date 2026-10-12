@@ -54,7 +54,7 @@ $isEvaluasiActive = isNavActive($baseUrl . '/laporan', $currentUri)
     || isNavActive($baseUrl . '/cqi', $currentUri)
     || isNavActive($baseUrl . '/rpl', $currentUri);
 
-$isSistemActive = isNavActive($baseUrl . '/audit-log', $currentUri) || isNavActive($baseUrl . '/user-management', $currentUri);
+$isSistemActive = isNavActive($baseUrl . '/audit-log', $currentUri) || isNavActive($baseUrl . '/user-management', $currentUri) || isNavActive($baseUrl . '/branding', $currentUri);
 
 // Ambil daftar semester dari database secara dinamis
 $listTahunAkademik = [];
@@ -81,7 +81,7 @@ try {
 }
 ?>
 <?php
-$allSidebarPaths = ['tahun-akademik','dosen','mahasiswa','prodi','kurikulum','aturan-kurikulum','profil-lulusan','cpl','mata-kuliah','rubrik','import','pemetaan-mk-cpl','pengampu-mk','rps','kelas','asesmen','laporan','laporan-semester','khs','transkrip','rpl','cqi','audit-log','user-management'];
+$allSidebarPaths = ['tahun-akademik','dosen','mahasiswa','prodi','kurikulum','aturan-kurikulum','profil-lulusan','cpl','mata-kuliah','rubrik','import','pemetaan-mk-cpl','pengampu-mk','rps','kelas','asesmen','laporan','laporan-semester','khs','transkrip','rpl','cqi','audit-log','user-management','branding'];
 $hiddenSidebarPaths = array_values(array_filter($allSidebarPaths, fn($item) => !$sidebarMenuAllowed($item)));
 ?>
 <?php if ($hiddenSidebarPaths): ?>
@@ -369,13 +369,14 @@ $hiddenSidebarPaths = array_values(array_filter($allSidebarPaths, fn($item) => !
                     <span>SISTEM & AUDIT</span>
                 </span>
                 <span class="sidebar-group-meta">
-                    <span class="sidebar-group-badge"><?= ($_SESSION['role']??'')==='Super Admin'?'2':'1' ?></span>
+                    <span class="sidebar-group-badge"><?= ($_SESSION['role']??'')==='Super Admin'?'3':'1' ?></span>
                     <i class="fa-solid fa-chevron-down group-chevron"></i>
                 </span>
             </button>
             <div class="sidebar-group-content">
                 <ul class="sidebar-nav">
                     <?php if (($_SESSION['role']??'')==='Super Admin'): ?><li class="sidebar-nav-item <?= isNavActive($baseUrl.'/user-management',$currentUri)?'active':'' ?>" data-label="manajemen user akun login role password"><a href="<?= $baseUrl ?>/user-management" class="sidebar-link" title="Manajemen User"><i class="fa-solid fa-users-gear"></i><span>Manajemen User</span></a></li><?php endif; ?>
+                    <?php if (($_SESSION['role']??'')==='Super Admin'): ?><li class="sidebar-nav-item <?= isNavActive($baseUrl.'/branding',$currentUri)?'active':'' ?>" data-label="logo favicon identitas branding aplikasi"><a href="<?= $baseUrl ?>/branding" class="sidebar-link" title="Logo & Favicon"><i class="fa-solid fa-icons"></i><span>Logo &amp; Favicon</span></a></li><?php endif; ?>
                     <li class="sidebar-nav-item <?= isNavActive($baseUrl . '/audit-log', $currentUri) ? 'active' : '' ?>" data-label="audit log trail riwayat aktivitas keamanan sistem">
                         <a href="<?= $baseUrl ?>/audit-log" class="sidebar-link" title="Audit Log">
                             <i class="fa-solid fa-clock-rotate-left"></i>

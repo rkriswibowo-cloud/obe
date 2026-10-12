@@ -174,6 +174,12 @@ switch ($path) {
         require_once __DIR__ . '/../app/Controllers/UserManagementController.php';(new UserManagementController())->save();break;
     case '/user-management/delete':
         require_once __DIR__ . '/../app/Controllers/UserManagementController.php';(new UserManagementController())->delete();break;
+    case '/branding':
+        require_once __DIR__ . '/../app/Controllers/BrandingController.php';(new BrandingController())->index();break;
+    case '/branding/save':
+        require_once __DIR__ . '/../app/Controllers/BrandingController.php';(new BrandingController())->save();break;
+    case '/branding/reset':
+        require_once __DIR__ . '/../app/Controllers/BrandingController.php';(new BrandingController())->reset();break;
     case '/dashboard':
         require_once __DIR__ . '/../app/Controllers/DashboardController.php';
         $d = new DashboardController();

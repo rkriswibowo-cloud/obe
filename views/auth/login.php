@@ -1,401 +1,472 @@
+<?php
+require_once __DIR__ . '/../../app/Support/Branding.php';
+$loginConfig = isset($config) && is_array($config) ? $config : require __DIR__ . '/../../config/app.php';
+$loginBranding = Branding::all();
+$loginLogoUrl = Branding::assetUrl($loginBranding['logo'] ?? null, $loginConfig['base_url'] ?? '/obe/public');
+$loginFaviconUrl = Branding::assetUrl($loginBranding['favicon'] ?? null, $loginConfig['base_url'] ?? '/obe/public');
+?>
 <!DOCTYPE html>
-<html lang="id" class="dark">
+<html lang="id" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign In - SIP-OKE : Sistem Informasi Pengukuran Outcome Kompetensi dan Evaluasi</title>
+    <title>Masuk — SIP-OKE</title>
+    <meta name="description" content="Masuk ke Sistem Informasi Pengukuran Outcome Kompetensi dan Evaluasi.">
+    <?php if ($loginFaviconUrl): ?><link rel="icon" href="<?= htmlspecialchars($loginFaviconUrl) ?>"><?php endif; ?>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        geist: ['Geist', 'Inter', 'sans-serif'],
-                        sans: ['Inter', 'sans-serif']
-                    },
-                    colors: {
-                        border: 'var(--border-color)',
-                        background: 'var(--bg-color)',
-                        foreground: 'var(--fg-color)',
-                        primary: {
-                            DEFAULT: '#6366f1',
-                            foreground: '#ffffff',
-                        },
-                        secondary: 'var(--secondary-color)',
-                        muted: {
-                            DEFAULT: 'var(--muted-color)',
-                            foreground: 'var(--muted-fg)',
-                        },
-                        card: 'var(--card-color)',
-                    }
-                }
-            }
-        }
+        (function () {
+            try {
+                document.documentElement.dataset.theme = localStorage.getItem('theme') || 'dark';
+            } catch (error) {}
+        })();
     </script>
-    
-    <!-- Lucide Icons CDN -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-
     <style>
         :root {
-            --bg-color: #ffffff;
-            --fg-color: #09090b;
-            --card-color: rgba(255, 255, 255, 0.7);
-            --border-color: rgba(228, 228, 231, 0.8);
-            --secondary-color: #f4f4f5;
-            --muted-color: #71717a;
-            --muted-fg: #71717a;
+            --background: #f4f6f8;
+            --surface: #ffffff;
+            --surface-subtle: #f8fafc;
+            --border: #dfe3e8;
+            --border-strong: #c7cdd4;
+            --text: #17202a;
+            --muted: #647180;
+            --muted-strong: #465362;
+            --primary: #126da3;
+            --primary-hover: #0c5a89;
+            --primary-soft: #e8f3f9;
+            --danger: #b42318;
+            --danger-bg: #fff1f0;
+            --danger-border: #f2c7c3;
+            --shadow: 0 20px 55px rgba(15, 32, 46, .09);
         }
 
-        html.dark, :root[data-theme="dark"] {
-            --bg-color: #09090b;
-            --fg-color: #f4f4f5;
-            --card-color: rgba(18, 18, 20, 0.7);
-            --border-color: rgba(39, 39, 42, 0.8);
-            --secondary-color: #18181b;
-            --muted-color: #a1a1aa;
-            --muted-fg: #a1a1aa;
+        [data-theme="dark"] {
+            --background: #080b0e;
+            --surface: #101419;
+            --surface-subtle: #151a20;
+            --border: #293039;
+            --border-strong: #3a444f;
+            --text: #f2f5f7;
+            --muted: #9aa6b2;
+            --muted-strong: #c0c8d0;
+            --primary: #4fb3e8;
+            --primary-hover: #75c5ed;
+            --primary-soft: #102c3b;
+            --danger: #ff8b82;
+            --danger-bg: #2b1515;
+            --danger-border: #69302d;
+            --shadow: 0 25px 70px rgba(0, 0, 0, .34);
         }
 
+        * { box-sizing: border-box; }
+        html, body { min-height: 100%; }
         body {
-            background-color: var(--bg-color);
-            color: var(--fg-color);
-            font-family: 'Geist', 'Inter', sans-serif;
-            overflow-x: hidden;
             margin: 0;
-            padding: 0;
+            background: var(--background);
+            color: var(--text);
+            font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        button, input { font: inherit; }
+        button { color: inherit; }
+
+        .auth-shell {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: minmax(360px, 42%) 1fr;
         }
 
-        /* Glass Input Wrapper */
-        .glass-input-wrapper {
-            border-radius: 1rem;
-            border: 1px solid var(--border-color);
-            background: rgba(125, 125, 125, 0.05);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .glass-input-wrapper:focus-within {
-            border-color: rgba(139, 92, 246, 0.7);
-            background: rgba(139, 92, 246, 0.08);
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+        .auth-panel {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 34px clamp(28px, 5vw, 76px);
+            background: var(--surface);
+            border-right: 1px solid var(--border);
         }
 
-        /* Animations */
-        @keyframes fadeSlideIn {
-            from {
-                opacity: 0;
-                filter: blur(4px);
-                transform: translateY(14px);
-            }
-            to {
-                opacity: 1;
-                filter: blur(0px);
-                transform: translateY(0px);
-            }
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            align-self: flex-start;
+            gap: 12px;
+            color: var(--text);
+            text-decoration: none;
         }
 
-        @keyframes slideRightIn {
-            from {
-                opacity: 0;
-                filter: blur(6px);
-                transform: translateX(24px);
-            }
-            to {
-                opacity: 1;
-                filter: blur(0px);
-                transform: translateX(0px);
-            }
+        .brand-mark {
+            width: 42px;
+            height: 42px;
+            display: grid;
+            place-items: center;
+            color: white;
+            background: #126da3;
+            border-radius: 10px;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,.16);
         }
 
-        @keyframes testimonialIn {
-            from {
-                opacity: 0;
-                filter: blur(6px);
-                transform: translateY(20px) scale(0.95);
-            }
-            to {
-                opacity: 1;
-                filter: blur(0px);
-                transform: translateY(0px) scale(1);
-            }
+        .brand-copy { display: grid; gap: 2px; }
+        .brand-name { font-size: .95rem; font-weight: 700; letter-spacing: .01em; }
+        .brand-unit { color: var(--muted); font-size: .72rem; }
+
+        .login-wrap {
+            width: 100%;
+            max-width: 420px;
+            margin: auto;
+            padding: 70px 0;
         }
 
-        .animate-element {
-            animation: fadeSlideIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            opacity: 0;
+        .login-header { margin-bottom: 31px; }
+        .login-header h1 {
+            margin: 0 0 10px;
+            font-size: clamp(1.75rem, 3vw, 2.1rem);
+            line-height: 1.18;
+            letter-spacing: -.035em;
+        }
+        .login-header p {
+            margin: 0;
+            color: var(--muted);
+            font-size: .9rem;
+            line-height: 1.65;
         }
 
-        .animate-slide-right {
-            animation: slideRightIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            opacity: 0;
+        .alert {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 12px 14px;
+            color: var(--danger);
+            background: var(--danger-bg);
+            border: 1px solid var(--danger-border);
+            border-radius: 9px;
+            font-size: .82rem;
+            line-height: 1.5;
         }
+        .alert i { margin-top: 2px; }
 
-        .animate-testimonial {
-            animation: testimonialIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            opacity: 0;
+        .field { margin-bottom: 19px; }
+        .field-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 12px;
+            margin-bottom: 8px;
         }
-
-        .animate-delay-100 { animation-delay: 100ms; }
-        .animate-delay-200 { animation-delay: 200ms; }
-        .animate-delay-300 { animation-delay: 300ms; }
-        .animate-delay-400 { animation-delay: 400ms; }
-        .animate-delay-500 { animation-delay: 500ms; }
-        .animate-delay-600 { animation-delay: 600ms; }
-        .animate-delay-700 { animation-delay: 700ms; }
-        .animate-delay-800 { animation-delay: 800ms; }
-        .animate-delay-900 { animation-delay: 900ms; }
-        .animate-delay-1000 { animation-delay: 1000ms; }
-        .animate-delay-1200 { animation-delay: 1200ms; }
-        .animate-delay-1400 { animation-delay: 1400ms; }
-
-        /* Custom Checkbox */
-        .custom-checkbox {
-            appearance: none;
-            width: 1.15rem;
-            height: 1.15rem;
-            border: 1px solid var(--border-color);
-            border-radius: 0.375rem;
+        .field label { color: var(--muted-strong); font-size: .79rem; font-weight: 600; }
+        .field-note { color: var(--muted); font-size: .7rem; }
+        .input-wrap { position: relative; }
+        .input-wrap > i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
+            font-size: .85rem;
+            pointer-events: none;
+        }
+        .input-wrap input {
+            width: 100%;
+            height: 48px;
+            padding: 0 43px;
+            color: var(--text);
+            background: var(--surface-subtle);
+            border: 1px solid var(--border-strong);
+            border-radius: 9px;
+            outline: none;
+            font-size: .88rem;
+            transition: border-color .15s, box-shadow .15s, background-color .15s;
+        }
+        .input-wrap input::placeholder { color: var(--muted); opacity: .75; }
+        .input-wrap input:hover { border-color: var(--muted); }
+        .input-wrap input:focus {
+            background: var(--surface);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 17%, transparent);
+        }
+        .password-toggle {
+            position: absolute;
+            top: 50%;
+            right: 7px;
+            width: 34px;
+            height: 34px;
+            transform: translateY(-50%);
+            border: 0;
+            border-radius: 7px;
+            color: var(--muted);
             background: transparent;
             cursor: pointer;
+        }
+        .password-toggle:hover { color: var(--text); background: var(--primary-soft); }
+
+        .form-options {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            margin: 2px 0 24px;
+            font-size: .78rem;
+        }
+        .remember { display: flex; align-items: center; gap: 9px; color: var(--muted-strong); cursor: pointer; }
+        .remember input { width: 16px; height: 16px; margin: 0; accent-color: var(--primary); }
+        .help-link { color: var(--primary); font-weight: 600; text-decoration: none; }
+        .help-link:hover { text-decoration: underline; }
+
+        .submit-button {
+            width: 100%;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            color: white;
+            background: #126da3;
+            border: 1px solid #126da3;
+            border-radius: 9px;
+            font-weight: 600;
+            font-size: .86rem;
+            cursor: pointer;
+            transition: background .15s, transform .1s;
+        }
+        .submit-button:hover { background: #0c5a89; }
+        .submit-button:active { transform: translateY(1px); }
+
+        .login-assistance {
+            margin: 22px 0 0;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: .76rem;
+            line-height: 1.6;
+        }
+
+        .panel-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            color: var(--muted);
+            font-size: .68rem;
+        }
+        .theme-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 6px 8px;
+            border: 0;
+            border-radius: 7px;
+            color: var(--muted);
+            background: transparent;
+            cursor: pointer;
+        }
+        .theme-toggle:hover { color: var(--text); background: var(--surface-subtle); }
+
+        .context-panel {
             position: relative;
-            outline: none;
-            transition: all 0.15s ease;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+            padding: clamp(38px, 6vw, 82px);
+            color: #eaf4f9;
+            background: #0b2738;
         }
-        .custom-checkbox:checked {
-            background-color: #6366f1;
-            border-color: #6366f1;
-        }
-        .custom-checkbox:checked::after {
-            content: '';
+        .context-panel::before {
+            content: "";
             position: absolute;
-            left: 5px;
-            top: 2px;
-            width: 4px;
-            height: 8px;
-            border: solid white;
-            border-width: 0 2px 2px 0;
-            transform: rotate(45deg);
+            inset: 0;
+            opacity: .17;
+            background-image:
+                linear-gradient(rgba(255,255,255,.12) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,.12) 1px, transparent 1px);
+            background-size: 42px 42px;
+            mask-image: linear-gradient(to bottom right, black, transparent 78%);
+        }
+        .context-panel::after {
+            content: "";
+            position: absolute;
+            right: -14%;
+            bottom: -18%;
+            width: min(52vw, 680px);
+            aspect-ratio: 1;
+            border: 1px solid rgba(112, 197, 238, .22);
+            border-radius: 50%;
+            box-shadow: 0 0 0 80px rgba(112,197,238,.035), 0 0 0 160px rgba(112,197,238,.025);
+        }
+        .context-top, .context-content, .context-footer { position: relative; z-index: 1; }
+        .context-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: rgba(234,244,249,.68);
+            font-size: .7rem;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+        .status { display: inline-flex; align-items: center; gap: 8px; }
+        .status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #58c89a; }
+        .context-content { max-width: 630px; margin: auto 0; padding: 70px 0; }
+        .context-kicker { margin: 0 0 18px; color: #70c5ee; font-size: .75rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+        .context-content h2 { max-width: 590px; margin: 0; font-size: clamp(2.15rem, 4.4vw, 4.45rem); line-height: 1.05; letter-spacing: -.055em; font-weight: 600; }
+        .context-description { max-width: 530px; margin: 25px 0 0; color: rgba(234,244,249,.7); font-size: clamp(.88rem, 1.35vw, 1rem); line-height: 1.75; }
+        .capabilities { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 34px; }
+        .capabilities span { padding: 8px 11px; border: 1px solid rgba(234,244,249,.17); border-radius: 6px; color: rgba(234,244,249,.82); background: rgba(255,255,255,.035); font-size: .72rem; }
+        .context-footer { max-width: 560px; padding-top: 20px; border-top: 1px solid rgba(234,244,249,.14); color: rgba(234,244,249,.5); font-size: .69rem; line-height: 1.6; }
+
+        @media (max-width: 900px) {
+            .auth-shell { grid-template-columns: 1fr; }
+            .auth-panel { min-height: 100vh; border-right: 0; }
+            .context-panel { display: none; }
+            .login-wrap { max-width: 440px; }
+        }
+        @media (max-width: 520px) {
+            .auth-panel { padding: 24px 20px; }
+            .login-wrap { padding: 52px 0; }
+            .brand-unit { display: none; }
+            .panel-footer { align-items: flex-end; }
+            .panel-footer > span { max-width: 210px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
         }
     </style>
 </head>
-<body class="bg-background text-foreground antialiased selection:bg-indigo-500/20 selection:text-indigo-400">
-
-    <!-- Top Floating Theme Toggle & Back Button -->
-    <div class="fixed top-6 right-6 z-50 flex items-center gap-3">
-        <button type="button" onclick="toggleTheme()" class="flex items-center gap-2 px-3 py-2 rounded-xl border border-border bg-card/60 backdrop-blur-md hover:bg-secondary transition-all text-xs font-medium text-foreground/80 shadow-sm" title="Ubah Tema Gelap/Terang">
-            <i id="themeToggleIcon" class="fa-solid fa-moon text-sm"></i>
-            <span id="themeToggleText">Dark</span>
-        </button>
-    </div>
-
-    <div class="min-h-screen flex flex-col md:flex-row font-geist w-full">
-        <!-- Left column: sign-in form -->
-        <section class="flex-1 flex items-center justify-center p-6 md:p-12 lg:p-16">
-            <div class="w-full max-w-md">
-                <div class="flex flex-col gap-6">
-                    
-                    <!-- Header Branding -->
-                    <div class="flex items-center gap-3 animate-element animate-delay-100">
-                        <div class="h-11 w-11 rounded-xl bg-gradient-to-tr from-indigo-500 to-violet-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/25 shrink-0">
-                            <i class="fa-solid fa-graduation-cap text-lg"></i>
-                        </div>
-                        <div>
-                            <span class="text-base font-bold tracking-tight text-indigo-400">SIP-OKE</span>
-                            <h2 class="text-xs text-muted-foreground leading-snug">Sistem Informasi Pengukuran Outcome Kompetensi dan Evaluasi</h2>
-                        </div>
-                    </div>
-
-                    <div>
-                        <h1 class="animate-element animate-delay-100 text-3xl md:text-5xl font-semibold leading-tight tracking-tight">
-                            <span class="font-light tracking-tighter">Welcome</span> Back
-                        </h1>
-                        <p class="animate-element animate-delay-200 text-muted-foreground mt-2 text-sm md:text-base">
-                            Masuk ke akun Anda untuk mengelola kurikulum OBE, asesmen, dan pemenuhan CPL
-                        </p>
-                    </div>
-
-                    <!-- Flash Session Error Notification -->
-                    <?php if(isset($_SESSION['error'])): ?>
-                        <div class="animate-element animate-delay-200 flex items-center gap-3 p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
-                            <i class="fa-solid fa-circle-exclamation text-base"></i>
-                            <span><?= htmlspecialchars($_SESSION['error']) ?></span>
-                        </div>
-                        <?php unset($_SESSION['error']); ?>
+<body>
+    <main class="auth-shell">
+        <section class="auth-panel" aria-labelledby="login-title">
+            <a class="brand" href="/obe/public/login" aria-label="SIP-OKE">
+                <span class="brand-mark">
+                    <?php if ($loginLogoUrl): ?>
+                        <img src="<?= htmlspecialchars($loginLogoUrl) ?>" alt="" style="width:100%;height:100%;object-fit:contain;padding:5px;">
+                    <?php else: ?>
+                        <i class="fa-solid fa-graduation-cap"></i>
                     <?php endif; ?>
+                </span>
+                <span class="brand-copy">
+                    <span class="brand-name">SIP-OKE</span>
+                    <span class="brand-unit">Sistem Informasi OBE</span>
+                </span>
+            </a>
 
-                    <!-- Sign In Form -->
-                    <form action="/obe/public/login/submit" method="POST" class="space-y-4">
-                        <div class="animate-element animate-delay-300">
-                            <label class="text-xs md:text-sm font-medium text-muted-foreground block mb-2">Username / NIDN</label>
-                            <div class="glass-input-wrapper">
-                                <input name="username" type="text" placeholder="Enter username or NIDN" required autofocus class="w-full bg-transparent text-sm p-4 rounded-2xl focus:outline-none text-foreground placeholder:text-muted-foreground/60" />
-                            </div>
+            <div class="login-wrap">
+                <header class="login-header">
+                    <h1 id="login-title">Masuk ke sistem</h1>
+                    <p>Gunakan akun yang telah diberikan oleh administrator program studi.</p>
+                </header>
+
+                <?php if (isset($_SESSION['error'])): ?>
+                    <div class="alert" role="alert">
+                        <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+                        <span><?= htmlspecialchars($_SESSION['error']) ?></span>
+                    </div>
+                    <?php unset($_SESSION['error']); ?>
+                <?php endif; ?>
+
+                <form action="/obe/public/login/submit" method="POST">
+                    <div class="field">
+                        <div class="field-head">
+                            <label for="username">Username atau NIDN</label>
+                            <span class="field-note">Wajib diisi</span>
                         </div>
-
-                        <div class="animate-element animate-delay-400">
-                            <label class="text-xs md:text-sm font-medium text-muted-foreground block mb-2">Password</label>
-                            <div class="glass-input-wrapper">
-                                <div class="relative">
-                                    <input id="passwordInput" name="password" type="password" placeholder="Enter your password" required class="w-full bg-transparent text-sm p-4 pr-12 rounded-2xl focus:outline-none text-foreground placeholder:text-muted-foreground/60" />
-                                    <button type="button" id="togglePasswordBtn" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-3 flex items-center px-2 text-muted-foreground hover:text-foreground transition-colors">
-                                        <i data-lucide="eye" id="eyeIcon" class="w-5 h-5"></i>
-                                    </button>
-                                </div>
-                            </div>
+                        <div class="input-wrap">
+                            <i class="fa-regular fa-user" aria-hidden="true"></i>
+                            <input id="username" name="username" type="text" autocomplete="username" placeholder="Masukkan username atau NIDN" required autofocus>
                         </div>
-
-                        <div class="animate-element animate-delay-500 flex items-center justify-between text-xs md:text-sm">
-                            <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" name="rememberMe" class="custom-checkbox" />
-                                <span class="text-foreground/90 font-medium">Keep me signed in</span>
-                            </label>
-                            <a href="#" onclick="event.preventDefault(); alert('Silakan hubungi Administrator Prodi untuk reset kredensial Anda.');" class="hover:underline text-indigo-400 hover:text-indigo-300 transition-colors">Reset password</a>
-                        </div>
-
-                        <button type="submit" class="animate-element animate-delay-600 w-full rounded-2xl bg-indigo-600 hover:bg-indigo-500 active:scale-[0.99] py-4 font-medium text-white transition-all shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2">
-                            <span>Sign In</span>
-                            <i class="fa-solid fa-arrow-right text-xs"></i>
-                        </button>
-                    </form>
-
-                    <div class="animate-element animate-delay-700 relative flex items-center justify-center my-1">
-                        <span class="w-full border-t border-border"></span>
-                        <span class="px-4 text-xs uppercase tracking-wider text-muted-foreground bg-background absolute">Or continue with</span>
                     </div>
 
-                    <button type="button" onclick="alert('Fitur SSO Google Kampus terintegrasi untuk akun @kampus.ac.id');" class="animate-element animate-delay-800 w-full flex items-center justify-center gap-3 border border-border rounded-2xl py-3.5 hover:bg-secondary text-sm font-medium transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 48 48">
-                            <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s12-5.373 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-2.641-.21-5.236-.611-7.743z" />
-                            <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z" />
-                            <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z" />
-                            <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C42.022 35.026 44 30.038 44 24c0-2.641-.21-5.236-.611-7.743z" />
-                        </svg>
-                        <span>Continue with Google Workspace</span>
+                    <div class="field">
+                        <div class="field-head">
+                            <label for="password">Kata sandi</label>
+                        </div>
+                        <div class="input-wrap">
+                            <i class="fa-solid fa-lock" aria-hidden="true"></i>
+                            <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Masukkan kata sandi" required>
+                            <button class="password-toggle" type="button" id="passwordToggle" aria-label="Tampilkan kata sandi" aria-pressed="false">
+                                <i class="fa-regular fa-eye" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-options">
+                        <label class="remember"><input type="checkbox" name="rememberMe"> Ingat saya di perangkat ini</label>
+                    </div>
+
+                    <button class="submit-button" type="submit">
+                        <span>Masuk</span>
+                        <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
                     </button>
+                </form>
 
-                    <p class="animate-element animate-delay-900 text-center text-xs md:text-sm text-muted-foreground">
-                        Belum memiliki akun dosen / mahasiswa? 
-                        <a href="#" onclick="event.preventDefault(); alert('Pendaftaran akun dikelola oleh Admin Program Studi.');" class="text-indigo-400 hover:underline font-medium ml-1">Hubungi Admin</a>
-                    </p>
-
-                </div>
+                <p class="login-assistance" id="login-help">Belum memiliki akun atau lupa kata sandi? Pendaftaran, pemulihan akun, dan perubahan hak akses dikelola oleh administrator program studi.</p>
             </div>
-        </section> 
 
-        <!-- Right column: hero image + testimonials -->
-        <section class="hidden md:block flex-1 relative p-4 lg:p-6">
-            <div class="animate-slide-right animate-delay-300 absolute inset-4 lg:inset-6 rounded-3xl bg-cover bg-center overflow-hidden border border-white/10 shadow-2xl" style="background-image: url('/obe/public/assets/images/gambar.png');">
-                
-                <!-- Gradient Vignette Overlay -->
-                <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/20"></div>
-
-                <!-- Top Floating Badge -->
-                <div class="absolute top-8 right-8 flex items-center gap-2 px-4 py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/15 text-white text-xs font-medium">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span>SIP-OKE Platform &bull; Kurikulum OBE</span>
-                </div>
-
-                <!-- Bottom Floating Testimonial Cards -->
-                <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-4 px-6 w-full justify-center">
-                    
-                    <!-- Card 1 -->
-                    <div class="animate-testimonial animate-delay-1000 flex items-start gap-3 rounded-3xl bg-zinc-900/60 backdrop-blur-xl border border-white/10 p-5 w-64 shadow-2xl">
-                        <img src="https://cdn.21st.dev/assets/mirror/9f/9f797e4acee1a4de4f9b4c3aa1cc4e89d7c9efd5dbff1c463d88374ed601d719.jpg" class="h-10 w-10 object-cover rounded-2xl border border-white/20" alt="avatar" />
-                        <div class="text-xs leading-snug">
-                            <p class="flex items-center gap-1 font-semibold text-white">Rusina Widha F., M.Kom.</p>
-                            <p class="text-zinc-400 text-[11px]">@kaprodi.si</p>
-                            <p class="mt-1 text-zinc-300">Platform yang luar biasa! Pemantauan ketercapaian CPL dan portofolio asesmen menjadi sangat akurat.</p>
-                        </div>
-                    </div>
-
-                    <!-- Card 2 (XL Screen) -->
-                    <div class="hidden xl:flex animate-testimonial animate-delay-1200 items-start gap-3 rounded-3xl bg-zinc-900/60 backdrop-blur-xl border border-white/10 p-5 w-64 shadow-2xl">
-                        <img src="https://cdn.21st.dev/assets/mirror/8d/8d9a61a581c43fe2088f221b7692c95db4b3ad5c0da0c856400c0e5acdcdcea8.jpg" class="h-10 w-10 object-cover rounded-2xl border border-white/20" alt="avatar" />
-                        <div class="text-xs leading-snug">
-                            <p class="flex items-center gap-1 font-semibold text-white">Agung Budi S., M.Pd.</p>
-                            <p class="text-zinc-400 text-[11px]">@dosen_pengampu</p>
-                            <p class="mt-1 text-zinc-300">Sangat memudahkan evaluasi rubrik nilai dan penyusunan RPS berbasis OBE secara terintegrasi.</p>
-                        </div>
-                    </div>
-
-                    <!-- Card 3 (2XL Screen) -->
-                    <div class="hidden 2xl:flex animate-testimonial animate-delay-1400 items-start gap-3 rounded-3xl bg-zinc-900/60 backdrop-blur-xl border border-white/10 p-5 w-64 shadow-2xl">
-                        <img src="https://cdn.21st.dev/assets/mirror/a6/a634d4f02fe5b77804943c1d74b8d70e35ffe26454e0e9af9717432a2c72bfde.jpg" class="h-10 w-10 object-cover rounded-2xl border border-white/20" alt="avatar" />
-                        <div class="text-xs leading-snug">
-                            <p class="flex items-center gap-1 font-semibold text-white">Rony Kriswibowo, M.Kom.</p>
-                            <p class="text-zinc-400 text-[11px]">@gugus_mutu_si</p>
-                            <p class="mt-1 text-zinc-300">Siklus Continuous Quality Improvement (CQI) dan pemetaan Sub-CPMK berjalan efektif dan andal.</p>
-                        </div>
-                    </div>
-
-                </div>
-
-            </div>
+            <footer class="panel-footer">
+                <span>&copy; <?= date('Y') ?> SIP-OKE · Akses terbatas untuk pengguna terdaftar</span>
+                <button type="button" class="theme-toggle" id="themeToggle" aria-label="Ubah tema tampilan">
+                    <i class="fa-solid fa-moon" aria-hidden="true"></i>
+                    <span>Gelap</span>
+                </button>
+            </footer>
         </section>
-    </div>
 
-    <!-- Scripts -->
+        <aside class="context-panel" aria-label="Tentang SIP-OKE">
+            <div class="context-top">
+                <span>Outcome-Based Education</span>
+                <span class="status">Sistem aktif</span>
+            </div>
+
+            <div class="context-content">
+                <p class="context-kicker">Platform akademik terintegrasi</p>
+                <h2>Data capaian yang dapat ditelusuri.</h2>
+                <p class="context-description">Kelola kurikulum, RPS, asesmen, dan ketercapaian CPL dalam satu alur kerja yang terukur dan akuntabel.</p>
+                <div class="capabilities" aria-label="Fitur utama">
+                    <span>Kurikulum OBE</span>
+                    <span>RPS Digital</span>
+                    <span>Asesmen</span>
+                    <span>Evaluasi CPL</span>
+                    <span>CQI</span>
+                </div>
+            </div>
+
+            <p class="context-footer">Sistem Informasi Pengukuran Outcome Kompetensi dan Evaluasi mendukung pengelolaan mutu pembelajaran berbasis bukti.</p>
+        </aside>
+    </main>
+
     <script>
-        // Initialize Lucide Icons
-        if (window.lucide) {
-            lucide.createIcons();
-        }
+        (function () {
+            const root = document.documentElement;
+            const password = document.getElementById('password');
+            const passwordToggle = document.getElementById('passwordToggle');
+            const themeToggle = document.getElementById('themeToggle');
 
-        // Password Reveal Toggle
-        let showPassword = false;
-        function togglePasswordVisibility() {
-            showPassword = !showPassword;
-            const input = document.getElementById('passwordInput');
-            const icon = document.getElementById('eyeIcon');
-            
-            if (input) {
-                input.type = showPassword ? 'text' : 'password';
+            function updateThemeControl() {
+                const isDark = root.dataset.theme !== 'light';
+                themeToggle.querySelector('i').className = isDark ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+                themeToggle.querySelector('span').textContent = isDark ? 'Gelap' : 'Terang';
             }
-            if (icon) {
-                icon.setAttribute('data-lucide', showPassword ? 'eye-off' : 'eye');
-                if (window.lucide) lucide.createIcons();
-            }
-        }
 
-        // Theme Switcher Sync with localStorage
-        function applyTheme(theme) {
-            document.documentElement.setAttribute('data-theme', theme);
-            document.documentElement.classList.remove('dark', 'light');
-            document.documentElement.classList.add(theme);
-            localStorage.setItem('theme', theme);
+            passwordToggle.addEventListener('click', function () {
+                const reveal = password.type === 'password';
+                password.type = reveal ? 'text' : 'password';
+                this.setAttribute('aria-pressed', String(reveal));
+                this.setAttribute('aria-label', reveal ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi');
+                this.querySelector('i').className = reveal ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
+            });
 
-            const icon = document.getElementById('themeToggleIcon');
-            const text = document.getElementById('themeToggleText');
-            if (icon && text) {
-                if (theme === 'light') {
-                    icon.className = 'fa-solid fa-sun text-amber-500';
-                    text.textContent = 'Light';
-                } else {
-                    icon.className = 'fa-solid fa-moon text-indigo-400';
-                    text.textContent = 'Dark';
-                }
-            }
-        }
+            themeToggle.addEventListener('click', function () {
+                root.dataset.theme = root.dataset.theme === 'light' ? 'dark' : 'light';
+                localStorage.setItem('theme', root.dataset.theme);
+                updateThemeControl();
+            });
 
-        function toggleTheme() {
-            const currentTheme = localStorage.getItem('theme') || (document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            applyTheme(newTheme);
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const savedTheme = localStorage.getItem('theme') || 'dark';
-            applyTheme(savedTheme);
-            if (window.lucide) lucide.createIcons();
-        });
+            updateThemeControl();
+        })();
     </script>
 </body>
 </html>

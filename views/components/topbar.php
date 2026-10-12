@@ -1,6 +1,9 @@
 <?php
 // views/components/topbar.php
+require_once __DIR__ . '/../../app/Support/Branding.php';
 require_once __DIR__ . '/../../app/Models/NotificationModel.php';
+$topbarBranding = Branding::all();
+$topbarLogoUrl = Branding::assetUrl($topbarBranding['logo'] ?? null, $config['base_url'] ?? '/obe/public');
 $notifModel = new NotificationModel();
 $notifUserId = $_SESSION['user_id'] ?? null;
 $unreadNotifCount = $notifModel->getUnreadCount($notifUserId);
@@ -20,7 +23,11 @@ $topbarRoleLabel = $topbarAccess->isKaprodi() && !$topbarAccess->isSuperAdmin()
         <!-- Brand Squircle Logo & Name -->
         <a href="<?= $config['base_url'] ?? '/obe/public' ?>/dashboard" class="brand-squircle-link" title="SIP-OKE : Sistem Informasi Pengukuran Outcome Kompetensi dan Evaluasi">
             <div class="brand-squircle">
-                <i class="fa-solid fa-graduation-cap"></i>
+                <?php if ($topbarLogoUrl): ?>
+                    <img src="<?= htmlspecialchars($topbarLogoUrl) ?>" alt="" style="width:100%;height:100%;object-fit:contain;padding:5px;border-radius:inherit;">
+                <?php else: ?>
+                    <i class="fa-solid fa-graduation-cap"></i>
+                <?php endif; ?>
             </div>
             <div class="brand-text-wrapper">
                 <span class="brand-title">SIP-OKE</span>

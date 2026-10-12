@@ -1,230 +1,885 @@
 <?php
-$title = "Import Data Master";
+$title = 'Import Data Master';
 $baseUrl = $GLOBALS['config']['base_url'] ?? '/obe/public';
+
+$importTypes = [
+    'cpl' => [
+        'title' => 'CPL',
+        'name' => 'Capaian Pembelajaran Lulusan',
+        'description' => 'Impor kode dan rumusan CPL sebagai fondasi pemetaan kurikulum.',
+        'icon' => 'fa-bullseye',
+        'columns' => 'kode, rumusan',
+        'requires_course' => false,
+    ],
+    'cpmk' => [
+        'title' => 'CPMK',
+        'name' => 'Capaian Pembelajaran Mata Kuliah',
+        'description' => 'Impor CPMK beserta relasinya terhadap CPL untuk mata kuliah terpilih.',
+        'icon' => 'fa-diagram-project',
+        'columns' => 'kode_cpl, kode_cpmk, rumusan_cpmk',
+        'requires_course' => true,
+    ],
+    'sub_cpmk' => [
+        'title' => 'Sub-CPMK',
+        'name' => 'Kemampuan Akhir Tiap Tahapan',
+        'description' => 'Impor rincian Sub-CPMK yang terhubung dengan CPMK mata kuliah.',
+        'icon' => 'fa-list-check',
+        'columns' => 'kode_cpmk, kode_sub_cpmk, rumusan_sub_cpmk',
+        'requires_course' => true,
+    ],
+];
 ob_start();
 ?>
+<style>
+    .import-page {
+        width: 100%;
+        max-width: 1240px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    /* Header */
+    .import-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+    }
+    .import-eyebrow {
+        margin: 0 0 5px;
+        color: var(--primary);
+        font-size: .76rem;
+        font-weight: 800;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+    .import-title {
+        margin: 0;
+        font-size: 1.55rem;
+        color: var(--text-main);
+        font-weight: 700;
+        letter-spacing: -.02em;
+    }
+    .import-subtitle {
+        margin: 6px 0 0;
+        color: var(--text-muted);
+        font-size: .88rem;
+        max-width: 700px;
+        line-height: 1.55;
+    }
 
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-    <h2>Import Data Master</h2>
-</div>
+    /* Alerts */
+    .import-alert {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 14px 18px;
+        border-radius: var(--radius-md);
+        font-size: .82rem;
+        line-height: 1.55;
+        border: 1px solid transparent;
+    }
+    .import-alert i {
+        font-size: 1.05rem;
+        margin-top: 2px;
+        flex-shrink: 0;
+    }
+    .import-alert-success {
+        color: #10b981;
+        background: rgba(16, 185, 129, .1);
+        border-color: rgba(16, 185, 129, .25);
+    }
+    .import-alert-danger {
+        color: #ef4444;
+        background: rgba(239, 68, 68, .1);
+        border-color: rgba(239, 68, 68, .25);
+    }
 
-<?php if (isset($_GET['success'])): ?>
-    <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid var(--success); color: var(--success); padding: 15px 20px; border-radius: var(--radius-sm); margin-bottom: 20px;">
-        <strong>Berhasil mengimpor <?= htmlspecialchars($_GET['count'] ?? '0') ?> baris data.</strong>
-        <?php if (isset($_GET['errors']) && $_GET['errors'] > 0): ?>
-            <br><small>Terdapat <?= htmlspecialchars($_GET['errors']) ?> baris data yang gagal/dilewati (format salah, data tidak lengkap, atau tidak ditemukan referensi).</small>
-        <?php endif; ?>
-    </div>
-<?php endif; ?>
+    /* Guide Workflow Cards */
+    .import-steps {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+    }
+    .import-step-card {
+        padding: 16px 18px;
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        background: var(--card-bg);
+    }
+    .import-step-num {
+        flex-shrink: 0;
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        background: rgba(var(--primary-rgb), .12);
+        color: var(--primary);
+        font-weight: 800;
+        font-size: .85rem;
+    }
+    .import-step-body strong {
+        display: block;
+        font-size: .84rem;
+        color: var(--text-main);
+        margin-bottom: 3px;
+    }
+    .import-step-body span {
+        display: block;
+        color: var(--text-muted);
+        font-size: .75rem;
+        line-height: 1.45;
+    }
 
-<?php if (isset($_GET['error'])): ?>
-    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); color: var(--danger); padding: 15px 20px; border-radius: var(--radius-sm); margin-bottom: 20px;">
-        <strong>Gagal melakukan import:</strong> <?= htmlspecialchars($_GET['error']) ?>
-    </div>
-<?php endif; ?>
+    /* Tabs */
+    .import-nav-tabs {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        align-self: flex-start;
+    }
+    .import-nav-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border: 0;
+        border-radius: 7px;
+        background: transparent;
+        color: var(--text-muted);
+        font-size: .78rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all .15s ease;
+    }
+    .import-nav-btn:hover {
+        color: var(--text-main);
+        background: var(--surface-hover);
+    }
+    .import-nav-btn.active {
+        color: var(--text-main);
+        background: var(--card-bg);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border);
+    }
 
-<!-- Tab Switcher -->
-<div style="display: flex; gap: 0; margin-bottom: 24px; border-bottom: 2px solid var(--border);">
-    <button onclick="switchTab('file')" id="tab-file" class="import-tab active-tab" style="padding: 12px 24px; background: none; border: none; color: var(--text-main); cursor: pointer; font-size: 0.95rem; font-weight: 600; border-bottom: 2px solid var(--primary); margin-bottom: -2px; transition: all 0.2s;">
-        <i class="fa-solid fa-file-csv"></i> Upload File CSV
-    </button>
-    <button onclick="switchTab('text')" id="tab-text" class="import-tab" style="padding: 12px 24px; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.95rem; font-weight: 500; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s;">
-        <i class="fa-solid fa-keyboard"></i> Input Teks CSV
-    </button>
-</div>
+    /* Type Selector Pills */
+    .type-selector-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    .type-card-btn {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        background: var(--card-bg);
+        color: var(--text-main);
+        text-align: left;
+        cursor: pointer;
+        transition: all .18s ease;
+    }
+    .type-card-btn:hover {
+        border-color: rgba(var(--primary-rgb), .45);
+        background: var(--surface-hover);
+        transform: translateY(-1px);
+    }
+    .type-card-btn.active {
+        border-color: var(--primary);
+        background: rgba(var(--primary-rgb), .06);
+        box-shadow: 0 0 0 2px rgba(var(--primary-rgb), .12);
+    }
+    .type-card-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        background: rgba(var(--primary-rgb), .12);
+        color: var(--primary);
+        font-size: 1.05rem;
+        flex-shrink: 0;
+    }
+    .type-card-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+        flex: 1;
+    }
+    .type-card-title {
+        font-size: .88rem;
+        font-weight: 750;
+        color: var(--text-main);
+    }
+    .type-card-sub {
+        font-size: .72rem;
+        color: var(--text-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .type-card-check {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 1.5px solid var(--border);
+        display: grid;
+        place-items: center;
+        font-size: .62rem;
+        color: transparent;
+        flex-shrink: 0;
+        transition: all .15s ease;
+    }
+    .type-card-btn.active .type-card-check {
+        border-color: var(--primary);
+        background: var(--primary);
+        color: #ffffff;
+    }
 
-<!-- ============ PANEL 1: FILE UPLOAD ============ -->
-<div id="panel-file">
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-        <!-- CPL -->
-        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; display: flex; flex-direction: column;">
-            <div style="padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.1);">
-                <h4 style="margin: 0; color: var(--primary);">Import CPL</h4>
-                <a href="<?= $baseUrl ?>/import/template?type=cpl" class="btn btn-sm btn-secondary" title="Download Template CSV">
-                    <i class="fa-solid fa-download"></i> Template
-                </a>
-            </div>
-            <div style="padding: 20px; display: flex; flex-direction: column; flex: 1;">
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0 0 15px 0;">Upload file CSV yang berisi Master CPL (Capaian Pembelajaran Lulusan).</p>
-                <form action="<?= $baseUrl ?>/import/upload" method="POST" enctype="multipart/form-data" style="margin-top: auto;">
-                    <input type="hidden" name="type" value="cpl">
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; margin-bottom: 5px; font-weight: 500;">File CSV</label>
-                        <input type="file" name="csv_file" accept=".csv" required style="width: 100%; box-sizing: border-box;">
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;"><i class="fa-solid fa-upload" style="margin-right: 5px;"></i> Upload & Proses</button>
-                </form>
+    /* Main Workspace Panels */
+    .import-workspace-card {
+        padding: 0;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        background: var(--card-bg);
+    }
+    .import-workspace-split {
+        display: grid;
+        grid-template-columns: minmax(0, 1.45fr) minmax(280px, .85fr);
+    }
+
+    /* Left Form Area */
+    .import-main-form {
+        padding: 24px 26px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+    .workspace-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--border-subtle);
+    }
+    .workspace-head h2 {
+        margin: 0 0 5px;
+        font-size: 1.05rem;
+        color: var(--text-main);
+    }
+    .workspace-head p {
+        margin: 0;
+        color: var(--text-muted);
+        font-size: .78rem;
+        line-height: 1.5;
+    }
+    .workspace-badge {
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: rgba(var(--primary-rgb), .12);
+        color: var(--primary);
+        font-size: .72rem;
+        font-weight: 750;
+        white-space: nowrap;
+    }
+
+    /* Form Fields Grid */
+    .import-form-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    .import-form-grid.with-course {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+    .form-group-field {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+    }
+    .form-group-field label {
+        font-size: .78rem;
+        font-weight: 700;
+        color: var(--text-main);
+    }
+    .form-group-field .form-control {
+        width: 100%;
+        min-height: 42px;
+        border: 1px solid var(--input-border);
+        border-radius: var(--radius-sm);
+        background: var(--input-bg);
+        color: var(--text-main);
+        padding: 9px 13px;
+        font-size: .8rem;
+    }
+
+    /* Modern Dropzone File Picker */
+    .modern-dropzone {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 24px 20px;
+        border: 2px dashed var(--input-border);
+        border-radius: var(--radius-md);
+        background: var(--surface);
+        cursor: pointer;
+        transition: all .2s ease;
+        min-height: 140px;
+    }
+    .modern-dropzone:hover, .modern-dropzone.has-file {
+        border-color: var(--primary);
+        background: rgba(var(--primary-rgb), .035);
+    }
+    .modern-dropzone input[type="file"] {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+    .modern-dropzone-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: rgba(var(--primary-rgb), .1);
+        color: var(--primary);
+        display: grid;
+        place-items: center;
+        font-size: 1.25rem;
+        margin-bottom: 10px;
+    }
+    .modern-dropzone strong {
+        display: block;
+        font-size: .82rem;
+        color: var(--text-main);
+        margin-bottom: 3px;
+    }
+    .modern-dropzone span.file-name-text {
+        font-size: .74rem;
+        color: var(--text-muted);
+        max-width: 90%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Form Actions */
+    .import-form-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border-subtle);
+        margin-top: 4px;
+    }
+    .import-form-footer .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        min-height: 40px;
+        padding: 0 18px;
+        font-weight: 650;
+        font-size: .8rem;
+    }
+
+    /* Right Reference Aside */
+    .import-side-reference {
+        padding: 24px;
+        background: var(--surface-hover);
+        border-left: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+    .import-side-reference h3 {
+        margin: 0 0 5px;
+        font-size: .9rem;
+        color: var(--text-main);
+    }
+    .import-side-reference p {
+        margin: 0;
+        font-size: .75rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+    .ref-box {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .ref-label {
+        font-size: .68rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: var(--text-muted);
+    }
+    .ref-code-block {
+        display: block;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--card-bg);
+        color: var(--text-main);
+        font-size: .73rem;
+        font-family: monospace;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+    }
+    .ref-checklist {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+    }
+    .ref-checklist li {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        font-size: .74rem;
+        color: var(--text-muted);
+        line-height: 1.45;
+    }
+    .ref-checklist li i {
+        color: #10b981;
+        margin-top: 3px;
+        font-size: .72rem;
+        flex-shrink: 0;
+    }
+
+    /* Text Import Layout */
+    .text-split-workspace {
+        display: grid;
+        grid-template-columns: minmax(260px, .7fr) minmax(0, 1.3fr);
+    }
+    .text-left-config {
+        padding: 24px;
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    .text-left-config h3 {
+        margin: 0 0 4px;
+        font-size: .95rem;
+    }
+    .text-left-config p {
+        margin: 0 0 10px;
+        font-size: .76rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+    .text-right-editor {
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+    .text-editor-title h3 {
+        margin: 0 0 4px;
+        font-size: .95rem;
+    }
+    .text-editor-title p {
+        margin: 0;
+        font-size: .76rem;
+        color: var(--text-muted);
+    }
+    .csv-format-hint {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 10px 14px;
+        border-radius: var(--radius-sm);
+        background: rgba(var(--primary-rgb), .07);
+        border: 1px solid rgba(var(--primary-rgb), .2);
+        color: var(--text-muted);
+        font-size: .75rem;
+    }
+    .csv-format-hint i {
+        color: var(--primary);
+    }
+    .csv-format-hint code {
+        color: var(--text-main);
+        font-weight: 700;
+    }
+    .modern-csv-textarea {
+        min-height: 280px;
+        resize: vertical;
+        font-family: Consolas, "Liberation Mono", Menlo, monospace;
+        font-size: .8rem;
+        line-height: 1.55;
+        padding: 12px;
+        border: 1px solid var(--input-border);
+        border-radius: var(--radius-sm);
+        background: var(--input-bg);
+        color: var(--text-main);
+    }
+    .text-editor-footer {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    /* Responsiveness Breakpoints */
+    @media (max-width: 960px) {
+        .import-steps {
+            grid-template-columns: 1fr;
+        }
+        .import-workspace-split {
+            grid-template-columns: 1fr;
+        }
+        .import-side-reference {
+            border-left: 0;
+            border-top: 1px solid var(--border);
+        }
+        .text-split-workspace {
+            grid-template-columns: 1fr;
+        }
+        .text-left-config {
+            border-right: 0;
+            border-bottom: 1px solid var(--border);
+        }
+    }
+
+    @media (max-width: 680px) {
+        .import-header {
+            flex-direction: column;
+        }
+        .type-selector-grid {
+            grid-template-columns: 1fr;
+        }
+        .import-form-grid.with-course {
+            grid-template-columns: 1fr;
+        }
+        .import-nav-tabs {
+            width: 100%;
+        }
+        .import-nav-btn {
+            flex: 1;
+            justify-content: center;
+        }
+        .import-form-footer {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .import-form-footer .btn {
+            width: 100%;
+            justify-content: center;
+        }
+        .text-editor-footer .btn {
+            width: 100%;
+            justify-content: center;
+        }
+        .import-main-form, .import-side-reference, .text-left-config, .text-right-editor {
+            padding: 18px 16px;
+        }
+    }
+</style>
+
+<div class="import-page">
+    <header class="import-header">
+        <div>
+            <p class="import-eyebrow">Integrasi Kurikulum & OBE</p>
+            <h1 class="import-title">Import Data Master</h1>
+            <p class="import-subtitle">Tambahkan data CPL, CPMK, dan Sub-CPMK secara massal melalui berkas CSV atau tempel teks data CSV secara langsung.</p>
+        </div>
+    </header>
+
+    <?php if (isset($_GET['success'])): ?>
+        <div class="import-alert import-alert-success" role="status">
+            <i class="fa-solid fa-circle-check"></i>
+            <div>
+                <strong><?= htmlspecialchars($_GET['count'] ?? '0') ?> baris berhasil diproses.</strong>
+                <?php if ((int)($_GET['errors'] ?? 0) > 0): ?>
+                    <br><?= htmlspecialchars($_GET['errors']) ?> baris dilewati karena format tidak sesuai, referensi tidak ditemukan, atau data duplikat.
+                <?php endif; ?>
             </div>
         </div>
+    <?php endif; ?>
 
-        <!-- CPMK -->
-        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; display: flex; flex-direction: column;">
-            <div style="padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.1);">
-                <h4 style="margin: 0; color: var(--success);">Import CPMK</h4>
-                <a href="<?= $baseUrl ?>/import/template?type=cpmk" class="btn btn-sm btn-secondary" title="Download Template CSV">
-                    <i class="fa-solid fa-download"></i> Template
-                </a>
-            </div>
-            <div style="padding: 20px; display: flex; flex-direction: column; flex: 1;">
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0 0 15px 0;">Upload file CSV yang berisi CPMK untuk suatu Mata Kuliah.</p>
-                <form action="<?= $baseUrl ?>/import/upload" method="POST" enctype="multipart/form-data" style="margin-top: auto;">
-                    <input type="hidden" name="type" value="cpmk">
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; margin-bottom: 5px; font-weight: 500;">Mata Kuliah</label>
-                        <select name="mk_id" required style="width: 100%;">
-                            <option value="">-- Pilih Mata Kuliah --</option>
-                            <?php foreach ($mataKuliah as $mk): ?>
-                                <option value="<?= $mk['id'] ?>"><?= htmlspecialchars($mk['kode'] . ' - ' . $mk['nama']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; margin-bottom: 5px; font-weight: 500;">File CSV</label>
-                        <input type="file" name="csv_file" accept=".csv" required style="width: 100%; box-sizing: border-box;">
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="background: var(--success); border-color: var(--success); width: 100%; justify-content: center;"><i class="fa-solid fa-upload" style="margin-right: 5px;"></i> Upload & Proses</button>
-                </form>
+    <?php if (isset($_GET['error'])): ?>
+        <div class="import-alert import-alert-danger" role="alert">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <div>
+                <strong>Import tidak dapat diproses:</strong><br>
+                <?= htmlspecialchars($_GET['error']) ?>
             </div>
         </div>
+    <?php endif; ?>
 
-        <!-- Sub-CPMK -->
-        <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; display: flex; flex-direction: column;">
-            <div style="padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.1);">
-                <h4 style="margin: 0; color: var(--info);">Import Sub-CPMK</h4>
-                <a href="<?= $baseUrl ?>/import/template?type=sub_cpmk" class="btn btn-sm btn-secondary" title="Download Template CSV">
-                    <i class="fa-solid fa-download"></i> Template
-                </a>
-            </div>
-            <div style="padding: 20px; display: flex; flex-direction: column; flex: 1;">
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0 0 15px 0;">Upload file CSV yang berisi Sub-CPMK untuk suatu Mata Kuliah.</p>
-                <form action="<?= $baseUrl ?>/import/upload" method="POST" enctype="multipart/form-data" style="margin-top: auto;">
-                    <input type="hidden" name="type" value="sub_cpmk">
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; margin-bottom: 5px; font-weight: 500;">Mata Kuliah</label>
-                        <select name="mk_id" required style="width: 100%;">
-                            <option value="">-- Pilih Mata Kuliah --</option>
-                            <?php foreach ($mataKuliah as $mk): ?>
-                                <option value="<?= $mk['id'] ?>"><?= htmlspecialchars($mk['kode'] . ' - ' . $mk['nama']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; margin-bottom: 5px; font-weight: 500;">File CSV</label>
-                        <input type="file" name="csv_file" accept=".csv" required style="width: 100%; box-sizing: border-box;">
-                    </div>
-                    <button type="submit" class="btn btn-primary" style="background: var(--info); border-color: var(--info); width: 100%; justify-content: center;"><i class="fa-solid fa-upload" style="margin-right: 5px;"></i> Upload & Proses</button>
-                </form>
+    <section class="import-steps" aria-label="Langkah-langkah import">
+        <div class="import-step-card">
+            <div class="import-step-num">1</div>
+            <div class="import-step-body">
+                <strong>Pilih Jenis Data</strong>
+                <span>Pilih CPL, CPMK, atau Sub-CPMK sesuai hierarki kurikulum.</span>
             </div>
         </div>
+        <div class="import-step-card">
+            <div class="import-step-num">2</div>
+            <div class="import-step-body">
+                <strong>Unduh Format Template</strong>
+                <span>Gunakan berkas template resmi agar urutan kolom sesuai standar sistem.</span>
+            </div>
+        </div>
+        <div class="import-step-card">
+            <div class="import-step-num">3</div>
+            <div class="import-step-body">
+                <strong>Unggah & Verifikasi</strong>
+                <span>Sistem memvalidasi relasi kode secara otomatis dan memperbarui data.</span>
+            </div>
+        </div>
+    </section>
+
+    <div class="import-nav-tabs" role="tablist" aria-label="Metode import">
+        <button type="button" class="import-nav-btn active" id="tab-file" role="tab" aria-selected="true" aria-controls="panel-file" data-tab="file">
+            <i class="fa-solid fa-file-arrow-up"></i> Unggah Berkas CSV
+        </button>
+        <button type="button" class="import-nav-btn" id="tab-text" role="tab" aria-selected="false" aria-controls="panel-text" data-tab="text">
+            <i class="fa-solid fa-paste"></i> Tempel Teks CSV
+        </button>
     </div>
-</div>
 
-<!-- ============ PANEL 2: TEXTAREA CSV ============ -->
-<div id="panel-text" style="display: none;">
-    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 24px; max-width: 800px;">
-        <form action="<?= $baseUrl ?>/import/upload-text" method="POST">
-            <div style="margin-bottom: 20px;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Jenis Data</label>
-                <select name="type" id="text-import-type" required style="width: 100%;" onchange="updatePlaceholder()">
-                    <option value="">-- Pilih Jenis Data --</option>
-                    <option value="cpl">CPL</option>
-                    <option value="cpmk">CPMK</option>
-                    <option value="sub_cpmk">Sub-CPMK</option>
-                </select>
-            </div>
-
-            <div id="text-mk-select" style="margin-bottom: 20px; display: none;">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Mata Kuliah</label>
-                <select name="mk_id" id="text-mk-id" style="width: 100%;">
-                    <option value="">-- Pilih Mata Kuliah --</option>
-                    <?php foreach ($mataKuliah as $mk): ?>
-                        <option value="<?= $mk['id'] ?>"><?= htmlspecialchars($mk['kode'] . ' - ' . $mk['nama']) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-
-            <div style="margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-                <label style="font-weight: 600;">Data CSV</label>
-                <small style="color: var(--text-muted);">Baris pertama = header, dipisah koma</small>
-            </div>
-
-            <!-- Hint box -->
-            <div id="csv-hint" style="background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.25); border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 12px; font-size: 0.85rem; color: var(--text-muted);">
-                <i class="fa-solid fa-circle-info" style="color: var(--primary); margin-right: 5px;"></i>
-                Pilih <strong>Jenis Data</strong> di atas untuk melihat contoh format CSV.
-            </div>
-
-            <textarea name="csv_text" id="csv-textarea" rows="12" required
-                style="width: 100%; font-family: 'Courier New', monospace; font-size: 0.9rem; resize: vertical; box-sizing: border-box;"
-                placeholder="kode,rumusan&#10;CPL01,Mampu menerapkan pengetahuan...&#10;CPL02,Mampu mengidentifikasi..."></textarea>
-
-            <div style="margin-top: 16px;">
-                <button type="submit" class="btn btn-primary" style="padding: 12px 28px;">
-                    <i class="fa-solid fa-paper-plane" style="margin-right: 5px;"></i> Proses Data
+    <!-- Panel 1: Unggah CSV -->
+    <section id="panel-file" role="tabpanel" aria-labelledby="tab-file">
+        <div class="type-selector-grid" role="radiogroup" aria-label="Pilih jenis data">
+            <?php foreach ($importTypes as $type => $item): ?>
+                <button type="button" class="type-card-btn <?= $type === 'cpl' ? 'active' : '' ?>" data-import-type="<?= htmlspecialchars($type) ?>" role="radio" aria-checked="<?= $type === 'cpl' ? 'true' : 'false' ?>">
+                    <div class="type-card-icon"><i class="fa-solid <?= $item['icon'] ?>"></i></div>
+                    <div class="type-card-info">
+                        <span class="type-card-title"><?= htmlspecialchars($item['title']) ?></span>
+                        <span class="type-card-sub"><?= htmlspecialchars($item['name']) ?></span>
+                    </div>
+                    <div class="type-card-check"><i class="fa-solid fa-check"></i></div>
                 </button>
+            <?php endforeach; ?>
+        </div>
+
+        <div class="import-workspace-card">
+            <div class="import-workspace-split">
+                <form class="import-main-form" action="<?= htmlspecialchars($baseUrl) ?>/import/upload" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="type" id="file-import-type" value="cpl">
+                    
+                    <header class="workspace-head">
+                        <div>
+                            <h2 id="upload-title">Import CPL</h2>
+                            <p id="upload-description"><?= htmlspecialchars($importTypes['cpl']['description']) ?></p>
+                        </div>
+                        <span class="workspace-badge" id="selected-type-badge">CPL</span>
+                    </header>
+
+                    <div class="import-form-grid" id="upload-fields">
+                        <div class="form-group-field" id="file-mk-field" hidden>
+                            <label for="file-mk-id">Mata Kuliah Tujuan <span style="color:#ef4444">*</span></label>
+                            <select class="form-control" name="mk_id" id="file-mk-id">
+                                <option value="">-- Pilih Mata Kuliah --</option>
+                                <?php foreach ($mataKuliah as $mk): ?>
+                                    <option value="<?= (int)$mk['id'] ?>"><?= htmlspecialchars($mk['kode'] . ' — ' . $mk['nama']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <div class="form-group-field" style="grid-column: 1/-1;">
+                            <label>Berkas CSV <span style="color:#ef4444">*</span></label>
+                            <label class="modern-dropzone" id="filePickerLabel">
+                                <input type="file" name="csv_file" accept=".csv,text/csv" required id="csvFileInput">
+                                <div class="modern-dropzone-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                                <strong>Pilih atau Seret Berkas CSV ke Sini</strong>
+                                <span class="file-name-text" id="fileNameDisplay">Format CSV dengan pemisah koma (,). Ukuran maks 5MB.</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="import-form-footer">
+                        <a class="btn btn-secondary" id="file-template-link" href="<?= htmlspecialchars($baseUrl) ?>/import/template?type=cpl">
+                            <i class="fa-solid fa-download"></i> Unduh Format Template
+                        </a>
+                        <button class="btn btn-primary" type="submit">
+                            <i class="fa-solid fa-arrow-up-from-bracket"></i> <span id="file-submit-label">Import CPL</span>
+                        </button>
+                    </div>
+                </form>
+
+                <aside class="import-side-reference">
+                    <div>
+                        <h3>Format Kolom & Panduan</h3>
+                        <p>Pastikan urutan baris pertama (header) sesuai spesifikasi di bawah ini:</p>
+                    </div>
+
+                    <div class="ref-box">
+                        <span class="ref-label">Header Kolom</span>
+                        <code class="ref-code-block" id="file-columns"><?= htmlspecialchars($importTypes['cpl']['columns']) ?></code>
+                    </div>
+
+                    <div class="ref-box">
+                        <span class="ref-label">Ketentuan Validasi</span>
+                        <ul class="ref-checklist">
+                            <li><i class="fa-solid fa-circle-check"></i><span>Gunakan tanda koma (<code>,</code>) sebagai pemisah nilai kolom.</span></li>
+                            <li><i class="fa-solid fa-circle-check"></i><span>Header baris pertama tidak boleh diubah atau diganti namanya.</span></li>
+                            <li><i class="fa-solid fa-circle-check"></i><span>Jika kode sudah ada di sistem, deskripsi/rumusan akan diperbarui otomatis.</span></li>
+                            <li><i class="fa-solid fa-circle-check"></i><span>Untuk CPMK/Sub-CPMK, pastikan kode CPL/CPMK induk sudah terdaftar di sistem.</span></li>
+                        </ul>
+                    </div>
+                </aside>
             </div>
-        </form>
-    </div>
+        </div>
+    </section>
+
+    <!-- Panel 2: Tempel Teks CSV -->
+    <section id="panel-text" role="tabpanel" aria-labelledby="tab-text" hidden>
+        <div class="import-workspace-card">
+            <form action="<?= htmlspecialchars($baseUrl) ?>/import/upload-text" method="post" class="text-split-workspace">
+                <div class="text-left-config">
+                    <div>
+                        <h3>Konfigurasi Data</h3>
+                        <p>Tentukan tipe data dan mata kuliah acuan sebelum memproses teks.</p>
+                    </div>
+
+                    <div class="form-group-field">
+                        <label for="text-import-type">Jenis Data <span style="color:#ef4444">*</span></label>
+                        <select class="form-control" name="type" id="text-import-type" required>
+                            <option value="">-- Pilih Jenis Data --</option>
+                            <option value="cpl">CPL (Capaian Pembelajaran Lulusan)</option>
+                            <option value="cpmk">CPMK (Capaian Pembelajaran Mata Kuliah)</option>
+                            <option value="sub_cpmk">Sub-CPMK (Kemampuan Akhir Tahapan)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group-field" id="text-mk-select" hidden>
+                        <label for="text-mk-id">Mata Kuliah Tujuan <span style="color:#ef4444">*</span></label>
+                        <select class="form-control" name="mk_id" id="text-mk-id">
+                            <option value="">-- Pilih Mata Kuliah --</option>
+                            <?php foreach ($mataKuliah as $mk): ?>
+                                <option value="<?= (int)$mk['id'] ?>"><?= htmlspecialchars($mk['kode'] . ' — ' . $mk['nama']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="text-right-editor">
+                    <div class="text-editor-title">
+                        <h3>Editor Teks CSV</h3>
+                        <p>Tempelkan data CSV lengkap dengan baris header.</p>
+                    </div>
+
+                    <div class="csv-format-hint" id="csv-hint">
+                        <i class="fa-solid fa-circle-info"></i>
+                        <span>Pilih jenis data pada menu sebelah kiri untuk melihat struktur kolom yang diperlukan.</span>
+                    </div>
+
+                    <textarea class="modern-csv-textarea" name="csv_text" id="csv-textarea" required spellcheck="false" placeholder="Pilih jenis data terlebih dahulu..."></textarea>
+
+                    <div class="text-editor-footer">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="fa-solid fa-gears"></i> Proses Data CSV
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </section>
 </div>
+
 
 <script>
-function switchTab(tab) {
-    document.getElementById('panel-file').style.display = tab === 'file' ? 'block' : 'none';
-    document.getElementById('panel-text').style.display = tab === 'text' ? 'block' : 'none';
+(function () {
+    const importTypes = <?= json_encode(array_map(static function ($item) {
+        return [
+            'title' => $item['title'],
+            'description' => $item['description'],
+            'columns' => $item['columns'],
+            'requiresCourse' => $item['requires_course'],
+        ];
+    }, $importTypes), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+    const tabs = document.querySelectorAll('[data-tab]');
+    tabs.forEach(tab => tab.addEventListener('click', function () {
+        tabs.forEach(item => { item.classList.toggle('active', item === this); item.setAttribute('aria-selected', item === this ? 'true' : 'false'); });
+        document.getElementById('panel-file').hidden = this.dataset.tab !== 'file';
+        document.getElementById('panel-text').hidden = this.dataset.tab !== 'text';
+    }));
 
-    const tabFile = document.getElementById('tab-file');
-    const tabText = document.getElementById('tab-text');
-
-    if (tab === 'file') {
-        tabFile.style.color = 'var(--text-main)';
-        tabFile.style.fontWeight = '600';
-        tabFile.style.borderBottomColor = 'var(--primary)';
-        tabText.style.color = 'var(--text-muted)';
-        tabText.style.fontWeight = '500';
-        tabText.style.borderBottomColor = 'transparent';
-    } else {
-        tabText.style.color = 'var(--text-main)';
-        tabText.style.fontWeight = '600';
-        tabText.style.borderBottomColor = 'var(--primary)';
-        tabFile.style.color = 'var(--text-muted)';
-        tabFile.style.fontWeight = '500';
-        tabFile.style.borderBottomColor = 'transparent';
+    const fileInput = document.getElementById('csvFileInput');
+    const dropzone = document.getElementById('filePickerLabel');
+    const fileName = document.getElementById('fileNameDisplay');
+    if (fileInput && dropzone && fileName) {
+        fileInput.addEventListener('change', function () {
+            const selected = this.files && this.files[0];
+            dropzone.classList.toggle('has-file', Boolean(selected));
+            if (selected) {
+                fileName.textContent = selected.name + ' (' + (selected.size / 1024).toFixed(1) + ' KB)';
+            } else {
+                fileName.textContent = 'Format CSV dengan pemisah koma (,). Ukuran maks 5MB.';
+            }
+        });
     }
-}
 
-function updatePlaceholder() {
-    const type = document.getElementById('text-import-type').value;
+    const fileType = document.getElementById('file-import-type');
+    const fileCourseField = document.getElementById('file-mk-field');
+    const fileCourse = document.getElementById('file-mk-id');
+    const uploadFields = document.getElementById('upload-fields');
+    document.querySelectorAll('[data-import-type]').forEach(option => option.addEventListener('click', function () {
+        const type = this.dataset.importType;
+        const config = importTypes[type];
+        document.querySelectorAll('[data-import-type]').forEach(item => {
+            const active = item === this;
+            item.classList.toggle('active', active);
+            item.setAttribute('aria-checked', active ? 'true' : 'false');
+        });
+        fileType.value = type;
+        fileCourseField.hidden = !config.requiresCourse;
+        fileCourse.required = config.requiresCourse;
+        uploadFields.classList.toggle('no-course', !config.requiresCourse);
+        document.getElementById('upload-title').textContent = 'Import ' + config.title;
+        document.getElementById('upload-description').textContent = config.description;
+        document.getElementById('selected-type-badge').textContent = config.title;
+        document.getElementById('file-columns').textContent = config.columns;
+        document.getElementById('file-template-link').href = <?= json_encode(rtrim($baseUrl, '/')) ?> + '/import/template?type=' + encodeURIComponent(type);
+        document.getElementById('file-submit-label').textContent = 'Import ' + config.title;
+    }));
+
+    const typeSelect = document.getElementById('text-import-type');
+    const courseField = document.getElementById('text-mk-select');
+    const courseSelect = document.getElementById('text-mk-id');
     const textarea = document.getElementById('csv-textarea');
-    const mkSelect = document.getElementById('text-mk-select');
-    const mkId = document.getElementById('text-mk-id');
     const hint = document.getElementById('csv-hint');
-
-    // Show/hide MK select
-    if (type === 'cpmk' || type === 'sub_cpmk') {
-        mkSelect.style.display = 'block';
-        mkId.required = true;
-    } else {
-        mkSelect.style.display = 'none';
-        mkId.required = false;
-    }
-
-    // Update placeholder and hint
-    if (type === 'cpl') {
-        textarea.placeholder = "kode,rumusan\nCPL01,Mampu menerapkan pengetahuan matematika dan sains\nCPL02,Mampu mengidentifikasi dan menganalisis permasalahan";
-        hint.innerHTML = '<i class="fa-solid fa-circle-info" style="color: var(--primary); margin-right: 5px;"></i> Format: <code style="background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:3px;">kode,rumusan</code>';
-    } else if (type === 'cpmk') {
-        textarea.placeholder = "kode_cpl,kode_cpmk,rumusan_cpmk\n\"CPL01, CPL02\",CPMK01,Mampu menjelaskan konsep dasar\nCPL03,CPMK02,Mampu membuat program sederhana";
-        hint.innerHTML = '<i class="fa-solid fa-circle-info" style="color: var(--primary); margin-right: 5px;"></i> Format: <code style="background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:3px;">kode_cpl,kode_cpmk,rumusan_cpmk</code> &mdash; Untuk multi-CPL gunakan tanda kutip: <code style="background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:3px;">"CPL01, CPL02"</code>';
-    } else if (type === 'sub_cpmk') {
-        textarea.placeholder = "kode_cpmk,kode_sub_cpmk,rumusan_sub_cpmk\nCPMK01,Sub-CPMK01,Mampu mendefinisikan konsep dasar\nCPMK01,Sub-CPMK02,Mampu menjelaskan jenis-jenis SI";
-        hint.innerHTML = '<i class="fa-solid fa-circle-info" style="color: var(--primary); margin-right: 5px;"></i> Format: <code style="background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:3px;">kode_cpmk,kode_sub_cpmk,rumusan_sub_cpmk</code>';
-    } else {
-        textarea.placeholder = "";
-        hint.innerHTML = '<i class="fa-solid fa-circle-info" style="color: var(--primary); margin-right: 5px;"></i> Pilih <strong>Jenis Data</strong> di atas untuk melihat contoh format CSV.';
-    }
-}
+    const formats = {
+        cpl: { columns: 'kode,rumusan', example: 'kode,rumusan\nCPL01,Mampu menerapkan pengetahuan dan keterampilan\nCPL02,Mampu menganalisis permasalahan secara sistematis' },
+        cpmk: { columns: 'kode_cpl,kode_cpmk,rumusan_cpmk', example: 'kode_cpl,kode_cpmk,rumusan_cpmk\n"CPL01, CPL02",CPMK01,Mampu menjelaskan konsep dasar\nCPL03,CPMK02,Mampu menerapkan metode analisis' },
+        sub_cpmk: { columns: 'kode_cpmk,kode_sub_cpmk,rumusan_sub_cpmk', example: 'kode_cpmk,kode_sub_cpmk,rumusan_sub_cpmk\nCPMK01,Sub-CPMK01,Mampu mendefinisikan konsep dasar\nCPMK01,Sub-CPMK02,Mampu menjelaskan penerapannya' }
+    };
+    typeSelect.addEventListener('change', function () {
+        const needsCourse = this.value === 'cpmk' || this.value === 'sub_cpmk';
+        courseField.hidden = !needsCourse;
+        courseSelect.required = needsCourse;
+        const format = formats[this.value];
+        textarea.placeholder = format ? format.example : 'Pilih jenis data terlebih dahulu...';
+        hint.innerHTML = format ? '<i class="fa-solid fa-circle-info"></i><span>Struktur kolom: <code>' + format.columns + '</code></span>' : '<i class="fa-solid fa-circle-info"></i><span>Pilih jenis data untuk melihat struktur kolom yang diperlukan.</span>';
+    });
+})();
 </script>
-
 <?php
 $content = ob_get_clean();
 require __DIR__ . '/../layouts/main.php';
