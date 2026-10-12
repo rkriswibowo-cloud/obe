@@ -33,11 +33,14 @@ ob_start();
 <style>
     .import-page {
         width: 100%;
-        max-width: 1240px;
-        margin: 0 auto;
         display: flex;
         flex-direction: column;
         gap: 20px;
+    }
+    
+    /* Ensure [hidden] is never overridden by display flex/grid */
+    .import-page [hidden] {
+        display: none !important;
     }
     
     /* Header */
@@ -261,15 +264,15 @@ ob_start();
     }
     .import-workspace-split {
         display: grid;
-        grid-template-columns: minmax(0, 1.45fr) minmax(280px, .85fr);
+        grid-template-columns: minmax(0, 1.7fr) minmax(320px, 1fr);
     }
 
     /* Left Form Area */
     .import-main-form {
-        padding: 24px 26px;
+        padding: 26px 30px;
         display: flex;
         flex-direction: column;
-        gap: 18px;
+        gap: 20px;
     }
     .workspace-head {
         display: flex;
