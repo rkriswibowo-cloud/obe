@@ -39,11 +39,17 @@ Aplikasi ini dibangun dengan prinsip:
    - Perhitungan capaian CPL individual mahasiswa, angkatan, dan program studi.
    - Kartu Hasil Studi (KHS) & Transkrip CPL Mahasiswa.
 
-5. **Laporan & Continuous Quality Improvement (CQI)**
+5. **Rekognisi Pembelajaran Lampau (RPL)**
+   - Penetapan mahasiswa jalur RPL, kurikulum tujuan, dan pengajuan konversi MK asal.
+   - Penilaian & persetujuan Kaprodi/Admin berbasis bobot mutu & persentase ekuivalensi.
+   - Fleksibilitas skema masa studi (3 atau 4 Semester) serta pengalihan/pemindahan mata kuliah antar-semester RPL.
+   - Generator & Cetak Kartu Rencana Studi (KRS) RPL per semester dengan kop surat universitas.
+
+6. **Laporan, Continuous Quality Improvement (CQI) & Audit**
    - Dashboard analitik pemenuhan CPL (visualisasi radar chart dan bar chart).
    - Traceability audit nilai dan bukti asesmen.
    - Rekomendasi perbaikan berkelanjutan (CQI) berdasarkan evaluasi ketercapaian CPL.
-   - Rekognisi Pembelajaran Lampau (RPL) & log aktivitas sistem (Audit Log).
+   - Log aktivitas sistem menyeluruh (Audit Log).
 
 ---
 
@@ -122,4 +128,4 @@ obe/
 
 ## 🔒 Lisensi & Hak Cipta
 
-Dikembangkan untuk pengelolaan penjaminan mutu kurikulum dan evaluasi CPL Program Studi Sistem Informasi berbasis OBE.
+Dikembangkan oleh Rony Kriswibowo untuk pengelolaan penjaminan mutu kurikulum dan evaluasi CPL Program Studi Sistem Informasi berbasis OBE.
