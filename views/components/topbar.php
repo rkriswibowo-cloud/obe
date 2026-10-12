@@ -12,6 +12,7 @@ $topbarAccess = new AccessContext();
 $topbarRoleLabel = $topbarAccess->isKaprodi() && !$topbarAccess->isSuperAdmin()
     ? 'Dosen / Kaprodi'
     : ($_SESSION['role'] ?? 'Admin');
+$topbarUserEmail = $_SESSION['email'] ?? 'admin@obe.ac.id';
 ?>
 <div class="topbar">
     <div class="topbar-left">
@@ -60,6 +61,9 @@ $topbarRoleLabel = $topbarAccess->isKaprodi() && !$topbarAccess->isSuperAdmin()
                     </div>
                 </div>
                 <div class="user-pill-menu-divider"></div>
+                <a href="mailto:<?= htmlspecialchars($topbarUserEmail) ?>" class="user-pill-menu-item" title="Kirim email ke <?= htmlspecialchars($topbarUserEmail) ?>">
+                    <i class="fa-regular fa-envelope"></i> <?= htmlspecialchars($topbarUserEmail) ?>
+                </a>
                 <a href="<?= $config['base_url'] ?? '/obe/public' ?>/dashboard" class="user-pill-menu-item">
                     <i class="fa-solid fa-chart-line"></i> Dashboard
                 </a>
