@@ -140,6 +140,12 @@ $topbarUserEmail = $_SESSION['email'] ?? 'admin@obe.ac.id';
                 </div>
             </div>
         </div>
+
+        <div class="obe-topbar-clock" id="obeTopbarClock" aria-label="Tanggal dan waktu saat ini">
+            <i class="fa-regular fa-clock" aria-hidden="true"></i>
+            <span class="obe-topbar-clock-date" id="obeTopbarClockDate"></span>
+            <strong class="obe-topbar-clock-time" id="obeTopbarClockTime"></strong>
+        </div>
     </div>
 
     <div class="topbar-right" style="display: flex; align-items: center; gap: 12px;">
@@ -202,3 +208,32 @@ $topbarUserEmail = $_SESSION['email'] ?? 'admin@obe.ac.id';
         </button>
     </div>
 </div>
+<script>
+(function () {
+    const dateNode = document.getElementById('obeTopbarClockDate');
+    const timeNode = document.getElementById('obeTopbarClockTime');
+    if (!dateNode || !timeNode) return;
+
+    function updateObeTopbarClock() {
+        const now = new Date();
+        dateNode.textContent = new Intl.DateTimeFormat('id-ID', {
+            timeZone: 'Asia/Jakarta',
+            weekday: 'long',
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric'
+        }).format(now);
+        timeNode.textContent = new Intl.DateTimeFormat('id-ID', {
+            timeZone: 'Asia/Jakarta',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        }).format(now).replace(/\./g, ':');
+    }
+
+    updateObeTopbarClock();
+    if (window.obeTopbarClockTimer) clearInterval(window.obeTopbarClockTimer);
+    window.obeTopbarClockTimer = setInterval(updateObeTopbarClock, 1000);
+})();
+</script>

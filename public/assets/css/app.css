@@ -315,6 +315,43 @@ a:hover {
     min-width: 0;
 }
 
+.obe-topbar-clock {
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 11px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.obe-topbar-clock > i {
+    color: var(--primary);
+    font-size: 0.76rem;
+}
+
+.obe-topbar-clock-time {
+    color: var(--text-main);
+    font-size: 0.72rem;
+    font-weight: 750;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+}
+
+@media (max-width: 1180px) {
+    .obe-topbar-clock-date { display: none; }
+    .obe-topbar-clock { padding-inline: 9px; }
+}
+
+@media (max-width: 720px) {
+    .obe-topbar-clock { display: none; }
+}
+
 /* Sidebar Toggle Button in Topbar */
 .topbar-sidebar-toggle-btn {
     width: 34px;
