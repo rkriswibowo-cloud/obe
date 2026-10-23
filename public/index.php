@@ -101,12 +101,12 @@ $access = new AccessContext();
 $isKaprodi = $access->isKaprodi();
 $rolePrefixes = [
     'Super Admin' => ['/'],
-    'Admin Prodi' => ['/dashboard', '/prodi', '/kurikulum', '/aturan-kurikulum', '/profil-lulusan', '/cpl', '/mata-kuliah', '/pemetaan-mk-cpl', '/import', '/rps', '/rubrik', '/kelas', '/asesmen', '/laporan', '/laporan-semester', '/khs', '/transkrip', '/cqi', '/tahun-akademik', '/dosen', '/mahasiswa', '/rpl', '/rpl-setting'],
-    'Dosen' => ['/dashboard', '/rps', '/rubrik', '/kelas', '/asesmen', '/laporan', '/laporan-semester', '/khs', '/transkrip'],
-    'Kaprodi' => ['/dashboard', '/rps', '/rubrik', '/laporan', '/laporan-semester', '/khs', '/transkrip', '/cqi', '/rpl'],
+    'Admin Prodi' => ['/dashboard', '/prodi', '/kurikulum', '/aturan-kurikulum', '/profil-lulusan', '/cpl', '/mata-kuliah', '/pemetaan-mk-cpl', '/import', '/rps', '/rubrik', '/kelas', '/asesmen', '/laporan', '/laporan-semester', '/monitoring-cpl-mk', '/khs', '/transkrip', '/cqi', '/tahun-akademik', '/dosen', '/mahasiswa', '/rpl', '/rpl-setting'],
+    'Dosen' => ['/dashboard', '/rps', '/rubrik', '/kelas', '/asesmen', '/laporan', '/laporan-semester', '/monitoring-cpl-mk', '/khs', '/transkrip'],
+    'Kaprodi' => ['/dashboard', '/rps', '/rubrik', '/laporan', '/laporan-semester', '/monitoring-cpl-mk', '/khs', '/transkrip', '/cqi', '/rpl'],
     'Mahasiswa' => ['/dashboard', '/laporan', '/khs', '/transkrip', '/rpl'],
 ];
-$kaprodiPrefixes = ['/dashboard', '/tahun-akademik', '/dosen', '/mahasiswa', '/prodi', '/kurikulum', '/aturan-kurikulum', '/profil-lulusan', '/cpl', '/mata-kuliah', '/pemetaan-mk-cpl', '/pengampu-mk', '/rps', '/rubrik', '/kelas', '/asesmen', '/laporan', '/laporan-semester', '/khs', '/transkrip', '/cqi', '/rpl'];
+$kaprodiPrefixes = ['/dashboard', '/tahun-akademik', '/dosen', '/mahasiswa', '/prodi', '/kurikulum', '/aturan-kurikulum', '/profil-lulusan', '/cpl', '/mata-kuliah', '/pemetaan-mk-cpl', '/pengampu-mk', '/rps', '/rubrik', '/kelas', '/asesmen', '/laporan', '/laporan-semester', '/monitoring-cpl-mk', '/khs', '/transkrip', '/cqi', '/rpl'];
 $allowedPrefixes = $rolePrefixes[$role] ?? [];
 if ($isKaprodi) {
     $allowedPrefixes = array_values(array_unique(array_merge($allowedPrefixes, $kaprodiPrefixes)));
@@ -549,6 +549,21 @@ switch ($path) {
         require_once __DIR__ . '/../app/Controllers/LaporanSemesterController.php';
         $laporanSemester = new LaporanSemesterController();
         $laporanSemester->index();
+        break;
+    case '/monitoring-cpl-mk':
+        require_once __DIR__ . '/../app/Controllers/MonitoringCplMkController.php';
+        $mcpl = new MonitoringCplMkController();
+        $mcpl->index();
+        break;
+    case '/monitoring-cpl-mk/detail':
+        require_once __DIR__ . '/../app/Controllers/MonitoringCplMkController.php';
+        $mcpl = new MonitoringCplMkController();
+        $mcpl->detail();
+        break;
+    case '/monitoring-cpl-mk/export':
+        require_once __DIR__ . '/../app/Controllers/MonitoringCplMkController.php';
+        $mcpl = new MonitoringCplMkController();
+        $mcpl->export();
         break;
     case '/kelas':
         require_once __DIR__ . '/../app/Controllers/KelasController.php';

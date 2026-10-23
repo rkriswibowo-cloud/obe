@@ -7,11 +7,11 @@ $sidebarIsKaprodi = $sidebarAccess->isKaprodi();
 $sidebarAllowed = $sidebarAccess->isSuperAdmin()
     ? ['*']
     : ($sidebarIsKaprodi
-        ? ['dashboard','tahun-akademik','dosen','mahasiswa','prodi','kurikulum','aturan-kurikulum','profil-lulusan','cpl','mata-kuliah','rubrik','pemetaan-mk-cpl','pengampu-mk','rps','kelas','asesmen','laporan','laporan-semester','khs','transkrip','rpl','cqi']
+        ? ['dashboard','tahun-akademik','dosen','mahasiswa','prodi','kurikulum','aturan-kurikulum','profil-lulusan','cpl','mata-kuliah','rubrik','pemetaan-mk-cpl','pengampu-mk','rps','kelas','asesmen','laporan','laporan-semester','monitoring-cpl-mk','khs','transkrip','rpl','cqi']
         : ($sidebarRole === 'Admin Prodi'
-            ? ['dashboard','tahun-akademik','dosen','mahasiswa','prodi','kurikulum','aturan-kurikulum','profil-lulusan','cpl','mata-kuliah','rubrik','import','pemetaan-mk-cpl','rps','kelas','asesmen','laporan','laporan-semester','khs','transkrip','rpl','cqi']
+            ? ['dashboard','tahun-akademik','dosen','mahasiswa','prodi','kurikulum','aturan-kurikulum','profil-lulusan','cpl','mata-kuliah','rubrik','import','pemetaan-mk-cpl','rps','kelas','asesmen','laporan','laporan-semester','monitoring-cpl-mk','khs','transkrip','rpl','cqi']
             : ($sidebarRole === 'Dosen'
-            ? ['dashboard','rps','rubrik','kelas','asesmen','laporan','laporan-semester','khs','transkrip']
+            ? ['dashboard','rps','rubrik','kelas','asesmen','laporan','laporan-semester','monitoring-cpl-mk','khs','transkrip']
             : ($sidebarRole === 'Mahasiswa' ? ['dashboard','laporan','khs','transkrip','rpl'] : []))));
 $sidebarMenuAllowed = static function (string $path) use ($sidebarAllowed): bool {
     return in_array('*', $sidebarAllowed, true) || in_array($path, $sidebarAllowed, true);
@@ -47,8 +47,10 @@ $isPembelajaranActive = isNavActive($baseUrl . '/pemetaan-mk-cpl', $currentUri)
     || isNavActive($baseUrl . '/asesmen', $currentUri);
 
 $isLaporanSemesterActive = isNavActive($baseUrl . '/laporan-semester', $currentUri);
+$isMonitoringCplMkActive = isNavActive($baseUrl . '/monitoring-cpl-mk', $currentUri);
 $isEvaluasiActive = isNavActive($baseUrl . '/laporan', $currentUri)
     || $isLaporanSemesterActive
+    || $isMonitoringCplMkActive
     || isNavActive($baseUrl . '/khs', $currentUri)
     || isNavActive($baseUrl . '/transkrip', $currentUri)
     || isNavActive($baseUrl . '/cqi', $currentUri)
@@ -81,7 +83,7 @@ try {
 }
 ?>
 <?php
-$allSidebarPaths = ['tahun-akademik','dosen','mahasiswa','prodi','kurikulum','aturan-kurikulum','profil-lulusan','cpl','mata-kuliah','rubrik','import','pemetaan-mk-cpl','pengampu-mk','rps','kelas','asesmen','laporan','laporan-semester','khs','transkrip','rpl','cqi','audit-log','user-management','branding'];
+$allSidebarPaths = ['tahun-akademik','dosen','mahasiswa','prodi','kurikulum','aturan-kurikulum','profil-lulusan','cpl','mata-kuliah','rubrik','import','pemetaan-mk-cpl','pengampu-mk','rps','kelas','asesmen','laporan','laporan-semester','monitoring-cpl-mk','khs','transkrip','rpl','cqi','audit-log','user-management','branding'];
 $hiddenSidebarPaths = array_values(array_filter($allSidebarPaths, fn($item) => !$sidebarMenuAllowed($item)));
 ?>
 <?php if ($hiddenSidebarPaths): ?>
@@ -94,6 +96,22 @@ $hiddenSidebarPaths = array_values(array_filter($allSidebarPaths, fn($item) => !
 </style>
 <?php endif; ?>
 <aside class="sidebar" id="appSidebar">
+    <!-- Mobile Drawer Header (Only visible on mobile/tablet <= 900px) -->
+    <div class="sidebar-mobile-header">
+        <div class="sidebar-mobile-brand">
+            <div class="brand-squircle" style="width: 32px; height: 32px; font-size: 0.9rem;">
+                <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <div class="brand-text-wrapper">
+                <span class="brand-title" style="font-size: 0.95rem;">SIP-OKE</span>
+                <span class="brand-subtitle-line" style="font-size: 0.62rem;">Menu Navigasi</span>
+            </div>
+        </div>
+        <button type="button" class="sidebar-mobile-close-btn" id="sidebarMobileCloseBtn" onclick="window.closeMobileSidebar()" title="Tutup Menu (Esc)" aria-label="Tutup Menu">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+
     <!-- Search Bar with '/' Shortcut -->
     <div class="sidebar-search-box">
         <i class="fa-solid fa-magnifying-glass search-icon"></i>
@@ -313,13 +331,13 @@ $hiddenSidebarPaths = array_values(array_filter($allSidebarPaths, fn($item) => !
                     <span>CAPAIAN & EVALUASI</span>
                 </span>
                 <span class="sidebar-group-meta">
-                    <span class="sidebar-group-badge">4</span>
+                    <span class="sidebar-group-badge"><?= in_array($_SESSION['role'] ?? '', ['Super Admin', 'Admin Prodi', 'Dosen', 'Kaprodi'], true) ? '6' : '4' ?></span>
                     <i class="fa-solid fa-chevron-down group-chevron"></i>
                 </span>
             </button>
             <div class="sidebar-group-content">
                 <ul class="sidebar-nav">
-                    <li class="sidebar-nav-item <?= isNavActive($baseUrl . '/laporan', $currentUri) && !$isLaporanSemesterActive ? 'active' : '' ?>" data-label="laporan cpl spider chart radar ketercapaian rekap">
+                    <li class="sidebar-nav-item <?= isNavActive($baseUrl . '/laporan', $currentUri) && !$isLaporanSemesterActive && !$isMonitoringCplMkActive ? 'active' : '' ?>" data-label="laporan cpl spider chart radar ketercapaian rekap">
                         <a href="<?= $baseUrl ?>/laporan" class="sidebar-link" title="Laporan CPL">
                             <i class="fa-solid fa-chart-pie"></i>
                             <span>Laporan CPL</span>
@@ -330,6 +348,12 @@ $hiddenSidebarPaths = array_values(array_filter($allSidebarPaths, fn($item) => !
                         <a href="<?= $baseUrl ?>/laporan-semester" class="sidebar-link" title="Laporan Pengukuran Semester">
                             <i class="fa-solid fa-calendar-check"></i>
                             <span>Laporan Semester</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-nav-item <?= $isMonitoringCplMkActive ? 'active' : '' ?>" data-label="monitoring cpl mata kuliah mk ketercapaian capaian mahasiswa">
+                        <a href="<?= $baseUrl ?>/monitoring-cpl-mk" class="sidebar-link" title="Monitoring CPL per Mata Kuliah">
+                            <i class="fa-solid fa-list-check"></i>
+                            <span>Monitoring CPL MK</span>
                         </a>
                     </li>
                     <?php endif; ?>
@@ -530,8 +554,28 @@ $hiddenSidebarPaths = array_values(array_filter($allSidebarPaths, fn($item) => !
     restoreGroupStates();
     updateToggleAllLabel();
 
-    // 4. Global Sidebar Mini/Collapse Mode
+    // Mobile Drawer Open / Close Functions
+    window.openMobileSidebar = function() {
+        document.documentElement.classList.add('sidebar-mobile-open');
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.closeMobileSidebar = function() {
+        document.documentElement.classList.remove('sidebar-mobile-open');
+        document.body.style.overflow = '';
+    };
+
+    // 4. Global Sidebar Mini/Collapse Mode & Mobile Drawer
     window.toggleSidebarCollapse = function() {
+        if (window.innerWidth <= 900) {
+            if (document.documentElement.classList.contains('sidebar-mobile-open')) {
+                window.closeMobileSidebar();
+            } else {
+                window.openMobileSidebar();
+            }
+            return;
+        }
+
         const isCollapsed = document.documentElement.classList.contains('sidebar-collapsed');
         const newState = !isCollapsed;
 
@@ -670,6 +714,29 @@ $hiddenSidebarPaths = array_values(array_filter($allSidebarPaths, fn($item) => !
         const notifMenu = document.getElementById('notifDropdownMenu');
         if (notifWrapper && notifMenu && !notifWrapper.contains(e.target)) {
             notifMenu.style.display = 'none';
+        }
+    });
+
+    // Otomatis tutup sidebar mobile saat navigasi menu diklik
+    document.querySelectorAll('#appSidebar a').forEach(function(link) {
+        link.addEventListener('click', function() {
+            if (window.innerWidth <= 900) {
+                window.closeMobileSidebar();
+            }
+        });
+    });
+
+    // Tutup mobile drawer dengan tombol Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && document.documentElement.classList.contains('sidebar-mobile-open')) {
+            window.closeMobileSidebar();
+        }
+    });
+
+    // Reset overflow saat resize ke layar desktop
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 900 && document.documentElement.classList.contains('sidebar-mobile-open')) {
+            window.closeMobileSidebar();
         }
     });
 

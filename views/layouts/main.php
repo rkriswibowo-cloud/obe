@@ -46,6 +46,9 @@ $layoutFaviconUrl = Branding::assetUrl($layoutBranding['favicon'] ?? null, $layo
             <!-- Floating Sidebar Island Card -->
             <?php require __DIR__ . '/../components/sidebar.php'; ?>
 
+            <!-- Mobile Sidebar Backdrop Overlay -->
+            <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="window.closeMobileSidebar()" aria-hidden="true"></div>
+
             <!-- Main Content Area -->
             <div class="main-content">
                 <div class="content-area">

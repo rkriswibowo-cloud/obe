@@ -148,7 +148,7 @@ $topbarUserEmail = $_SESSION['email'] ?? 'admin@obe.ac.id';
         </div>
     </div>
 
-    <div class="topbar-right" style="display: flex; align-items: center; gap: 12px;">
+    <div class="topbar-right">
         <!-- Accent Palette Switcher Dropdown (Gradient / Palet) -->
         <div class="palette-dropdown-wrapper" id="paletteDropdownWrapper">
             <button type="button" id="paletteToggleBtn" class="palette-toggle-btn" onclick="window.togglePaletteDropdown(event)" title="Pilih Tema Palet Warna" aria-label="Palette Selector">
