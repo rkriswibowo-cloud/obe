@@ -132,12 +132,14 @@ $topbarUserEmail = $_SESSION['email'] ?? 'admin@obe.ac.id';
                     <?php endif; ?>
                 </div>
 
+                <?php if (($_SESSION['username'] ?? '') !== 'demo' && empty($_SESSION['hide_sistem_audit'])): ?>
                 <div class="notif-footer">
                     <a href="<?= $config['base_url'] ?? '/obe/public' ?>/audit-log" class="notif-footer-link">
                         <span>Lihat Riwayat Log & Aktivitas</span>
                         <i class="fa-solid fa-arrow-right" style="font-size: 0.72rem; margin-left: 4px;"></i>
                     </a>
                 </div>
+                <?php endif; ?>
             </div>
         </div>
 
