@@ -89,6 +89,15 @@ if ($path === '/logout') {
     exit;
 }
 
+// Read-only RPS preview shared by DEIS. This route deliberately sits before
+// the authentication middleware and only renders the document view.
+if ($requestMethod === 'GET' && preg_match('#^/rps/preview/(\d+)$#', $path, $matches)) {
+    require_once __DIR__ . '/../app/Controllers/RpsController.php';
+    $r = new RpsController();
+    $r->document((int)$matches[1], true);
+    exit;
+}
+
 // Protected routes middleware
 if (!isset($_SESSION['user_id'])) {
     header("Location: $base_path/login");

@@ -494,9 +494,11 @@ $headerProdiList = $headerProdiList ?: [$headerProdiRaw];
             <button type="button" onclick="toggleDocTheme()" class="btn-tb btn-tb-mode" id="btnDocTheme" title="Ganti Mode Latar (Dark / Light)">
                 <i class="fa-solid fa-moon" id="docThemeIcon"></i> <span id="docThemeText">Dark</span>
             </button>
+            <?php if (empty($isPublicPreview)): ?>
             <a href="<?= $baseUrl ?>/rps?mk_id=<?= $mk['id'] ?>" class="btn-tb btn-tb-back">
                 <i class="fa-solid fa-arrow-left"></i> Kembali ke Builder
             </a>
+            <?php endif; ?>
             <button onclick="window.print()" class="btn-tb btn-tb-print">
                 <i class="fa-solid fa-print"></i> Cetak / Simpan PDF
             </button>

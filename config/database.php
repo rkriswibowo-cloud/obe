@@ -6,7 +6,7 @@ class Database {
 
     private $host = 'localhost';
     private $user = 'root';
-    private $pass = 'rony123';
+    private $pass = '';
     private $name = 'obe_cpl';
 
     private function __construct() {

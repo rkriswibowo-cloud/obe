@@ -753,23 +753,31 @@ class RpsController {
     // ==========================================
     // Tampilan Dokumen RPS Resmi (PDF Layout)
     // ==========================================
-    public function document() {
-        $mkId = $_GET['mk_id'] ?? null;
+    public function document($requestedMkId = null, $isPublicPreview = false) {
+        $mkId = $requestedMkId ?? ($_GET['mk_id'] ?? null);
         if (!$mkId) {
+            if ($isPublicPreview) {
+                http_response_code(404);
+                exit('404 Not Found: Dokumen RPS tidak ditemukan.');
+            }
             header('Location: ' . ($GLOBALS['config']['base_url'] ?? '/obe/public') . '/mata-kuliah');
             exit;
         }
         $access = new AccessContext();
         $documentAssignment=null;
-        if($access->isDosen()){
+        if(!$isPublicPreview && $access->isDosen()){
             $taId=(int)($_GET['ta_id']??0);
             if(!$taId){$taId=(int)Database::getInstance()->query('SELECT id FROM tahun_akademik WHERE is_active=1 ORDER BY id DESC LIMIT 1')->fetchColumn();}
             $documentAssignment=$this->pengampuModel->findForLecturer((int)$mkId,$taId,$access->userId());
             if(!$documentAssignment){http_response_code(403);exit('403 Forbidden: Dokumen RPS ini bukan penugasan PJMK Anda.');}
-        }elseif (!$access->isSuperAdmin() && $access->isKaprodi()) $access->assertMataKuliah($mkId);
+        }elseif (!$isPublicPreview && !$access->isSuperAdmin() && $access->isKaprodi()) $access->assertMataKuliah($mkId);
 
         $fullData = $this->rpsModel->getFullRpsData($mkId);
         if (!$fullData || !$fullData['mk']) {
+            if ($isPublicPreview) {
+                http_response_code(404);
+                exit('404 Not Found: Dokumen RPS tidak ditemukan.');
+            }
             header('Location: ' . ($GLOBALS['config']['base_url'] ?? '/obe/public') . '/mata-kuliah');
             exit;
         }
