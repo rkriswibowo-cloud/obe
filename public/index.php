@@ -51,7 +51,13 @@ if ($path === '' || $path === '/') {
     $path = '/dashboard';
 }
 
-$base_path = '/obe/public';
+$base_path = '';
+$scriptName = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+if (strpos($scriptName, '/obe/public') !== false) {
+    $base_path = '/obe/public';
+} elseif (strpos($scriptName, '/obe') !== false) {
+    $base_path = '/obe';
+}
 
 // Semua mutasi wajib berasal dari form/tautan aplikasi yang sah.
 $getMutationPaths = [

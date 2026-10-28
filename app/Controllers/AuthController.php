@@ -2,9 +2,19 @@
 // app/Controllers/AuthController.php
 
 class AuthController {
+    private function getBasePrefix(): string {
+        $sn = str_replace('\\', '/', $_SERVER['SCRIPT_NAME'] ?? '');
+        if (strpos($sn, '/obe/public') !== false) {
+            return '/obe/public';
+        } elseif (strpos($sn, '/obe') !== false) {
+            return '/obe';
+        }
+        return '';
+    }
+
     public function loginView() {
         if (isset($_SESSION['user_id'])) {
-            header("Location: /obe/public/dashboard");
+            header("Location: " . $this->getBasePrefix() . "/dashboard");
             exit;
         }
         require_once __DIR__ . '/../../views/auth/login.php';
@@ -35,11 +45,11 @@ class AuthController {
             $_SESSION['kaprodi_prodi_ids'] = array_map('intval', $kaprodiStmt->fetchAll(PDO::FETCH_COLUMN));
             $_SESSION['just_logged_in'] = true;
             
-            header("Location: /obe/public/dashboard");
+            header("Location: " . $this->getBasePrefix() . "/dashboard");
             exit;
         } else {
             $_SESSION['error'] = "Username atau password salah.";
-            header("Location: /obe/public/login");
+            header("Location: " . $this->getBasePrefix() . "/login");
             exit;
         }
     }
@@ -51,7 +61,7 @@ class AuthController {
             setcookie(session_name(), '', time() - 42000, $params['path'], $params['domain'], $params['secure'], $params['httponly']);
         }
         session_destroy();
-        header("Location: /obe/public/login");
+        header("Location: " . $this->getBasePrefix() . "/login");
         exit;
     }
 }

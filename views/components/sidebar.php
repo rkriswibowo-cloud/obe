@@ -92,11 +92,7 @@ $hiddenSidebarPaths = array_values(array_filter($allSidebarPaths, fn($item) => !
 #appSidebar .sidebar-nav-item:has(>a[href$="/<?= $hiddenPath ?>"]),
 #appSidebar .sidebar-nav-item:has(>a[href*="/<?= $hiddenPath ?>?"]){display:none!important}
 <?php endforeach; ?>
-</style>
-<?php endif; ?>
-<?php if (!$sidebarAccess->isSuperAdmin() || ($_SESSION['username'] ?? '') === 'demo' || !empty($_SESSION['hide_sistem_audit'])): ?>
-<style>
-#appSidebar .sidebar-group[data-group="sistem"]{display:none!important}
+<?php if (!$sidebarAccess->isSuperAdmin()): ?>#appSidebar .sidebar-group[data-group="sistem"]{display:none!important}<?php endif; ?>
 </style>
 <?php endif; ?>
 <aside class="sidebar" id="appSidebar">
@@ -389,7 +385,7 @@ $hiddenSidebarPaths = array_values(array_filter($allSidebarPaths, fn($item) => !
             </div>
         </div>
 
-        <?php if (($_SESSION['username'] ?? '') !== 'demo' && empty($_SESSION['hide_sistem_audit'])): ?>
+        <?php if (($_SESSION['username'] ?? '') !== 'demo'): ?>
         <!-- Section: Sistem & Audit (Collapsible Dropdown) -->
         <div class="sidebar-group <?= $isSistemActive ? 'expanded' : '' ?>" data-group="sistem">
             <button type="button" class="sidebar-group-header" onclick="window.toggleSidebarGroup('sistem')" title="Klik untuk ciutkan/buka Sistem & Audit">

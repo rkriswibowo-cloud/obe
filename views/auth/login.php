@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../app/Support/Branding.php';
 $loginConfig = isset($config) && is_array($config) ? $config : require __DIR__ . '/../../config/app.php';
+$loginBaseUrl = $loginConfig['base_url'] ?? '';
 $loginBranding = Branding::all();
 $loginLogoUrl = Branding::assetUrl($loginBranding['logo'] ?? null, $loginConfig['base_url'] ?? '/obe/public');
 $loginFaviconUrl = Branding::assetUrl($loginBranding['favicon'] ?? null, $loginConfig['base_url'] ?? '/obe/public');
@@ -340,7 +341,7 @@ $loginFaviconUrl = Branding::assetUrl($loginBranding['favicon'] ?? null, $loginC
 <body>
     <main class="auth-shell">
         <section class="auth-panel" aria-labelledby="login-title">
-            <a class="brand" href="/obe/public/login" aria-label="SIP-OKE">
+            <a class="brand" href="<?= $loginBaseUrl ?>/login" aria-label="SIP-OKE">
                 <span class="brand-mark">
                     <?php if ($loginLogoUrl): ?>
                         <img src="<?= htmlspecialchars($loginLogoUrl) ?>" alt="" style="width:100%;height:100%;object-fit:contain;padding:5px;">
@@ -368,7 +369,7 @@ $loginFaviconUrl = Branding::assetUrl($loginBranding['favicon'] ?? null, $loginC
                     <?php unset($_SESSION['error']); ?>
                 <?php endif; ?>
 
-                <form action="/obe/public/login/submit" method="POST">
+                <form action="<?= $loginBaseUrl ?>/login/submit" method="POST">
                     <div class="field">
                         <div class="field-head">
                             <label for="username">Username atau NIDN</label>
