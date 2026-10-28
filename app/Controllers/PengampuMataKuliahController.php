@@ -27,7 +27,13 @@ class PengampuMataKuliahController
         $assignments = $this->model->getAll($prodiIds, $search, $perPage, $offset);
         $scopeSql=$prodiIds?' WHERE k.prodi_id IN ('.implode(',',array_fill(0,count($prodiIds),'?')).')':'';
         $stmt=$this->db->prepare("SELECT mk.id,mk.kode,mk.nama,k.nama kurikulum_nama,k.prodi_id,p.kode prodi_kode FROM mata_kuliah mk JOIN kurikulum k ON k.id=mk.kurikulum_id JOIN program_studi p ON p.id=k.prodi_id{$scopeSql} ORDER BY p.nama,k.tahun_mulai DESC,mk.kode");$stmt->execute($prodiIds);$courses=$stmt->fetchAll(PDO::FETCH_ASSOC);
-        $dosenSql="SELECT u.id,u.nama_lengkap,u.nidn,u.prodi_id,p.kode prodi_kode FROM users u JOIN roles r ON r.id=u.role_id LEFT JOIN program_studi p ON p.id=u.prodi_id WHERE r.name IN ('Dosen','Kaprodi')";$params=[];if($prodiIds){$dosenSql.=' AND u.prodi_id IN ('.implode(',',array_fill(0,count($prodiIds),'?')).')';$params=$prodiIds;}$dosenSql.=' ORDER BY p.nama,u.nama_lengkap';$stmt=$this->db->prepare($dosenSql);$stmt->execute($params);$lecturers=$stmt->fetchAll(PDO::FETCH_ASSOC);
+        $dosenSql = "SELECT u.id, u.nama_lengkap, u.nidn, u.prodi_id, p.kode AS prodi_kode, p.nama AS prodi_nama 
+                     FROM users u 
+                     JOIN roles r ON r.id = u.role_id 
+                     LEFT JOIN program_studi p ON p.id = u.prodi_id 
+                     WHERE r.name IN ('Dosen', 'Kaprodi') 
+                     ORDER BY p.nama ASC, u.nama_lengkap ASC";
+        $lecturers = $this->db->query($dosenSql)->fetchAll(PDO::FETCH_ASSOC);
         $academicYears=$this->db->query('SELECT id,nama,is_active FROM tahun_akademik ORDER BY is_active DESC,id DESC')->fetchAll(PDO::FETCH_ASSOC);
         require __DIR__.'/../../views/pengampu_mk/index.php';
     }
@@ -42,5 +48,9 @@ class PengampuMataKuliahController
         try{$id=(int)($_POST['id']??0);$assignment=$this->model->getById($id);if(!$assignment)throw new RuntimeException('Penugasan tidak ditemukan.');if(!$this->access->isSuperAdmin())$this->access->assertProdi($assignment['prodi_id']);$count=$this->model->syncClasses($id);$this->audit->log('PENGAMPU_MK','SYNC','Sinkronisasi penugasan #'.$id.' ke '.$count.' kelas');$_SESSION['success']='PJMK dan tim teaching berhasil disinkronkan ke '.$count.' kelas.';}catch(Throwable $e){$_SESSION['error']='Sinkronisasi gagal: '.$e->getMessage();}$this->redirect();
     }
 
-    private function redirect(): void {header('Location: '.($GLOBALS['config']['base_url']??'/obe/public').'/pengampu-mk');exit;}
+    private function redirect(): void {
+        $base = isset($GLOBALS['config']['base_url']) ? $GLOBALS['config']['base_url'] : '';
+        header('Location: ' . $base . '/pengampu-mk');
+        exit;
+    }
 }

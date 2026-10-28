@@ -570,8 +570,9 @@ foreach ($jenisPenilaian as $item) {
                                                 <select class="form-control select-dosen-row" onchange="onRowDosenSelectChange(this)" style="font-size: 0.85rem; padding: 6px 10px;" <?= !empty($officialAssignment) ? 'disabled' : '' ?>>
                                                     <option value="">-- Pilih Dosen --</option>
                                                     <?php foreach ($allDosen as $dsn): ?>
+                                                        <?php $pLabel = !empty($dsn['prodi_nama']) ? ' [' . $dsn['prodi_nama'] . ']' : ''; ?>
                                                         <option value="<?= htmlspecialchars($dsn['nama_lengkap']) ?>" <?= (trim($row['nama']) === trim($dsn['nama_lengkap'])) ? 'selected' : '' ?>>
-                                                            <?= htmlspecialchars($dsn['nama_lengkap']) ?>
+                                                            <?= htmlspecialchars($dsn['nama_lengkap'] . $pLabel) ?>
                                                         </option>
                                                     <?php endforeach; ?>
                                                     <option value="__manual__">+ Dosen Luar / Manual</option>
@@ -761,7 +762,8 @@ foreach ($jenisPenilaian as $item) {
         let selectOptions = `<option value="">-- Pilih Dosen --</option>`;
         availableDosenList.forEach(dsn => {
             const isSel = (nama && nama.trim() === dsn.nama_lengkap.trim()) ? 'selected' : '';
-            selectOptions += `<option value="${escapeHtml(dsn.nama_lengkap)}" ${isSel}>${escapeHtml(dsn.nama_lengkap)}</option>`;
+            const pLabel = dsn.prodi_nama ? ` [${dsn.prodi_nama}]` : '';
+            selectOptions += `<option value="${escapeHtml(dsn.nama_lengkap)}" ${isSel}>${escapeHtml(dsn.nama_lengkap + pLabel)}</option>`;
         });
         selectOptions += `<option value="__manual__">+ Dosen Luar / Manual</option>`;
 

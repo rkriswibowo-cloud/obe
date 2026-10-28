@@ -146,7 +146,7 @@ class PengampuMataKuliahModel
     {
         $mkId=(int)$data['mata_kuliah_id'];$taId=(int)$data['tahun_akademik_id'];$pjmk=(int)$data['pjmk_user_id'];
         $tim=array_values(array_unique(array_filter(array_map('intval',$data['tim_ids']??[]),fn($id)=>$id>0&&$id!==$pjmk)));
-        $this->validateSameProdi($mkId,array_merge([$pjmk],$tim));
+        $this->validateActiveLecturers($mkId,array_merge([$pjmk],$tim));
         $this->db->beginTransaction();
         try {
             $stmt=$this->db->prepare("INSERT INTO mata_kuliah_pengampu(mata_kuliah_id,tahun_akademik_id,pjmk_user_id,status) VALUES(?,?,?,?) ON DUPLICATE KEY UPDATE pjmk_user_id=VALUES(pjmk_user_id),status=VALUES(status),id=LAST_INSERT_ID(id)");
@@ -181,9 +181,21 @@ class PengampuMataKuliahModel
         $this->db->prepare('UPDATE rps SET dosen_pengampu=?,tim_teaching_json=? WHERE mata_kuliah_id=?')->execute([implode("\n",$lines),$tim?json_encode($tim,JSON_UNESCAPED_UNICODE):null,$assignment['mata_kuliah_id']]);
     }
 
-    private function validateSameProdi(int $mkId,array $dosenIds): void
+    private function validateActiveLecturers(int $mkId, array $dosenIds): void
     {
-        $stmt=$this->db->prepare('SELECT k.prodi_id FROM mata_kuliah mk JOIN kurikulum k ON k.id=mk.kurikulum_id WHERE mk.id=?');$stmt->execute([$mkId]);$prodi=(int)$stmt->fetchColumn();if(!$prodi)throw new InvalidArgumentException('Mata kuliah tidak ditemukan.');
-        $check=$this->db->prepare("SELECT COUNT(*) FROM users u JOIN roles r ON r.id=u.role_id WHERE u.id=? AND u.prodi_id=? AND r.name IN ('Dosen','Kaprodi')");foreach($dosenIds as $dosenId){$check->execute([$dosenId,$prodi]);if((int)$check->fetchColumn()!==1)throw new InvalidArgumentException('PJMK dan tim teaching harus berasal dari prodi mata kuliah.');}
+        $stmt=$this->db->prepare('SELECT k.prodi_id FROM mata_kuliah mk JOIN kurikulum k ON k.id=mk.kurikulum_id WHERE mk.id=?');
+        $stmt->execute([$mkId]);
+        $prodi=(int)$stmt->fetchColumn();
+        if(!$prodi) throw new InvalidArgumentException('Mata kuliah tidak ditemukan.');
+
+        $dosenIds = array_values(array_filter(array_map('intval', $dosenIds)));
+        if(empty($dosenIds)) return;
+
+        $in = implode(',', array_fill(0, count($dosenIds), '?'));
+        $check = $this->db->prepare("SELECT COUNT(*) FROM users u JOIN roles r ON r.id=u.role_id WHERE u.id IN ($in) AND r.name IN ('Dosen','Kaprodi')");
+        $check->execute($dosenIds);
+        if((int)$check->fetchColumn() !== count($dosenIds)) {
+            throw new InvalidArgumentException('PJMK atau anggota tim teaching harus berupa dosen aktif.');
+        }
     }
 }

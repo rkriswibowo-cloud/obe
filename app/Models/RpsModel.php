@@ -386,13 +386,14 @@ class RpsModel {
         $stmtKelasTT->execute([$mkId]);
         $detectedKelasTimTeaching = $stmtKelasTT->fetchAll(PDO::FETCH_ASSOC);
 
-        // 11. Seluruh Dosen untuk Dropdown Pilihan
+        // 11. Seluruh Dosen untuk Dropdown Pilihan (Mendukung Dosen & Kaprodi Lintas Prodi)
         $stmtDosen = $this->db->query("
-            SELECT u.id, u.nama_lengkap, u.username as nidn 
+            SELECT u.id, u.nama_lengkap, u.username as nidn, p.nama as prodi_nama, p.kode as prodi_kode
             FROM users u 
             JOIN roles r ON u.role_id = r.id 
-            WHERE r.name = 'Dosen'
-            ORDER BY u.nama_lengkap ASC
+            LEFT JOIN program_studi p ON p.id = u.prodi_id
+            WHERE r.name IN ('Dosen', 'Kaprodi')
+            ORDER BY p.nama ASC, u.nama_lengkap ASC
         ");
         $allDosen = $stmtDosen->fetchAll(PDO::FETCH_ASSOC);
 

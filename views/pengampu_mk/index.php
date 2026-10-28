@@ -614,19 +614,21 @@ $queryBase = $search !== '' ? '&search=' . rawurlencode($search) : '';
         <select class="form-control pm-lecturer" name="pjmk_user_id" id="pmPjmk" required>
           <option value="">Pilih PJMK...</option>
           <?php foreach($lecturers as $d): ?>
+            <?php $prodiLabel = !empty($d['prodi_nama']) ? ' [' . $d['prodi_nama'] . ']' : (!empty($d['prodi_kode']) ? ' [' . $d['prodi_kode'] . ']' : ''); ?>
             <option value="<?= (int)$d['id'] ?>" data-prodi="<?= (int)$d['prodi_id'] ?>">
-              <?= htmlspecialchars($d['nama_lengkap'] . ($d['nidn'] ? ' · ' . $d['nidn'] : '')) ?>
+              <?= htmlspecialchars($d['nama_lengkap'] . ($d['nidn'] ? ' · ' . $d['nidn'] : '') . $prodiLabel) ?>
             </option>
           <?php endforeach; ?>
         </select>
       </label>
 
       <label class="pm-field full">
-        Tim teaching <span class="pm-help">Gunakan Ctrl/Command untuk memilih lebih dari satu dosen.</span>
+        Tim teaching <span class="pm-help">Gunakan Ctrl/Command untuk memilih lebih dari satu dosen lintas prodi.</span>
         <select class="form-control pm-lecturer" name="tim_ids[]" id="pmTeam" multiple>
           <?php foreach($lecturers as $d): ?>
+            <?php $prodiLabel = !empty($d['prodi_nama']) ? ' [' . $d['prodi_nama'] . ']' : (!empty($d['prodi_kode']) ? ' [' . $d['prodi_kode'] . ']' : ''); ?>
             <option value="<?= (int)$d['id'] ?>" data-prodi="<?= (int)$d['prodi_id'] ?>">
-              <?= htmlspecialchars($d['nama_lengkap'] . ($d['nidn'] ? ' · ' . $d['nidn'] : '')) ?>
+              <?= htmlspecialchars($d['nama_lengkap'] . ($d['nidn'] ? ' · ' . $d['nidn'] : '') . $prodiLabel) ?>
             </option>
           <?php endforeach; ?>
         </select>
@@ -646,11 +648,7 @@ $queryBase = $search !== '' ? '&search=' . rawurlencode($search) : '';
 const assignmentDialog = document.getElementById('assignmentDialog');
 
 function filterLecturers() {
-    const prodi = document.querySelector('#pmCourse option:checked')?.dataset.prodi || '';
-    document.querySelectorAll('.pm-lecturer option[data-prodi]').forEach(o => {
-        o.hidden = !!prodi && o.dataset.prodi !== prodi;
-        if (o.hidden) o.selected = false;
-    });
+    // Seluruh dosen tetap dapat dipilih untuk mendukung penugasan tim teaching lintas prodi & MKDU.
 }
 
 function openAssignment(btn = null) {
