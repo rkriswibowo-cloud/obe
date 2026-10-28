@@ -176,10 +176,20 @@ class RpsController {
     }
 
     public function createCpmk() {
+        $access = new AccessContext();
+        if ($access->isDosen()) {
+            http_response_code(403);
+            echo '403 Forbidden: CPMK ditetapkan oleh Program Studi dan dikunci untuk peran Dosen.';
+            exit;
+        }
+
         $mkId = $_GET['mk_id'] ?? null;
         if (!$mkId) {
             header('Location: ' . ($GLOBALS['config']['base_url'] ?? '/obe/public') . '/mata-kuliah');
             exit;
+        }
+        if (!$access->isSuperAdmin() && $access->isKaprodi()) {
+            $access->assertMataKuliah($mkId);
         }
 
         $mk = $this->mkModel->getById($mkId);
@@ -197,7 +207,8 @@ class RpsController {
             $cplIds = $_POST['cpl_ids'] ?? [];
 
             if ($this->cpmkModel->create($data, $cplIds)) {
-                header('Location: ' . ($GLOBALS['config']['base_url'] ?? '/obe/public') . '/rps?mk_id=' . $mkId);
+                $_SESSION['success'] = "CPMK {$data['kode']} berhasil ditambahkan.";
+                header('Location: ' . ($GLOBALS['config']['base_url'] ?? '/obe/public') . '/rps?mk_id=' . $mkId . '&tab=cpmk');
                 exit;
             } else {
                 $error = "Gagal menambah CPMK.";
@@ -208,6 +219,13 @@ class RpsController {
     }
 
     public function editCpmk() {
+        $access = new AccessContext();
+        if ($access->isDosen()) {
+            http_response_code(403);
+            echo '403 Forbidden: CPMK ditetapkan oleh Program Studi dan dikunci untuk peran Dosen.';
+            exit;
+        }
+
         $id = $_GET['id'] ?? null;
         $cpmk = $this->cpmkModel->getById($id);
         if (!$cpmk) {
@@ -216,6 +234,10 @@ class RpsController {
         }
 
         $mkId = $cpmk['mk_id'];
+        if (!$access->isSuperAdmin() && $access->isKaprodi()) {
+            $access->assertMataKuliah($mkId);
+        }
+
         $mk = $this->mkModel->getById($mkId);
         $fullRps = $this->rpsModel->getFullRpsData($mkId);
         $mappedCpls = $fullRps['cpls'] ?? [];
@@ -230,7 +252,8 @@ class RpsController {
             $cplIds = $_POST['cpl_ids'] ?? [];
 
             if ($this->cpmkModel->update($id, $data, $cplIds)) {
-                header('Location: ' . ($GLOBALS['config']['base_url'] ?? '/obe/public') . '/rps?mk_id=' . $mkId);
+                $_SESSION['success'] = "CPMK {$data['kode']} berhasil diperbarui.";
+                header('Location: ' . ($GLOBALS['config']['base_url'] ?? '/obe/public') . '/rps?mk_id=' . $mkId . '&tab=cpmk');
                 exit;
             } else {
                 $error = "Gagal memperbarui CPMK.";
@@ -241,11 +264,23 @@ class RpsController {
     }
 
     public function deleteCpmk() {
+        $access = new AccessContext();
+        if ($access->isDosen()) {
+            http_response_code(403);
+            echo '403 Forbidden: CPMK ditetapkan oleh Program Studi dan dikunci untuk peran Dosen.';
+            exit;
+        }
+
         $id = $_GET['id'] ?? null;
         $cpmk = $this->cpmkModel->getById($id);
         if ($cpmk) {
+            $mkId = $cpmk['mk_id'];
+            if (!$access->isSuperAdmin() && $access->isKaprodi()) {
+                $access->assertMataKuliah($mkId);
+            }
             $this->cpmkModel->delete($id);
-            header('Location: ' . ($GLOBALS['config']['base_url'] ?? '/obe/public') . '/rps?mk_id=' . $cpmk['mk_id']);
+            $_SESSION['success'] = "CPMK {$cpmk['kode']} berhasil dihapus.";
+            header('Location: ' . ($GLOBALS['config']['base_url'] ?? '/obe/public') . '/rps?mk_id=' . $mkId . '&tab=cpmk');
         } else {
             header('Location: ' . ($GLOBALS['config']['base_url'] ?? '/obe/public') . '/mata-kuliah');
         }
@@ -267,6 +302,18 @@ class RpsController {
 
         $mkId = $cpmk['mk_id'];
         $mk = $this->mkModel->getById($mkId);
+        if (!$mk) {
+            header('Location: ' . ($GLOBALS['config']['base_url'] ?? '/obe/public') . '/mata-kuliah');
+            exit;
+        }
+
+        $access = new AccessContext();
+        if (!$access->isSuperAdmin() && $access->isKaprodi() && !$access->isDosen()) {
+            $access->assertMataKuliah($mkId);
+        }
+        $this->requireAssignedCourse($mkId);
+
+        $taParam = !empty($_GET['ta_id']) ? '&ta_id=' . (int)$_GET['ta_id'] : '';
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $data = [
@@ -282,7 +329,8 @@ class RpsController {
             $indikators = $_POST['indikators'] ?? [];
 
             if ($this->subCpmkModel->create($data, $indikators)) {
-                header('Location: ' . ($GLOBALS['config']['base_url'] ?? '/obe/public') . '/rps?mk_id=' . $mkId . '&tab=cpmk');
+                $_SESSION['success'] = "Sub-CPMK {$data['kode']} berhasil ditambahkan.";
+                header('Location: ' . ($GLOBALS['config']['base_url'] ?? '/obe/public') . '/rps?mk_id=' . $mkId . '&tab=cpmk' . $taParam);
                 exit;
             } else {
                 $error = "Gagal menambah Sub-CPMK.";
@@ -302,8 +350,25 @@ class RpsController {
 
         $cpmkId = $subCpmk['cpmk_id'];
         $cpmk = $this->cpmkModel->getById($cpmkId);
+        if (!$cpmk) {
+            header('Location: ' . ($GLOBALS['config']['base_url'] ?? '/obe/public') . '/mata-kuliah');
+            exit;
+        }
+
         $mkId = $cpmk['mk_id'];
         $mk = $this->mkModel->getById($mkId);
+        if (!$mk) {
+            header('Location: ' . ($GLOBALS['config']['base_url'] ?? '/obe/public') . '/mata-kuliah');
+            exit;
+        }
+
+        $access = new AccessContext();
+        if (!$access->isSuperAdmin() && $access->isKaprodi() && !$access->isDosen()) {
+            $access->assertMataKuliah($mkId);
+        }
+        $this->requireAssignedCourse($mkId);
+
+        $taParam = !empty($_GET['ta_id']) ? '&ta_id=' . (int)$_GET['ta_id'] : '';
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $data = [
@@ -318,7 +383,8 @@ class RpsController {
             $indikators = $_POST['indikators'] ?? [];
 
             if ($this->subCpmkModel->update($id, $data, $indikators)) {
-                header('Location: ' . ($GLOBALS['config']['base_url'] ?? '/obe/public') . '/rps?mk_id=' . $mkId . '&tab=cpmk');
+                $_SESSION['success'] = "Sub-CPMK {$data['kode']} berhasil diperbarui.";
+                header('Location: ' . ($GLOBALS['config']['base_url'] ?? '/obe/public') . '/rps?mk_id=' . $mkId . '&tab=cpmk' . $taParam);
                 exit;
             } else {
                 $error = "Gagal memperbarui Sub-CPMK.";
@@ -333,8 +399,21 @@ class RpsController {
         $subCpmk = $this->subCpmkModel->getById($id);
         if ($subCpmk) {
             $cpmk = $this->cpmkModel->getById($subCpmk['cpmk_id']);
+            if (!$cpmk) {
+                header('Location: ' . ($GLOBALS['config']['base_url'] ?? '/obe/public') . '/mata-kuliah');
+                exit;
+            }
+            $mkId = $cpmk['mk_id'];
+            $access = new AccessContext();
+            if (!$access->isSuperAdmin() && $access->isKaprodi() && !$access->isDosen()) {
+                $access->assertMataKuliah($mkId);
+            }
+            $this->requireAssignedCourse($mkId);
+
             $this->subCpmkModel->delete($id);
-            header('Location: ' . ($GLOBALS['config']['base_url'] ?? '/obe/public') . '/rps?mk_id=' . $cpmk['mk_id']);
+            $_SESSION['success'] = "Sub-CPMK {$subCpmk['kode']} berhasil dihapus.";
+            $taParam = !empty($_GET['ta_id']) ? '&ta_id=' . (int)$_GET['ta_id'] : '';
+            header('Location: ' . ($GLOBALS['config']['base_url'] ?? '/obe/public') . '/rps?mk_id=' . $mkId . '&tab=cpmk' . $taParam);
         } else {
             header('Location: ' . ($GLOBALS['config']['base_url'] ?? '/obe/public') . '/mata-kuliah');
         }

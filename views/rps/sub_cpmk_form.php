@@ -7,7 +7,7 @@ $baseUrl = $GLOBALS['config']['base_url'] ?? '/obe/public';
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
     <h4><?= $isEdit ? "Edit" : "Tambah" ?> Sub-CPMK</h4>
-    <a href="<?= $baseUrl ?>/rps?mk_id=<?= $mk['id'] ?>" class="btn btn-secondary">
+    <a href="<?= $baseUrl ?>/rps?mk_id=<?= $mk['id'] ?><?= !empty($_GET['ta_id']) ? '&ta_id=' . (int)$_GET['ta_id'] : '' ?>&tab=cpmk" class="btn btn-secondary">
         <i class="fa-solid fa-arrow-left"></i> Kembali ke RPS
     </a>
 </div>

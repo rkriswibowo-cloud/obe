@@ -944,6 +944,11 @@ foreach ($jenisPenilaian as $item) {
      TAB 2: CAPAIAN PEMBELAJARAN (CPMK & SUB-CPMK)
      ======================================================================== -->
 <?php if ($activeTab === 'cpmk'): ?>
+    <?php
+    $canManageCpmk = !$access->isDosen() && ($access->isSuperAdmin() || $access->isKaprodi());
+    $canManageSubCpmk = $rpsCanEdit && ($access->isSuperAdmin() || $access->isKaprodi() || !empty($rpsAssignment['is_active']));
+    $taParam = !empty($rpsAssignment['tahun_akademik_id']) ? '&ta_id=' . (int)$rpsAssignment['tahun_akademik_id'] : '';
+    ?>
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
         <div>
             <h3 style="margin: 0 0 4px 0; font-size: 1.2rem;">2a & 2c. CPMK, Sub-CPMK, dan Indikator Penilaian</h3>
@@ -951,19 +956,31 @@ foreach ($jenisPenilaian as $item) {
                 Petakan CPMK ke CPL, rumuskan Sub-CPMK bertaksonomi (C/A/P), indikator terukur, serta bobot persentase.
             </p>
         </div>
-        <a href="<?= $baseUrl ?>/rps/cpmk/create?mk_id=<?= $mk['id'] ?>" class="btn btn-primary">
-            <i class="fa-solid fa-plus"></i> Tambah CPMK
-        </a>
+        <div>
+            <?php if ($canManageCpmk): ?>
+                <a href="<?= $baseUrl ?>/rps/cpmk/create?mk_id=<?= $mk['id'] ?>" class="btn btn-primary">
+                    <i class="fa-solid fa-plus"></i> Tambah CPMK
+                </a>
+            <?php else: ?>
+                <span style="background: rgba(148, 163, 184, 0.15); color: var(--text-muted); padding: 7px 14px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 600; border: 1px solid var(--border); display: inline-flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-lock"></i> CPMK Ditetapkan Prodi (Terkunci)
+                </span>
+            <?php endif; ?>
+        </div>
     </div>
 
     <?php if (empty($cpmkList)): ?>
         <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid var(--info); color: var(--info); padding: 24px; border-radius: var(--radius-md); text-align: center;">
             <i class="fa-solid fa-circle-info" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
             <h4 style="margin: 0 0 6px 0;">Belum ada CPMK untuk mata kuliah ini</h4>
-            <p style="margin: 0 0 16px 0; font-size: 0.9rem;">Tambahkan rumusan CPMK dan petakan ke CPL terkait sebelum membuat Sub-CPMK.</p>
-            <a href="<?= $baseUrl ?>/rps/cpmk/create?mk_id=<?= $mk['id'] ?>" class="btn btn-primary">
-                <i class="fa-solid fa-plus"></i> Tambah CPMK Sekarang
-            </a>
+            <p style="margin: 0 0 16px 0; font-size: 0.9rem;">Rumusan CPMK ditetapkan dan dipetakan ke CPL oleh Program Studi sebelum Sub-CPMK dapat disusun.</p>
+            <?php if ($canManageCpmk): ?>
+                <a href="<?= $baseUrl ?>/rps/cpmk/create?mk_id=<?= $mk['id'] ?>" class="btn btn-primary">
+                    <i class="fa-solid fa-plus"></i> Tambah CPMK Sekarang
+                </a>
+            <?php else: ?>
+                <span style="font-size: 0.85rem; color: var(--text-muted);"><i class="fa-solid fa-lock"></i> Hubungi Kaprodi / Admin Prodi untuk menetapkan CPMK mata kuliah ini.</span>
+            <?php endif; ?>
         </div>
     <?php else: ?>
         <div style="display: flex; flex-direction: column; gap: 20px;">
@@ -985,12 +1002,18 @@ foreach ($jenisPenilaian as $item) {
                             </div>
                         </div>
                         <div style="display: flex; gap: 6px; margin-left: 20px;">
-                            <a href="<?= $baseUrl ?>/rps/cpmk/edit?id=<?= $cpmk['id'] ?>" class="btn btn-sm btn-secondary" title="Edit CPMK">
-                                <i class="fa-solid fa-edit"></i> Edit
-                            </a>
-                            <a href="<?= $baseUrl ?>/rps/cpmk/delete?id=<?= $cpmk['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Hapus CPMK ini beserta semua Sub-CPMK di dalamnya?')" title="Hapus CPMK">
-                                <i class="fa-solid fa-trash"></i>
-                            </a>
+                            <?php if ($canManageCpmk): ?>
+                                <a href="<?= $baseUrl ?>/rps/cpmk/edit?id=<?= $cpmk['id'] ?>" class="btn btn-sm btn-secondary" title="Edit CPMK">
+                                    <i class="fa-solid fa-edit"></i> Edit
+                                </a>
+                                <a href="<?= $baseUrl ?>/rps/cpmk/delete?id=<?= $cpmk['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Hapus CPMK ini beserta semua Sub-CPMK di dalamnya?')" title="Hapus CPMK">
+                                    <i class="fa-solid fa-trash"></i>
+                                </a>
+                            <?php else: ?>
+                                <span style="font-size: 0.78rem; color: var(--text-muted); background: var(--surface-hover); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); display: inline-flex; align-items: center; gap: 4px;" title="CPMK ditetapkan prodi dan dikunci">
+                                    <i class="fa-solid fa-lock"></i> Terkunci
+                                </span>
+                            <?php endif; ?>
                         </div>
                     </div>
 
@@ -1000,9 +1023,11 @@ foreach ($jenisPenilaian as $item) {
                             <h4 style="margin: 0; font-size: 0.95rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">
                                 Sub-CPMK di bawah <?= htmlspecialchars($cpmk['kode']) ?>
                             </h4>
-                            <a href="<?= $baseUrl ?>/rps/sub_cpmk/create?cpmk_id=<?= $cpmk['id'] ?>" class="btn btn-sm btn-primary">
-                                <i class="fa-solid fa-plus"></i> Tambah Sub-CPMK
-                            </a>
+                            <?php if ($canManageSubCpmk): ?>
+                                <a href="<?= $baseUrl ?>/rps/sub_cpmk/create?cpmk_id=<?= $cpmk['id'] ?><?= $taParam ?>" class="btn btn-sm btn-primary">
+                                    <i class="fa-solid fa-plus"></i> Tambah Sub-CPMK
+                                </a>
+                            <?php endif; ?>
                         </div>
 
                         <?php if (empty($cpmk['sub_cpmks'])): ?>
@@ -1052,14 +1077,16 @@ foreach ($jenisPenilaian as $item) {
                                                 </div>
                                             </div>
 
-                                            <div style="display: flex; gap: 6px;">
-                                                <a href="<?= $baseUrl ?>/rps/sub_cpmk/edit?id=<?= $sub['id'] ?>" class="btn btn-sm btn-secondary" title="Edit Sub-CPMK">
-                                                    <i class="fa-solid fa-edit"></i>
-                                                </a>
-                                                <a href="<?= $baseUrl ?>/rps/sub_cpmk/delete?id=<?= $sub['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Hapus Sub-CPMK <?= htmlspecialchars($sub['kode']) ?>?')" title="Hapus">
-                                                    <i class="fa-solid fa-trash"></i>
-                                                </a>
-                                            </div>
+                                            <?php if ($canManageSubCpmk): ?>
+                                                <div style="display: flex; gap: 6px;">
+                                                    <a href="<?= $baseUrl ?>/rps/sub_cpmk/edit?id=<?= $sub['id'] ?><?= $taParam ?>" class="btn btn-sm btn-secondary" title="Edit Sub-CPMK">
+                                                        <i class="fa-solid fa-edit"></i>
+                                                    </a>
+                                                    <a href="<?= $baseUrl ?>/rps/sub_cpmk/delete?id=<?= $sub['id'] ?><?= $taParam ?>" class="btn btn-sm btn-danger" onclick="return confirm('Hapus Sub-CPMK <?= htmlspecialchars($sub['kode']) ?>?')" title="Hapus">
+                                                        <i class="fa-solid fa-trash"></i>
+                                                    </a>
+                                                </div>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 <?php endforeach; ?>
@@ -3582,7 +3609,7 @@ foreach ($jenisPenilaian as $item) {
 document.addEventListener('DOMContentLoaded',()=>{
   const taId=<?= (int)$rpsAssignment['tahun_akademik_id'] ?>;
   document.querySelectorAll('a[href*="/rps?mk_id="]').forEach(a=>{const u=new URL(a.href,location.origin);if(!u.searchParams.has('ta_id')){u.searchParams.set('ta_id',taId);a.href=u.toString()}});
-  document.querySelectorAll('a[href*="/rps/cpmk/"],a[href*="/rps/sub_cpmk/"]').forEach(a=>a.style.display='none');
+  document.querySelectorAll('a[href*="/rps/cpmk/"]').forEach(a=>a.style.display='none');
 });
 </script>
 <?php endif; ?>

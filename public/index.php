@@ -144,13 +144,11 @@ $roleDeniedPaths = [
         '/kelas/create', '/kelas/store', '/kelas/edit', '/kelas/update', '/kelas/delete',
         '/kelas/peserta/add', '/kelas/peserta/remove',
         '/rps/cpmk/create', '/rps/cpmk/edit', '/rps/cpmk/delete',
-        '/rps/sub_cpmk/create', '/rps/sub_cpmk/edit', '/rps/sub_cpmk/delete',
         '/rubrik/create', '/rubrik/store', '/rubrik/builder', '/rubrik/save-matrix',
         '/rubrik/duplicate', '/rubrik/delete',
     ],
     'Kaprodi' => [
         '/rps/cpmk/create', '/rps/cpmk/edit', '/rps/cpmk/delete',
-        '/rps/sub_cpmk/create', '/rps/sub_cpmk/edit', '/rps/sub_cpmk/delete',
         '/rps/pertemuan/store', '/rps/pertemuan/update', '/rps/pertemuan/delete',
         '/rps/pertemuan/generate-template', '/rps/pertemuan/import-csv', '/rps/save-settings',
         '/rubrik/create', '/rubrik/store', '/rubrik/builder', '/rubrik/save-matrix',
