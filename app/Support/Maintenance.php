@@ -216,6 +216,31 @@ class Maintenance
         return dirname(__DIR__, 2) . '/config/maintenance.json';
     }
 
+    public static function formatDateIndo(?string $dateStr): string
+    {
+        if (empty($dateStr)) return '';
+        $trimmed = trim($dateStr);
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $trimmed, $m)) {
+            $year = (int)$m[1];
+            $month = (int)$m[2];
+            $day = (int)$m[3];
+            $months = [
+                1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+                5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+                9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+            ];
+            $days = [
+                'Sun' => 'Minggu', 'Mon' => 'Senin', 'Tue' => 'Selasa',
+                'Wed' => 'Rabu', 'Thu' => 'Kamis', 'Fri' => 'Jumat', 'Sat' => 'Sabtu'
+            ];
+            $time = strtotime("$year-$month-$day");
+            $dayName = $time ? ($days[date('D', $time)] ?? '') : '';
+            $monthName = $months[$month] ?? '';
+            return trim(($dayName ? $dayName . ', ' : '') . "$day $monthName $year");
+        }
+        return $trimmed;
+    }
+
     public static function renderAdminBanner(string $baseUrl): string
     {
         $trimmedBase = rtrim($baseUrl, '/');
@@ -244,7 +269,7 @@ class Maintenance
         $message = !empty($settings['maintenance_message'])
             ? $settings['maintenance_message']
             : 'Sistem Informasi Pengukuran Outcome Kompetensi dan Evaluasi (SIP-OKE) saat ini sedang dalam proses pemeliharaan berkala untuk peningkatan performa, pembaruan fitur, dan keandalan sistem. Seluruh menu dan layanan sementara dinonaktifkan hingga proses pemeliharaan selesai.';
-        $until = $settings['maintenance_until'] ?? '';
+        $until = self::formatDateIndo($settings['maintenance_until'] ?? '');
         $imgUrl = self::assetUrl($settings['maintenance_img'] ?? null, $baseUrl);
         $maintUrl = htmlspecialchars($trimmedBase . '/maintenance');
         $logoutUrl = htmlspecialchars($trimmedBase . '/logout');

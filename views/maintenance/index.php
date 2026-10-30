@@ -3,6 +3,14 @@ require_once __DIR__ . '/../../app/Support/Maintenance.php';
 $baseUrl = Maintenance::baseUrl($config['base_url'] ?? null);
 $imgUrl = Maintenance::assetUrl($settings['maintenance_img'] ?? null, $baseUrl);
 $isCustomImg = !empty($settings['maintenance_img']) && strpos($settings['maintenance_img'], 'uploads/maintenance/') === 0;
+
+$rawUntil = $settings['maintenance_until'] ?? '';
+$dateValue = '';
+if (preg_match('/^\d{4}-\d{2}-\d{2}$/', trim($rawUntil))) {
+    $dateValue = trim($rawUntil);
+} elseif (!empty($rawUntil) && strtotime($rawUntil)) {
+    $dateValue = date('Y-m-d', strtotime($rawUntil));
+}
 ob_start();
 ?>
 <style>
@@ -308,14 +316,21 @@ input[type="checkbox"]:checked + .maint-switch-toggle::after {
 
                     <div class="maint-form-group">
                         <label for="field_message">Pesan / Penjelasan Pemeliharaan</label>
-                        <textarea class="form-control" id="field_message" name="maintenance_message" rows="4" placeholder="Jelaskan alasan pemeliharaan kepada civitas akademika..."><?= htmlspecialchars($settings['maintenance_message'] ?? '') ?></textarea>
-                        <div class="maint-hint">Penjelasan detail mengenai peningkatan mutu, migrasi data, atau perbaikan server.</div>
+                        <textarea class="form-control" id="field_message" name="maintenance_message" rows="8" placeholder="Jelaskan alasan pemeliharaan, ruang lingkup peningkatan mutu, dan estimasi waktu kepada pengguna..." style="width: 100%; min-height: 180px; padding: 12px 14px; font-size: 0.92rem; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--input-bg); color: var(--text-main); line-height: 1.6; resize: vertical; box-sizing: border-box;"><?= htmlspecialchars($settings['maintenance_message'] ?? '') ?></textarea>
+                        <div class="maint-hint">Penjelasan detail mengenai peningkatan mutu, migrasi data, atau perbaikan server yang tampil pada body halaman pemeliharaan.</div>
                     </div>
 
                     <div class="maint-form-group">
-                        <label for="field_until">Estimasi / Jadwal Selesai (Opsional)</label>
-                        <input type="text" class="form-control" id="field_until" name="maintenance_until" value="<?= htmlspecialchars($settings['maintenance_until'] ?? '') ?>" placeholder="Contoh: Jumat, 30 Oktober 2026, Pukul 15:00 WIB">
-                        <div class="maint-hint">Informasi perkiraan waktu selesai agar pengguna mengetahui kapan sistem aktif kembali.</div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <label for="field_until" style="margin: 0; font-size: 0.8rem; font-weight: 600; color: var(--text-main);">
+                                Estimasi / Jadwal Selesai (Pilihan Tanggal)
+                            </label>
+                            <button type="button" onclick="clearUntilDate()" style="background: none; border: none; font-size: 0.74rem; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px;">
+                                <i class="fa-solid fa-xmark"></i> Kosongkan Tanggal
+                            </button>
+                        </div>
+                        <input type="date" class="form-control" id="field_until" name="maintenance_until" value="<?= htmlspecialchars($dateValue) ?>" style="width: 100%; padding: 11px 14px; font-size: 0.9rem; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--input-bg); color: var(--text-main); box-sizing: border-box;">
+                        <div class="maint-hint">Pilih tanggal perkiraan selesai pemeliharaan (ditampilkan otomatis dalam format tanggal lengkap).</div>
                     </div>
 
                     <div class="maint-form-group">
@@ -379,7 +394,7 @@ input[type="checkbox"]:checked + .maint-switch-toggle::after {
                             <i class="fa-regular fa-clock"></i>
                             <div>
                                 <span class="maint-info-label">Jadwal / Estimasi Selesai</span>
-                                <strong class="maint-info-val" id="prev_until_val"><?= htmlspecialchars($settings['maintenance_until'] ?? '') ?></strong>
+                                <strong class="maint-info-val" id="prev_until_val"><?= htmlspecialchars(Maintenance::formatDateIndo($settings['maintenance_until'] ?? '')) ?></strong>
                             </div>
                         </div>
 
@@ -417,6 +432,36 @@ input[type="checkbox"]:checked + .maint-switch-toggle::after {
     const pImg = document.getElementById('prev_img');
     const thumbImg = document.getElementById('img_thumb');
 
+    function formatIndoDate(dateStr) {
+        if (!dateStr) return '';
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+            const y = parseInt(parts[0], 10);
+            const m = parseInt(parts[1], 10);
+            const d = parseInt(parts[2], 10);
+            const months = [
+                'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+            ];
+            const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const dt = new Date(y, m - 1, d);
+            if (!isNaN(dt.getTime())) {
+                const dayName = days[dt.getDay()];
+                const monthName = months[m - 1] || '';
+                return `${dayName}, ${d} ${monthName} ${y}`;
+            }
+        }
+        return dateStr;
+    }
+
+    window.clearUntilDate = function() {
+        if (fUntil) {
+            fUntil.value = '';
+            if (pUntilBox) pUntilBox.style.display = 'none';
+            if (pUntilVal) pUntilVal.textContent = '';
+        }
+    };
+
     if (fTitle && pTitle) {
         fTitle.addEventListener('input', function() {
             pTitle.textContent = this.value || 'Website Sedang Dalam Pemeliharaan';
@@ -430,15 +475,17 @@ input[type="checkbox"]:checked + .maint-switch-toggle::after {
     }
 
     if (fUntil && pUntilBox && pUntilVal) {
-        fUntil.addEventListener('input', function() {
-            const val = (this.value || '').trim();
-            if (val === '') {
+        const updateUntilPreview = function() {
+            const raw = (fUntil.value || '').trim();
+            if (raw === '') {
                 pUntilBox.style.display = 'none';
             } else {
                 pUntilBox.style.display = 'flex';
-                pUntilVal.textContent = val;
+                pUntilVal.textContent = formatIndoDate(raw);
             }
-        });
+        };
+        fUntil.addEventListener('change', updateUntilPreview);
+        fUntil.addEventListener('input', updateUntilPreview);
     }
 
     if (fImg && pImg) {
