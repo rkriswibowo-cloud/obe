@@ -1,8 +1,9 @@
 <?php
 // views/profil_lulusan/index.php
+require_once __DIR__ . '/../../app/Support/Maintenance.php';
 $title = 'Profil Lulusan - Sistem OBE';
 ob_start();
-$baseUrl = $config['base_url'] ?? '/obe/public';
+$baseUrl = Maintenance::baseUrl($config['base_url'] ?? null);
 ?>
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 15px;">
