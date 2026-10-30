@@ -110,6 +110,18 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+require_once __DIR__ . '/../app/Support/Maintenance.php';
+
+// Penegakan Mode Pemeliharaan: Blokir mutasi data untuk pengguna non-Super Admin
+if (Maintenance::isActive() && !Maintenance::isSuperAdmin()) {
+    $isMutation = ($requestMethod === 'POST') || in_array($path, $getMutationPaths, true);
+    if ($isMutation && $path !== '/logout') {
+        $_SESSION['flash_error'] = 'Sistem sedang dalam mode pemeliharaan (maintenance). Operasi data sementara dinonaktifkan.';
+        header("Location: $base_path/dashboard");
+        exit;
+    }
+}
+
 // Otorisasi server-side berdasarkan tanggung jawab pada PRD.
 $role = $_SESSION['role'] ?? '';
 $access = new AccessContext();
@@ -193,6 +205,14 @@ switch ($path) {
         require_once __DIR__ . '/../app/Controllers/BrandingController.php';(new BrandingController())->save();break;
     case '/branding/reset':
         require_once __DIR__ . '/../app/Controllers/BrandingController.php';(new BrandingController())->reset();break;
+    case '/maintenance':
+        require_once __DIR__ . '/../app/Controllers/MaintenanceController.php';(new MaintenanceController())->index();break;
+    case '/maintenance/toggle':
+        require_once __DIR__ . '/../app/Controllers/MaintenanceController.php';(new MaintenanceController())->toggle();break;
+    case '/maintenance/save':
+        require_once __DIR__ . '/../app/Controllers/MaintenanceController.php';(new MaintenanceController())->save();break;
+    case '/maintenance/reset-image':
+        require_once __DIR__ . '/../app/Controllers/MaintenanceController.php';(new MaintenanceController())->resetImage();break;
     case '/dashboard':
         require_once __DIR__ . '/../app/Controllers/DashboardController.php';
         $d = new DashboardController();

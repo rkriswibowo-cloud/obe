@@ -56,7 +56,7 @@ $isEvaluasiActive = isNavActive($baseUrl . '/laporan', $currentUri)
     || isNavActive($baseUrl . '/cqi', $currentUri)
     || isNavActive($baseUrl . '/rpl', $currentUri);
 
-$isSistemActive = isNavActive($baseUrl . '/audit-log', $currentUri) || isNavActive($baseUrl . '/user-management', $currentUri) || isNavActive($baseUrl . '/branding', $currentUri);
+$isSistemActive = isNavActive($baseUrl . '/audit-log', $currentUri) || isNavActive($baseUrl . '/user-management', $currentUri) || isNavActive($baseUrl . '/branding', $currentUri) || isNavActive($baseUrl . '/maintenance', $currentUri);
 
 // Ambil daftar semester dari database secara dinamis
 $listTahunAkademik = [];
@@ -83,7 +83,7 @@ try {
 }
 ?>
 <?php
-$allSidebarPaths = ['tahun-akademik','dosen','mahasiswa','prodi','kurikulum','aturan-kurikulum','profil-lulusan','cpl','mata-kuliah','rubrik','import','pemetaan-mk-cpl','pengampu-mk','rps','kelas','asesmen','laporan','laporan-semester','monitoring-cpl-mk','khs','transkrip','rpl','cqi','audit-log','user-management','branding'];
+$allSidebarPaths = ['tahun-akademik','dosen','mahasiswa','prodi','kurikulum','aturan-kurikulum','profil-lulusan','cpl','mata-kuliah','rubrik','import','pemetaan-mk-cpl','pengampu-mk','rps','kelas','asesmen','laporan','laporan-semester','monitoring-cpl-mk','khs','transkrip','rpl','cqi','audit-log','user-management','branding','maintenance'];
 $hiddenSidebarPaths = array_values(array_filter($allSidebarPaths, fn($item) => !$sidebarMenuAllowed($item)));
 ?>
 <?php if ($hiddenSidebarPaths): ?>
@@ -111,6 +111,13 @@ $hiddenSidebarPaths = array_values(array_filter($allSidebarPaths, fn($item) => !
             <i class="fa-solid fa-xmark"></i>
         </button>
     </div>
+
+    <?php if (class_exists('Maintenance') && Maintenance::isActive()): ?>
+    <div style="margin: 0 14px 12px; padding: 7px 12px; background: rgba(245, 158, 11, 0.14); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 9px; font-size: 0.72rem; color: #f59e0b; display: flex; align-items: center; justify-content: center; gap: 7px; font-weight: 700; text-align: center;">
+        <i class="fa-solid fa-screwdriver-wrench"></i>
+        <span>MODE PEMELIHARAAN</span>
+    </div>
+    <?php endif; ?>
 
     <!-- Search Bar with '/' Shortcut -->
     <div class="sidebar-search-box">
@@ -394,13 +401,14 @@ $hiddenSidebarPaths = array_values(array_filter($allSidebarPaths, fn($item) => !
                     <span>SISTEM & AUDIT</span>
                 </span>
                 <span class="sidebar-group-meta">
-                    <span class="sidebar-group-badge"><?= ($_SESSION['role']??'')==='Super Admin'?'3':'1' ?></span>
+                    <span class="sidebar-group-badge"><?= ($_SESSION['role']??'')==='Super Admin'?'4':'1' ?></span>
                     <i class="fa-solid fa-chevron-down group-chevron"></i>
                 </span>
             </button>
             <div class="sidebar-group-content">
                 <ul class="sidebar-nav">
                     <?php if (($_SESSION['role']??'')==='Super Admin'): ?><li class="sidebar-nav-item <?= isNavActive($baseUrl.'/user-management',$currentUri)?'active':'' ?>" data-label="manajemen user akun login role password"><a href="<?= $baseUrl ?>/user-management" class="sidebar-link" title="Manajemen User"><i class="fa-solid fa-users-gear"></i><span>Manajemen User</span></a></li><?php endif; ?>
+                    <?php if (($_SESSION['role']??'')==='Super Admin'): ?><li class="sidebar-nav-item <?= isNavActive($baseUrl.'/maintenance',$currentUri)?'active':'' ?>" data-label="mode maintenance pemeliharaan perbaikan sistem website server"><a href="<?= $baseUrl ?>/maintenance" class="sidebar-link" title="Mode Maintenance"><i class="fa-solid fa-screwdriver-wrench"></i><span>Mode Maintenance</span></a></li><?php endif; ?>
                     <?php if (($_SESSION['role']??'')==='Super Admin'): ?><li class="sidebar-nav-item <?= isNavActive($baseUrl.'/branding',$currentUri)?'active':'' ?>" data-label="logo favicon identitas branding aplikasi"><a href="<?= $baseUrl ?>/branding" class="sidebar-link" title="Logo & Favicon"><i class="fa-solid fa-icons"></i><span>Logo &amp; Favicon</span></a></li><?php endif; ?>
                     <li class="sidebar-nav-item <?= isNavActive($baseUrl . '/audit-log', $currentUri) ? 'active' : '' ?>" data-label="audit log trail riwayat aktivitas keamanan sistem">
                         <a href="<?= $baseUrl ?>/audit-log" class="sidebar-link" title="Audit Log">

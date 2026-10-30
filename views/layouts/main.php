@@ -1,8 +1,20 @@
 <?php
 require_once __DIR__ . '/../../app/Support/Branding.php';
+require_once __DIR__ . '/../../app/Support/Maintenance.php';
 $layoutBranding = Branding::all();
-$layoutBaseUrl = $config['base_url'] ?? '/obe/public';
+$layoutBaseUrl = Maintenance::baseUrl($config['base_url'] ?? null);
 $layoutFaviconUrl = Branding::assetUrl($layoutBranding['favicon'] ?? null, $layoutBaseUrl);
+
+$isMaintenanceActive = Maintenance::isActive();
+$isSuperAdmin = Maintenance::isSuperAdmin();
+$isMaintPreview = ($isSuperAdmin && isset($_GET['preview_maintenance']) && $_GET['preview_maintenance'] === '1');
+
+// Tangani konten pemeliharaan (sidebar & topbar tetap utuh)
+if (($isMaintenanceActive && !$isSuperAdmin) || $isMaintPreview) {
+    $content = Maintenance::renderWorkspace(Maintenance::getSettings(), $isMaintPreview, $layoutBaseUrl);
+} elseif ($isMaintenanceActive && $isSuperAdmin) {
+    $content = Maintenance::renderAdminBanner($layoutBaseUrl) . ($content ?? '');
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -51,7 +63,7 @@ $layoutFaviconUrl = Branding::assetUrl($layoutBranding['favicon'] ?? null, $layo
 
             <!-- Main Content Area -->
             <div class="main-content">
-                <div class="content-area">
+                <div class="content-area <?= (($isMaintenanceActive && !$isSuperAdmin) || $isMaintPreview) ? 'maint-active-area' : '' ?>">
                     <?php
                     $globalSuccess = $_SESSION['flash_success'] ?? $_SESSION['success'] ?? null;
                     $globalError = $_SESSION['flash_error'] ?? $_SESSION['error'] ?? null;
