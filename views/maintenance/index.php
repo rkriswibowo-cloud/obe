@@ -179,56 +179,89 @@ ob_start();
 }
 
 .maint-form-group {
-    margin-bottom: 18px;
+    margin-bottom: 20px;
 }
 .maint-form-group > label {
     display: block;
-    margin-bottom: 6px;
-    font-size: 0.8rem;
+    margin-bottom: 8px;
+    font-size: 0.82rem;
     font-weight: 600;
     color: var(--text-main);
+}
+.maint-form-group input[type="text"],
+.maint-form-group input[type="date"],
+.maint-form-group input[type="file"],
+.maint-form-group textarea,
+.maint-form-group select {
+    width: 100% !important;
+    display: block;
+    box-sizing: border-box;
 }
 .maint-hint {
-    font-size: 0.73rem;
+    font-size: 0.74rem;
     color: var(--text-muted);
-    margin-top: 5px;
+    margin-top: 6px;
+    line-height: 1.45;
 }
 
-.maint-switch-label {
+/* Modern Toggle Switch Card */
+.maint-toggle-card {
     display: flex;
     align-items: center;
-    gap: 12px;
-    cursor: pointer;
-    user-select: none;
-    font-size: 0.88rem;
-    font-weight: 600;
-    color: var(--text-main);
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 18px;
+    background: var(--surface-hover);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+    margin-bottom: 22px;
 }
-.maint-switch-toggle {
+.maint-toggle-switch {
     position: relative;
-    width: 44px;
-    height: 24px;
-    background: var(--border);
-    border-radius: 20px;
-    transition: background 0.2s ease;
+    display: inline-block !important;
+    width: 50px !important;
+    height: 28px !important;
     flex-shrink: 0;
+    margin: 0 !important;
+    cursor: pointer;
 }
-.maint-switch-toggle::after {
-    content: "";
+.maint-toggle-switch input[type="checkbox"] {
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    position: absolute !important;
+    margin: 0 !important;
+}
+.maint-toggle-slider {
     position: absolute;
-    top: 3px;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--border, #3f3f46);
+    transition: all 0.25s ease;
+    border-radius: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.maint-toggle-slider::before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
     left: 4px;
-    width: 18px;
-    height: 18px;
-    background: #fff;
+    bottom: 3px;
+    background-color: #ffffff;
+    transition: transform 0.25s ease;
     border-radius: 50%;
-    transition: transform 0.2s ease;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.35);
 }
-input[type="checkbox"]:checked + .maint-switch-toggle {
-    background: #f59e0b;
+.maint-toggle-switch input[type="checkbox"]:checked + .maint-toggle-slider {
+    background-color: #f59e0b;
+    border-color: #d97706;
 }
-input[type="checkbox"]:checked + .maint-switch-toggle::after {
-    transform: translateX(18px);
+.maint-toggle-switch input[type="checkbox"]:checked + .maint-toggle-slider::before {
+    transform: translateX(21px);
 }
 
 .maint-preview-frame {
@@ -299,18 +332,24 @@ input[type="checkbox"]:checked + .maint-switch-toggle::after {
             </div>
             <div class="maint-box-body">
                 <form action="<?= htmlspecialchars($baseUrl) ?>/maintenance/save" method="post" enctype="multipart/form-data">
-                    <div class="maint-form-group" style="padding: 12px 14px; background: var(--surface-hover); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); margin-bottom: 20px;">
-                        <label class="maint-switch-label">
-                            <input type="checkbox" name="maintenance_mode" value="1" <?= $isActive ? 'checked' : '' ?> style="display:none;" id="field_toggle">
-                            <span class="maint-switch-toggle"></span>
-                            <span>Aktifkan Mode Pemeliharaan Sekarang</span>
+                    <div class="maint-toggle-card">
+                        <div>
+                            <div style="font-size: 0.88rem; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">
+                                Aktifkan Mode Pemeliharaan Sekarang
+                            </div>
+                            <div class="maint-hint" style="margin: 0; font-size: 0.74rem;">
+                                Centang / geser toggle untuk mengunci akses seluruh pengguna non-Super Admin.
+                            </div>
+                        </div>
+                        <label class="maint-toggle-switch" title="Toggle Mode Pemeliharaan">
+                            <input type="checkbox" name="maintenance_mode" value="1" <?= $isActive ? 'checked' : '' ?> id="field_toggle">
+                            <span class="maint-toggle-slider"></span>
                         </label>
-                        <div class="maint-hint" style="margin-left: 56px;">Centang untuk mengunci akses seluruh pengguna non-Super Admin.</div>
                     </div>
 
                     <div class="maint-form-group">
                         <label for="field_title">Judul Tampilan Pemeliharaan</label>
-                        <input type="text" class="form-control" id="field_title" name="maintenance_title" value="<?= htmlspecialchars($settings['maintenance_title'] ?? 'Website Sedang Dalam Pemeliharaan') ?>" required placeholder="Contoh: Website Sedang Dalam Pemeliharaan">
+                        <input type="text" class="form-control" id="field_title" name="maintenance_title" value="<?= htmlspecialchars($settings['maintenance_title'] ?? 'Website Sedang Dalam Pemeliharaan') ?>" required placeholder="Contoh: Website Sedang Dalam Pemeliharaan" style="width: 100% !important; padding: 12px 14px; font-size: 0.95rem; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--input-bg); color: var(--text-main); box-sizing: border-box;">
                         <div class="maint-hint">Judul utama berukuran besar yang muncul pada halaman pemeliharaan.</div>
                     </div>
 
