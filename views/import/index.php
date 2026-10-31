@@ -2,14 +2,21 @@
 $title = 'Import Data Master';
 $baseUrl = $GLOBALS['config']['base_url'] ?? '/obe/public';
 
+$importResult = $_SESSION['import_result'] ?? null;
+unset($_SESSION['import_result']);
+
+$kurikulumList = $kurikulumList ?? [];
+$mataKuliah = $mataKuliah ?? [];
+
 $importTypes = [
     'cpl' => [
         'title' => 'CPL',
         'name' => 'Capaian Pembelajaran Lulusan',
         'description' => 'Impor kode dan rumusan CPL sebagai fondasi pemetaan kurikulum.',
         'icon' => 'fa-bullseye',
-        'columns' => 'kode, rumusan',
+        'columns' => 'kode, rumusan, kategori, target_capaian',
         'requires_course' => false,
+        'requires_kurikulum' => true,
     ],
     'cpmk' => [
         'title' => 'CPMK',
@@ -18,14 +25,16 @@ $importTypes = [
         'icon' => 'fa-diagram-project',
         'columns' => 'kode_cpl, kode_cpmk, rumusan_cpmk',
         'requires_course' => true,
+        'requires_kurikulum' => false,
     ],
     'sub_cpmk' => [
         'title' => 'Sub-CPMK',
         'name' => 'Kemampuan Akhir Tiap Tahapan',
         'description' => 'Impor rincian Sub-CPMK yang terhubung dengan CPMK mata kuliah.',
         'icon' => 'fa-list-check',
-        'columns' => 'kode_cpmk, kode_sub_cpmk, rumusan_sub_cpmk',
+        'columns' => 'kode_cpmk, kode_sub_cpmk, rumusan_sub_cpmk, bobot, level_taksonomi, pengalaman_belajar, asesmen_penilaian',
         'requires_course' => true,
+        'requires_kurikulum' => false,
     ],
 ];
 ob_start();
@@ -611,19 +620,49 @@ ob_start();
         </div>
     </header>
 
-    <?php if (isset($_GET['success'])): ?>
-        <div class="import-alert import-alert-success" role="status">
-            <i class="fa-solid fa-circle-check"></i>
-            <div>
-                <strong><?= htmlspecialchars($_GET['count'] ?? '0') ?> baris berhasil diproses.</strong>
-                <?php if ((int)($_GET['errors'] ?? 0) > 0): ?>
-                    <br><?= htmlspecialchars($_GET['errors']) ?> baris dilewati karena format tidak sesuai, referensi tidak ditemukan, atau data duplikat.
-                <?php endif; ?>
+    <?php if ($importResult): ?>
+        <?php if ($importResult['success_count'] > 0 && $importResult['error_count'] === 0): ?>
+            <div class="import-alert import-alert-success" role="status">
+                <i class="fa-solid fa-circle-check"></i>
+                <div>
+                    <strong>Berhasil! <?= (int)$importResult['success_count'] ?> baris data <?= strtoupper($importResult['type']) ?> berhasil diimpor ke sistem.</strong>
+                </div>
             </div>
-        </div>
-    <?php endif; ?>
-
-    <?php if (isset($_GET['error'])): ?>
+        <?php elseif ($importResult['success_count'] > 0 && $importResult['error_count'] > 0): ?>
+            <div class="import-alert" style="color:#d97706; background:rgba(245,158,11,.1); border-color:rgba(245,158,11,.3);" role="status">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <div>
+                    <strong>Sebagian Berhasil: <?= (int)$importResult['success_count'] ?> baris berhasil diimpor, tetapi <?= (int)$importResult['error_count'] ?> baris dilewati.</strong>
+                    <?php if (!empty($importResult['errors'])): ?>
+                        <ul style="margin: 6px 0 0; padding-left: 18px; font-size: 0.76rem;">
+                            <?php foreach (array_slice($importResult['errors'], 0, 5) as $err): ?>
+                                <li><?= htmlspecialchars($err) ?></li>
+                            <?php endforeach; ?>
+                            <?php if (count($importResult['errors']) > 5): ?>
+                                <li>... dan <?= count($importResult['errors']) - 5 ?> baris lainnya.</li>
+                            <?php endif; ?>
+                        </ul>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php else: ?>
+            <div class="import-alert import-alert-danger" role="alert">
+                <i class="fa-solid fa-circle-xmark"></i>
+                <div>
+                    <strong>Import tidak berhasil (0 baris data tersimpan). Periksa catatan kesalahan berikut:</strong>
+                    <?php if (!empty($importResult['errors'])): ?>
+                        <ul style="margin: 6px 0 0; padding-left: 18px; font-size: 0.76rem;">
+                            <?php foreach (array_slice($importResult['errors'], 0, 8) as $err): ?>
+                                <li><?= htmlspecialchars($err) ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    <?php else: ?>
+                        <p style="margin:4px 0 0; font-size:0.76rem;">Format kolom tidak sesuai dengan template atau data yang diunggah kosong.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php endif; ?>
+    <?php elseif (isset($_GET['error'])): ?>
         <div class="import-alert import-alert-danger" role="alert">
             <i class="fa-solid fa-circle-exclamation"></i>
             <div>
@@ -695,12 +734,24 @@ ob_start();
                     </header>
 
                     <div class="import-form-grid" id="upload-fields">
+                        <div class="form-group-field" id="file-kurikulum-field">
+                            <label for="file-kurikulum-id">Kurikulum Tujuan <span style="color:#ef4444">*</span></label>
+                            <select class="form-control" name="kurikulum_id" id="file-kurikulum-id">
+                                <option value="">-- Pilih Kurikulum --</option>
+                                <?php foreach ($kurikulumList as $kur): ?>
+                                    <option value="<?= (int)$kur['id'] ?>"><?= htmlspecialchars($kur['kode'] . ' — ' . $kur['nama'] . ' (' . ($kur['nama_prodi'] ?? 'Prodi') . ')') ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
                         <div class="form-group-field" id="file-mk-field" hidden>
                             <label for="file-mk-id">Mata Kuliah Tujuan <span style="color:#ef4444">*</span></label>
                             <select class="form-control" name="mk_id" id="file-mk-id">
                                 <option value="">-- Pilih Mata Kuliah --</option>
                                 <?php foreach ($mataKuliah as $mk): ?>
-                                    <option value="<?= (int)$mk['id'] ?>"><?= htmlspecialchars($mk['kode'] . ' — ' . $mk['nama']) ?></option>
+                                    <option value="<?= (int)$mk['id'] ?>">
+                                        <?= htmlspecialchars($mk['kode'] . ' — ' . $mk['nama'] . ' (' . ($mk['kurikulum_nama'] ?? 'Kurikulum ' . $mk['kurikulum_id']) . ')') ?>
+                                    </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -711,7 +762,7 @@ ob_start();
                                 <input type="file" name="csv_file" accept=".csv,text/csv" required id="csvFileInput">
                                 <div class="modern-dropzone-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
                                 <strong>Pilih atau Seret Berkas CSV ke Sini</strong>
-                                <span class="file-name-text" id="fileNameDisplay">Format CSV dengan pemisah koma (,). Ukuran maks 5MB.</span>
+                                <span class="file-name-text" id="fileNameDisplay">Format CSV dengan pemisah koma (,) atau titik-koma (;). Ukuran maks 5MB.</span>
                             </label>
                         </div>
                     </div>
@@ -771,12 +822,24 @@ ob_start();
                         </select>
                     </div>
 
+                    <div class="form-group-field" id="text-kurikulum-select" hidden>
+                        <label for="text-kurikulum-id">Kurikulum Tujuan <span style="color:#ef4444">*</span></label>
+                        <select class="form-control" name="kurikulum_id" id="text-kurikulum-id">
+                            <option value="">-- Pilih Kurikulum --</option>
+                            <?php foreach ($kurikulumList as $kur): ?>
+                                <option value="<?= (int)$kur['id'] ?>"><?= htmlspecialchars($kur['kode'] . ' — ' . $kur['nama'] . ' (' . ($kur['nama_prodi'] ?? 'Prodi') . ')') ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
                     <div class="form-group-field" id="text-mk-select" hidden>
                         <label for="text-mk-id">Mata Kuliah Tujuan <span style="color:#ef4444">*</span></label>
                         <select class="form-control" name="mk_id" id="text-mk-id">
                             <option value="">-- Pilih Mata Kuliah --</option>
                             <?php foreach ($mataKuliah as $mk): ?>
-                                <option value="<?= (int)$mk['id'] ?>"><?= htmlspecialchars($mk['kode'] . ' — ' . $mk['nama']) ?></option>
+                                <option value="<?= (int)$mk['id'] ?>">
+                                    <?= htmlspecialchars($mk['kode'] . ' — ' . $mk['nama'] . ' (' . ($mk['kurikulum_nama'] ?? 'Kurikulum ' . $mk['kurikulum_id']) . ')') ?>
+                                </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -815,6 +878,7 @@ ob_start();
             'description' => $item['description'],
             'columns' => $item['columns'],
             'requiresCourse' => $item['requires_course'],
+            'requiresKurikulum' => $item['requires_kurikulum'] ?? false,
         ];
     }, $importTypes), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
     const tabs = document.querySelectorAll('[data-tab]');
@@ -834,15 +898,18 @@ ob_start();
             if (selected) {
                 fileName.textContent = selected.name + ' (' + (selected.size / 1024).toFixed(1) + ' KB)';
             } else {
-                fileName.textContent = 'Format CSV dengan pemisah koma (,). Ukuran maks 5MB.';
+                fileName.textContent = 'Format CSV dengan pemisah koma (,) atau titik-koma (;). Ukuran maks 5MB.';
             }
         });
     }
 
     const fileType = document.getElementById('file-import-type');
+    const fileKurField = document.getElementById('file-kurikulum-field');
+    const fileKur = document.getElementById('file-kurikulum-id');
     const fileCourseField = document.getElementById('file-mk-field');
     const fileCourse = document.getElementById('file-mk-id');
     const uploadFields = document.getElementById('upload-fields');
+
     document.querySelectorAll('[data-import-type]').forEach(option => option.addEventListener('click', function () {
         const type = this.dataset.importType;
         const config = importTypes[type];
@@ -852,9 +919,17 @@ ob_start();
             item.setAttribute('aria-checked', active ? 'true' : 'false');
         });
         fileType.value = type;
-        fileCourseField.hidden = !config.requiresCourse;
-        fileCourse.required = config.requiresCourse;
-        uploadFields.classList.toggle('no-course', !config.requiresCourse);
+
+        if (fileKurField && fileKur) {
+            fileKurField.hidden = !config.requiresKurikulum;
+            fileKur.required = Boolean(config.requiresKurikulum);
+        }
+        if (fileCourseField && fileCourse) {
+            fileCourseField.hidden = !config.requiresCourse;
+            fileCourse.required = Boolean(config.requiresCourse);
+        }
+
+        uploadFields.classList.toggle('no-course', !config.requiresCourse && !config.requiresKurikulum);
         document.getElementById('upload-title').textContent = 'Import ' + config.title;
         document.getElementById('upload-description').textContent = config.description;
         document.getElementById('selected-type-badge').textContent = config.title;
@@ -864,23 +939,48 @@ ob_start();
     }));
 
     const typeSelect = document.getElementById('text-import-type');
+    const textKurField = document.getElementById('text-kurikulum-select');
+    const textKurSelect = document.getElementById('text-kurikulum-id');
     const courseField = document.getElementById('text-mk-select');
     const courseSelect = document.getElementById('text-mk-id');
     const textarea = document.getElementById('csv-textarea');
     const hint = document.getElementById('csv-hint');
     const formats = {
-        cpl: { columns: 'kode,rumusan', example: 'kode,rumusan\nCPL01,Mampu menerapkan pengetahuan dan keterampilan\nCPL02,Mampu menganalisis permasalahan secara sistematis' },
-        cpmk: { columns: 'kode_cpl,kode_cpmk,rumusan_cpmk', example: 'kode_cpl,kode_cpmk,rumusan_cpmk\n"CPL01, CPL02",CPMK01,Mampu menjelaskan konsep dasar\nCPL03,CPMK02,Mampu menerapkan metode analisis' },
-        sub_cpmk: { columns: 'kode_cpmk,kode_sub_cpmk,rumusan_sub_cpmk', example: 'kode_cpmk,kode_sub_cpmk,rumusan_sub_cpmk\nCPMK01,Sub-CPMK01,Mampu mendefinisikan konsep dasar\nCPMK01,Sub-CPMK02,Mampu menjelaskan penerapannya' }
+        cpl: { 
+            columns: 'kode,rumusan,kategori,target_capaian', 
+            example: 'kode,rumusan,kategori,target_capaian\nCPL-01,"Mampu menerapkan pemikiran logis dan inovatif dalam memecahkan masalah rekayasa",Keterampilan Umum,70.00\nCPL-02,"Mampu menunjukkan kinerja mandiri dan profesional",Keterampilan Umum,75.00' 
+        },
+        cpmk: { 
+            columns: 'kode_cpl,kode_cpmk,rumusan_cpmk', 
+            example: 'kode_cpl,kode_cpmk,rumusan_cpmk\n"CPL-01, CPL-02",CPMK-01,"Mampu menjelaskan konsep dasar dan arsitektur sistem"\nCPL-02,CPMK-02,"Mampu merancang modul perangkat lunak berbasis standar industri"' 
+        },
+        sub_cpmk: { 
+            columns: 'kode_cpmk,kode_sub_cpmk,rumusan_sub_cpmk,bobot,level_taksonomi,pengalaman_belajar,asesmen_penilaian', 
+            example: 'kode_cpmk,kode_sub_cpmk,rumusan_sub_cpmk,bobot,level_taksonomi,pengalaman_belajar,asesmen_penilaian\nCPMK-01,Sub-CPMK 1.1,"Mampu mendefinisikan modul dan struktur data",15.00,"C3, A2, P4","Ceramah dan Diskusi","Pretes dan Kuis"\nCPMK-01,Sub-CPMK 1.2,"Mampu menganalisis kebutuhan sistem",15.00,"C4, A3, P4","Studi Kasus","Tugas Proyek"' 
+        }
     };
-    typeSelect.addEventListener('change', function () {
-        const needsCourse = this.value === 'cpmk' || this.value === 'sub_cpmk';
-        courseField.hidden = !needsCourse;
-        courseSelect.required = needsCourse;
-        const format = formats[this.value];
-        textarea.placeholder = format ? format.example : 'Pilih jenis data terlebih dahulu...';
-        hint.innerHTML = format ? '<i class="fa-solid fa-circle-info"></i><span>Struktur kolom: <code>' + format.columns + '</code></span>' : '<i class="fa-solid fa-circle-info"></i><span>Pilih jenis data untuk melihat struktur kolom yang diperlukan.</span>';
-    });
+
+    if (typeSelect) {
+        typeSelect.addEventListener('change', function () {
+            const isCpl = this.value === 'cpl';
+            const needsCourse = this.value === 'cpmk' || this.value === 'sub_cpmk';
+
+            if (textKurField && textKurSelect) {
+                textKurField.hidden = !isCpl;
+                textKurSelect.required = isCpl;
+            }
+            if (courseField && courseSelect) {
+                courseField.hidden = !needsCourse;
+                courseSelect.required = needsCourse;
+            }
+
+            const format = formats[this.value];
+            textarea.placeholder = format ? format.example : 'Pilih jenis data terlebih dahulu...';
+            hint.innerHTML = format 
+                ? '<i class="fa-solid fa-circle-info"></i><span>Struktur kolom: <code>' + format.columns + '</code></span>' 
+                : '<i class="fa-solid fa-circle-info"></i><span>Pilih jenis data pada menu sebelah kiri untuk melihat struktur kolom yang diperlukan.</span>';
+        });
+    }
 })();
 </script>
 <?php

@@ -133,7 +133,7 @@ $rolePrefixes = [
     'Kaprodi' => ['/dashboard', '/rps', '/rubrik', '/laporan', '/laporan-semester', '/monitoring-cpl-mk', '/khs', '/transkrip', '/cqi', '/rpl'],
     'Mahasiswa' => ['/dashboard', '/laporan', '/khs', '/transkrip', '/rpl'],
 ];
-$kaprodiPrefixes = ['/dashboard', '/tahun-akademik', '/dosen', '/mahasiswa', '/prodi', '/kurikulum', '/aturan-kurikulum', '/profil-lulusan', '/cpl', '/mata-kuliah', '/pemetaan-mk-cpl', '/pengampu-mk', '/rps', '/rubrik', '/kelas', '/asesmen', '/laporan', '/laporan-semester', '/monitoring-cpl-mk', '/khs', '/transkrip', '/cqi', '/rpl'];
+$kaprodiPrefixes = ['/dashboard', '/tahun-akademik', '/dosen', '/mahasiswa', '/prodi', '/kurikulum', '/aturan-kurikulum', '/profil-lulusan', '/cpl', '/mata-kuliah', '/pemetaan-mk-cpl', '/pengampu-mk', '/import', '/rps', '/rubrik', '/kelas', '/asesmen', '/laporan', '/laporan-semester', '/monitoring-cpl-mk', '/khs', '/transkrip', '/cqi', '/rpl'];
 $allowedPrefixes = $rolePrefixes[$role] ?? [];
 if ($isKaprodi) {
     $allowedPrefixes = array_values(array_unique(array_merge($allowedPrefixes, $kaprodiPrefixes)));
