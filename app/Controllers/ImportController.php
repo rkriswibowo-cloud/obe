@@ -53,7 +53,7 @@ class ImportController {
                 'success_count' => 0,
                 'error_count' => 1,
                 'type' => $type,
-                'errors' => ['Gagal mengunggah berkas CSV (Kode error: ' . $file['error'] . ').']
+                'errors' => ['Gagal mengunggah berkas (Kode status error upload: ' . $file['error'] . ').']
             ];
             header('Location: ' . $baseUrl . '/import');
             exit;
@@ -172,82 +172,152 @@ class ImportController {
     }
 
     /**
-     * Intelligently detect CSV delimiter: comma, semicolon, tab, or pipe.
+     * Parse rows from CSV, TSV, or XLSX file.
      */
-    private function detectDelimiter(string $filePath): string {
-        $handle = fopen($filePath, 'r');
-        if (!$handle) return ',';
-
-        $firstLine = fgets($handle);
-        fclose($handle);
-        if (!$firstLine) return ',';
-
-        $firstLine = preg_replace('/^\xEF\xBB\xBF/', '', $firstLine);
-
-        $delimiters = [',', ';', "\t", '|'];
-        $counts = [];
-        foreach ($delimiters as $delim) {
-            $counts[$delim] = substr_count($firstLine, $delim);
+    private function parseRowsFromFile(string $filePath): array {
+        if (!file_exists($filePath) || filesize($filePath) === 0) {
+            return [];
         }
-        arsort($counts);
-        $best = array_key_first($counts);
-        return ($counts[$best] > 0) ? $best : ',';
+
+        // Check if file is XLSX (ZIP archive signature PK\x03\x04)
+        $f = fopen($filePath, 'rb');
+        $sig = fread($f, 4);
+        fclose($f);
+
+        if ($sig === "PK\x03\x04") {
+            $xlsxRows = $this->parseXlsxFile($filePath);
+            if (!empty($xlsxRows)) {
+                return $xlsxRows;
+            }
+        }
+
+        // Parse text/CSV/TSV
+        $content = file_get_contents($filePath);
+        return $this->parseTextToRows($content);
     }
 
     /**
-     * Process CSV file content for CPL, CPMK, or Sub-CPMK.
+     * Parse XLSX format using PHP ZipArchive & SimpleXML without external libraries.
      */
-    private function processFile(string $filePath, string $type, ?int $kurikulumId, ?int $mkId): array {
-        $delimiter = $this->detectDelimiter($filePath);
-        $handle = fopen($filePath, 'r');
-        if (!$handle) {
-            return [
-                'success_count' => 0,
-                'error_count' => 1,
-                'type' => $type,
-                'errors' => ['Tidak dapat membaca berkas CSV.']
-            ];
-        }
+    private function parseXlsxFile(string $filePath): array {
+        if (!class_exists('ZipArchive')) return [];
 
-        $rawHeader = fgetcsv($handle, 2000, $delimiter);
-        if (!$rawHeader || empty(array_filter($rawHeader))) {
-            fclose($handle);
-            return [
-                'success_count' => 0,
-                'error_count' => 1,
-                'type' => $type,
-                'errors' => ['Berkas CSV kosong atau tidak memiliki baris header.']
-            ];
-        }
+        $zip = new ZipArchive();
+        if ($zip->open($filePath) !== true) return [];
 
-        // Clean & normalize header names
-        $header = array_map(function ($h) {
-            $h = preg_replace('/^\xEF\xBB\xBF/', '', (string)$h);
-            $h = strtolower(trim($h));
-            $h = preg_replace('/[\s\-]+/', '_', $h);
-            return $h;
-        }, $rawHeader);
-
-        // Map column aliases
-        $colIndex = [];
-        foreach ($header as $idx => $name) {
-            $colIndex[$name] = $idx;
-        }
-
-        $getCol = function (array $data, array $aliases) use ($colIndex) {
-            foreach ($aliases as $alias) {
-                if (isset($colIndex[$alias]) && isset($data[$colIndex[$alias]])) {
-                    $val = trim((string)$data[$colIndex[$alias]]);
-                    if ($val !== '') return $val;
+        $strings = [];
+        if ($zip->locateName('xl/sharedStrings.xml') !== false) {
+            $xml = @simplexml_load_string($zip->getFromName('xl/sharedStrings.xml'));
+            if ($xml && isset($xml->si)) {
+                foreach ($xml->si as $si) {
+                    if (isset($si->t)) {
+                        $strings[] = (string)$si->t;
+                    } elseif (isset($si->r)) {
+                        $text = '';
+                        foreach ($si->r as $r) $text .= (string)$r->t;
+                        $strings[] = $text;
+                    } else {
+                        $strings[] = '';
+                    }
                 }
             }
-            return '';
-        };
+        }
 
-        $successCount = 0;
-        $errorCount = 0;
-        $errors = [];
-        $line = 1; // Line 1 is header
+        $sheetXmlContent = $zip->getFromName('xl/worksheets/sheet1.xml');
+        $zip->close();
+
+        if (!$sheetXmlContent) return [];
+        $sheetXml = @simplexml_load_string($sheetXmlContent);
+        if (!$sheetXml || !isset($sheetXml->sheetData->row)) return [];
+
+        $rows = [];
+        foreach ($sheetXml->sheetData->row as $r) {
+            $rowCells = [];
+            $maxColIdx = 0;
+            foreach ($r->c as $c) {
+                $ref = (string)$c['r'];
+                preg_match('/^([A-Z]+)(\d+)$/', $ref, $m);
+                $colLetters = $m[1] ?? 'A';
+                $colIdx = 0;
+                for ($i = 0; $i < strlen($colLetters); $i++) {
+                    $colIdx = $colIdx * 26 + (ord($colLetters[$i]) - 64);
+                }
+                $colIdx--;
+                if ($colIdx > $maxColIdx) $maxColIdx = $colIdx;
+
+                $val = '';
+                $type = (string)$c['t'];
+                if ($type === 's' && isset($c->v)) {
+                    $idx = (int)$c->v;
+                    $val = $strings[$idx] ?? '';
+                } elseif (isset($c->v)) {
+                    $val = (string)$c->v;
+                } elseif (isset($c->is->t)) {
+                    $val = (string)$c->is->t;
+                }
+                $rowCells[$colIdx] = trim($val);
+            }
+
+            $ordered = [];
+            for ($i = 0; $i <= $maxColIdx; $i++) {
+                $ordered[] = $rowCells[$i] ?? '';
+            }
+            if (!empty(array_filter($ordered, static fn($v) => $v !== ''))) {
+                $rows[] = $ordered;
+            }
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Parse plaintext CSV/TSV with multi-delimiter detection and newline normalization.
+     */
+    private function parseTextToRows(string $content): array {
+        // Strip UTF-8 BOM
+        $content = preg_replace('/^\xEF\xBB\xBF/', '', $content);
+        // Normalize CRLF and classic Mac CR to standard LF
+        $content = str_replace(["\r\n", "\r"], "\n", $content);
+        $lines = explode("\n", $content);
+
+        $lines = array_filter(array_map('trim', $lines), static fn($l) => $l !== '');
+        if (empty($lines)) return [];
+
+        // Detect delimiter from sample
+        $sample = implode("\n", array_slice($lines, 0, 5));
+        $delimiters = [',', ';', "\t", '|'];
+        $counts = [];
+        foreach ($delimiters as $delim) {
+            $counts[$delim] = substr_count($sample, $delim);
+        }
+        arsort($counts);
+        $bestDelim = array_key_first($counts);
+        $delimiter = ($counts[$bestDelim] > 0) ? $bestDelim : ',';
+
+        $rows = [];
+        foreach ($lines as $line) {
+            $parsed = str_getcsv($line, $delimiter);
+            if (!empty(array_filter($parsed, static fn($v) => trim((string)$v) !== ''))) {
+                $rows[] = array_map('trim', $parsed);
+            }
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Process imported rows for CPL, CPMK, or Sub-CPMK.
+     */
+    private function processFile(string $filePath, string $type, ?int $kurikulumId, ?int $mkId): array {
+        $rows = $this->parseRowsFromFile($filePath);
+        if (empty($rows)) {
+            return [
+                'success_count' => 0,
+                'error_count' => 1,
+                'type' => $type,
+                'errors' => ['Berkas atau teks tidak memuat data yang dapat dibaca. Pastikan berkas CSV/Excel memuat baris data yang valid.']
+            ];
+        }
 
         // Fetch MK info if required
         $mkData = null;
@@ -259,7 +329,6 @@ class ImportController {
 
         // Validate required parent selections
         if ($type === 'cpl' && !$kurikulumId) {
-            fclose($handle);
             return [
                 'success_count' => 0,
                 'error_count' => 1,
@@ -269,7 +338,6 @@ class ImportController {
         }
 
         if (($type === 'cpmk' || $type === 'sub_cpmk') && (!$mkId || !$mkData)) {
-            fclose($handle);
             return [
                 'success_count' => 0,
                 'error_count' => 1,
@@ -278,29 +346,110 @@ class ImportController {
             ];
         }
 
+        // Check if row 0 is a header row or direct data
+        $firstRow = $rows[0];
+        $normFirstRow = array_map(static function ($h) {
+            $h = preg_replace('/^\xEF\xBB\xBF/', '', (string)$h);
+            $h = strtolower(trim($h));
+            return preg_replace('/[\s\-]+/', '_', $h);
+        }, $firstRow);
+
+        $isHeader = false;
+        $headerKeywords = ['kode', 'rumusan', 'kategori', 'target', 'cpl', 'cpmk', 'sub_cpmk', 'bobot', 'deskripsi', 'capaian', 'aspek'];
+        foreach ($normFirstRow as $cell) {
+            foreach ($headerKeywords as $kw) {
+                if (strpos($cell, $kw) !== false) {
+                    $isHeader = true;
+                    break 2;
+                }
+            }
+        }
+
+        if ($isHeader) {
+            $header = $normFirstRow;
+            $dataRows = array_slice($rows, 1);
+            $startLine = 2;
+        } else {
+            // Raw data without header row: use standard positional mapping
+            if ($type === 'cpl') {
+                $header = ['kode', 'rumusan', 'kategori', 'target_capaian'];
+            } elseif ($type === 'cpmk') {
+                // If col 0 looks like CPL code, then: kode_cpl, kode_cpmk, rumusan_cpmk
+                $c0 = strtoupper($firstRow[0] ?? '');
+                if (strpos($c0, 'CPL') !== false) {
+                    $header = ['kode_cpl', 'kode_cpmk', 'rumusan_cpmk'];
+                } else {
+                    $header = ['kode_cpmk', 'rumusan_cpmk', 'kode_cpl'];
+                }
+            } else {
+                $header = ['kode_cpmk', 'kode_sub_cpmk', 'rumusan_sub_cpmk', 'bobot', 'level_taksonomi', 'pengalaman_belajar', 'asesmen_penilaian'];
+            }
+            $dataRows = $rows;
+            $startLine = 1;
+        }
+
+        if (empty($dataRows)) {
+            return [
+                'success_count' => 0,
+                'error_count' => 1,
+                'type' => $type,
+                'errors' => ['Berkas hanya memuat baris header tanpa ada baris data. Silakan masukkan data di bawah baris header.']
+            ];
+        }
+
+        $colIndex = [];
+        foreach ($header as $idx => $name) {
+            $colIndex[$name] = $idx;
+        }
+
+        $getCol = function (array $data, array $aliases, int $fallbackIdx = -1) use ($colIndex) {
+            foreach ($aliases as $alias) {
+                if (isset($colIndex[$alias]) && isset($data[$colIndex[$alias]])) {
+                    $val = trim((string)$data[$colIndex[$alias]]);
+                    if ($val !== '') return $val;
+                }
+            }
+            // Fuzzy search on column headers
+            foreach ($aliases as $alias) {
+                foreach ($colIndex as $colName => $idx) {
+                    if (strpos($colName, $alias) !== false && isset($data[$idx])) {
+                        $val = trim((string)$data[$idx]);
+                        if ($val !== '') return $val;
+                    }
+                }
+            }
+            if ($fallbackIdx >= 0 && isset($data[$fallbackIdx])) {
+                return trim((string)$data[$fallbackIdx]);
+            }
+            return '';
+        };
+
+        $successCount = 0;
+        $errorCount = 0;
+        $errors = [];
+        $line = $startLine - 1;
+
         $this->db->beginTransaction();
         try {
-            while (($data = fgetcsv($handle, 4000, $delimiter)) !== false) {
+            foreach ($dataRows as $data) {
                 $line++;
-                // Skip empty lines
                 if (empty(array_filter($data, static fn($v) => trim((string)$v) !== ''))) {
                     continue;
                 }
 
                 if ($type === 'cpl') {
-                    $kode = $getCol($data, ['kode', 'kode_cpl', 'cpl', 'kode_cpl_capaian']);
-                    $rumusan = $getCol($data, ['rumusan', 'rumusan_cpl', 'deskripsi', 'deskripsi_cpl', 'capaian']);
-                    $kategori = $getCol($data, ['kategori', 'kategori_cpl', 'aspek', 'jenis']);
-                    $targetStr = $getCol($data, ['target_capaian', 'target', 'bobot_target', 'standar']);
+                    $kode = $getCol($data, ['kode', 'kode_cpl', 'cpl', 'kode_capaian', 'no_cpl'], 0);
+                    $rumusan = $getCol($data, ['rumusan', 'rumusan_cpl', 'deskripsi', 'deskripsi_cpl', 'capaian', 'uraian', 'penjelasan'], 1);
+                    $kategori = $getCol($data, ['kategori', 'kategori_cpl', 'aspek', 'jenis', 'tipe'], 2);
+                    $targetStr = $getCol($data, ['target_capaian', 'target', 'bobot_target', 'standar', 'skor'], 3);
                     $target = (is_numeric($targetStr) && (float)$targetStr > 0) ? (float)$targetStr : 70.00;
 
                     if (!$kode || !$rumusan) {
                         $errorCount++;
-                        $errors[] = "Baris {$line}: Kolom 'kode' dan 'rumusan' CPL wajib diisi.";
+                        $errors[] = "Baris {$line}: Kode atau rumusan CPL belum terisi.";
                         continue;
                     }
 
-                    // Check if CPL already exists in this kurikulum
                     $normKode = preg_replace('/[^a-zA-Z0-9]/', '', strtoupper($kode));
                     $stmt = $this->db->prepare("
                         SELECT id FROM cpl 
@@ -331,17 +480,29 @@ class ImportController {
                 }
 
                 elseif ($type === 'cpmk') {
+                    $cplKodes = $getCol($data, ['kode_cpl', 'cpl', 'cpl_terkait', 'relasi_cpl', 'pemetaan_cpl']);
                     $kodeCpmk = $getCol($data, ['kode_cpmk', 'cpmk', 'kode', 'kode_capaian']);
-                    $rumusan = $getCol($data, ['rumusan_cpmk', 'rumusan', 'deskripsi_cpmk', 'deskripsi']);
-                    $cplKodes = $getCol($data, ['kode_cpl', 'cpl', 'cpl_terkait', 'relasi_cpl']);
+                    $rumusan = $getCol($data, ['rumusan_cpmk', 'rumusan', 'deskripsi_cpmk', 'deskripsi', 'capaian', 'uraian']);
+
+                    // Positional fallback if needed
+                    if (!$kodeCpmk && count($data) >= 2) {
+                        if (strpos(strtoupper($data[0]), 'CPMK') !== false) {
+                            $kodeCpmk = $data[0];
+                            $rumusan = $data[1] ?? '';
+                            $cplKodes = $data[2] ?? '';
+                        } elseif (strpos(strtoupper($data[1]), 'CPMK') !== false) {
+                            $cplKodes = $data[0];
+                            $kodeCpmk = $data[1];
+                            $rumusan = $data[2] ?? '';
+                        }
+                    }
 
                     if (!$kodeCpmk || !$rumusan) {
                         $errorCount++;
-                        $errors[] = "Baris {$line}: Kolom 'kode_cpmk' dan 'rumusan_cpmk' wajib diisi.";
+                        $errors[] = "Baris {$line}: Kode CPMK atau rumusan CPMK belum terisi.";
                         continue;
                     }
 
-                    // Check if CPMK exists in this MK
                     $normCpmk = preg_replace('/[^a-zA-Z0-9]/', '', strtoupper($kodeCpmk));
                     $stmt = $this->db->prepare("
                         SELECT id FROM cpmk 
@@ -362,7 +523,7 @@ class ImportController {
                         $cpmkId = (int)$this->db->lastInsertId();
                     }
 
-                    // Map CPL relationships
+                    // Connect related CPLs
                     if ($cplKodes) {
                         $rawCplList = preg_split('/[\s,;|+\/]+/', $cplKodes, -1, PREG_SPLIT_NO_EMPTY);
                         $mkKurikulumId = (int)($mkData['kurikulum_id'] ?? 0);
@@ -379,30 +540,28 @@ class ImportController {
                 }
 
                 elseif ($type === 'sub_cpmk') {
-                    $kodeCpmk = $getCol($data, ['kode_cpmk', 'cpmk', 'kode_induk']);
-                    $kodeSub = $getCol($data, ['kode_sub_cpmk', 'sub_cpmk', 'kode_sub', 'kode']);
-                    $rumusan = $getCol($data, ['rumusan_sub_cpmk', 'rumusan', 'deskripsi_sub_cpmk', 'deskripsi']);
-                    $bobotStr = $getCol($data, ['bobot', 'bobot_persen', 'persen', 'bobot_nilai']);
-                    $levelTaksonomi = $getCol($data, ['level_taksonomi', 'taksonomi', 'level']);
-                    $pengalamanBelajar = $getCol($data, ['pengalaman_belajar', 'metode', 'bentuk_pembelajaran']);
-                    $asesmenPenilaian = $getCol($data, ['asesmen_penilaian', 'asesmen', 'penilaian', 'evaluasi']);
+                    $kodeCpmk = $getCol($data, ['kode_cpmk', 'cpmk', 'kode_induk'], 0);
+                    $kodeSub = $getCol($data, ['kode_sub_cpmk', 'sub_cpmk', 'kode_sub', 'subcpmk'], 1);
+                    $rumusan = $getCol($data, ['rumusan_sub_cpmk', 'rumusan', 'deskripsi_sub_cpmk', 'deskripsi', 'capaian'], 2);
+                    $bobotStr = $getCol($data, ['bobot', 'bobot_persen', 'persen', 'bobot_nilai', 'persentase'], 3);
+                    $levelTaksonomi = $getCol($data, ['level_taksonomi', 'taksonomi', 'level', 'ranah'], 4);
+                    $pengalamanBelajar = $getCol($data, ['pengalaman_belajar', 'metode', 'bentuk_pembelajaran', 'aktivitas'], 5);
+                    $asesmenPenilaian = $getCol($data, ['asesmen_penilaian', 'asesmen', 'penilaian', 'evaluasi'], 6);
                     $bobot = (is_numeric($bobotStr) && (float)$bobotStr > 0) ? (float)$bobotStr : 0.00;
 
                     if (!$kodeCpmk || !$kodeSub || !$rumusan) {
                         $errorCount++;
-                        $errors[] = "Baris {$line}: Kolom 'kode_cpmk', 'kode_sub_cpmk', dan 'rumusan' Sub-CPMK wajib diisi.";
+                        $errors[] = "Baris {$line}: Kolom 'kode_cpmk', 'kode_sub_cpmk', atau 'rumusan' Sub-CPMK belum terisi.";
                         continue;
                     }
 
-                    // Find CPMK ID in this MK
                     $cpmkId = $this->findCpmkId($mkId, $kodeCpmk);
                     if (!$cpmkId) {
                         $errorCount++;
-                        $errors[] = "Baris {$line}: CPMK '{$kodeCpmk}' tidak ditemukan pada mata kuliah {$mkData['kode']} - {$mkData['nama']}.";
+                        $errors[] = "Baris {$line}: CPMK '{$kodeCpmk}' belum terdaftar pada mata kuliah {$mkData['kode']} - {$mkData['nama']}.";
                         continue;
                     }
 
-                    // Check if Sub-CPMK exists in this CPMK
                     $normSub = preg_replace('/[^a-zA-Z0-9]/', '', strtoupper($kodeSub));
                     $stmt = $this->db->prepare("
                         SELECT id FROM sub_cpmk 
@@ -453,7 +612,6 @@ class ImportController {
             }
 
             $this->db->commit();
-            fclose($handle);
 
             return [
                 'success_count' => $successCount,
@@ -463,7 +621,6 @@ class ImportController {
             ];
         } catch (\Throwable $e) {
             $this->db->rollBack();
-            fclose($handle);
             return [
                 'success_count' => 0,
                 'error_count' => 1,

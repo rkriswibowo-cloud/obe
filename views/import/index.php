@@ -757,12 +757,12 @@ ob_start();
                         </div>
 
                         <div class="form-group-field" style="grid-column: 1/-1;">
-                            <label>Berkas CSV <span style="color:#ef4444">*</span></label>
+                            <label>Berkas CSV / Excel (.xlsx) <span style="color:#ef4444">*</span></label>
                             <label class="modern-dropzone" id="filePickerLabel">
-                                <input type="file" name="csv_file" accept=".csv,text/csv" required id="csvFileInput">
+                                <input type="file" name="csv_file" accept=".csv,.xlsx,.xls,.txt,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" required id="csvFileInput">
                                 <div class="modern-dropzone-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
-                                <strong>Pilih atau Seret Berkas CSV ke Sini</strong>
-                                <span class="file-name-text" id="fileNameDisplay">Format CSV dengan pemisah koma (,) atau titik-koma (;). Ukuran maks 5MB.</span>
+                                <strong>Pilih atau Seret Berkas CSV / Excel ke Sini</strong>
+                                <span class="file-name-text" id="fileNameDisplay">Format CSV atau Excel (.xlsx) dengan pemisah koma (,) atau titik-koma (;). Ukuran maks 5MB.</span>
                             </label>
                         </div>
                     </div>
