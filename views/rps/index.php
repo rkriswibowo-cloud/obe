@@ -1847,6 +1847,72 @@ foreach ($jenisPenilaian as $item) {
             filter: brightness(1.2);
             box-shadow: 0 2px 8px rgba(0,0,0,0.25);
         }
+        .eval-sub-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 14px;
+        }
+        .eval-sub-grid {
+            display: grid;
+            grid-template-columns: minmax(110px, 140px) minmax(130px, 165px) minmax(105px, 125px) minmax(0, 1fr);
+            gap: 12px 14px;
+            align-items: start;
+        }
+        .eval-sub-grid > div {
+            min-width: 0;
+        }
+        .eval-field-label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+        .eval-bobot-col input.form-control {
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .eval-indikator-col {
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+        .question-row {
+            display: grid;
+            grid-template-columns: minmax(160px, 200px) minmax(0, 1fr) 38px;
+            gap: 8px;
+            margin-top: 8px;
+            align-items: start;
+        }
+        .question-row > * {
+            min-width: 0;
+        }
+        @media (max-width: 992px) {
+            .eval-sub-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+            .eval-indikator-col {
+                grid-column: 1 / -1;
+                padding-top: 8px;
+                border-top: 1px dashed var(--border);
+            }
+        }
+        @media (max-width: 640px) {
+            .eval-sub-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+            .eval-bobot-col {
+                grid-column: 1 / -1;
+                max-width: 180px;
+            }
+            .question-row {
+                grid-template-columns: minmax(0, 1fr) 38px;
+            }
+            .question-row .question-type-select {
+                grid-column: 1 / -1;
+            }
+        }
         </style>
         <div style="margin-bottom: 20px;">
             <h3 style="margin: 0 0 6px 0; font-size: 1.25rem;">6 & 7. Sistem Penilaian dan Rencana Evaluasi Mahasiswa</h3>
@@ -1887,7 +1953,7 @@ foreach ($jenisPenilaian as $item) {
             </div>
 
             <!-- RESPONSIVE 2-COLUMN CARDS UNTUK DESKRIPSI & KEBIJAKAN REMEDIAL -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 20px; margin-bottom: 24px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 20px; margin-bottom: 24px;">
                 
                 <!-- Card 1: Deskripsi Sistem Penilaian (Seksi 6) -->
                 <div style="background: var(--surface-hover); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
@@ -1969,18 +2035,18 @@ foreach ($jenisPenilaian as $item) {
                     $questions = is_array($eval['soal'] ?? null) ? $eval['soal'] : [];
                     $targetId = 'soal_' . $evalIndex;
                 ?>
-                <div style="background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:14px;">
-                    <div style="display:grid; grid-template-columns:140px 160px 100px 1fr; gap:12px; align-items:start;">
-                        <div><small style="color:var(--text-muted);">CPL Terkait</small><div style="font-weight:700;"><?= htmlspecialchars(implode(', ', $sub['cpl_kodes'] ?? []) ?: '-') ?></div></div>
-                        <div><small style="color:var(--text-muted);">Kode Sub-CPMK</small><div style="font-weight:700;"><?= htmlspecialchars($sub['kode']) ?></div></div>
-                        <div><label style="font-size:.75rem;color:var(--text-muted);">Bobot (%)</label><input type="number" min="0" max="100" step="0.01" class="form-control" name="rencana_evaluasi[<?= htmlspecialchars($sub['kode']) ?>][bobot]" value="<?= htmlspecialchars($eval['bobot'] ?? $sub['bobot']) ?>"></div>
-                        <div><small style="color:var(--text-muted);">Rumusan Indikator</small>
+                <div class="eval-sub-card">
+                    <div class="eval-sub-grid">
+                        <div><small class="eval-field-label">CPL Terkait</small><div style="font-weight:700;"><?= htmlspecialchars(implode(', ', $sub['cpl_kodes'] ?? []) ?: '-') ?></div></div>
+                        <div><small class="eval-field-label">Kode Sub-CPMK</small><div style="font-weight:700;"><?= htmlspecialchars($sub['kode']) ?></div></div>
+                        <div class="eval-bobot-col"><label class="eval-field-label">Bobot (%)</label><input type="number" min="0" max="100" step="0.01" class="form-control" name="rencana_evaluasi[<?= htmlspecialchars($sub['kode']) ?>][bobot]" value="<?= htmlspecialchars($eval['bobot'] ?? $sub['bobot']) ?>"></div>
+                        <div class="eval-indikator-col"><small class="eval-field-label">Rumusan Indikator</small>
                             <?php if (!empty($sub['indikators'])): foreach ($sub['indikators'] as $ind): ?><div style="font-size:.84rem; margin-top:3px;">• <?= htmlspecialchars($ind['indikator']) ?></div><?php endforeach; else: ?><div style="font-size:.84rem;"><?= htmlspecialchars($sub['rumusan']) ?></div><?php endif; ?>
                         </div>
                     </div>
                     <div id="<?= $targetId ?>" style="margin-top:12px;">
                         <?php foreach ($questions as $qIndex => $question): ?>
-                        <div class="question-row" style="display:grid; grid-template-columns:190px 1fr 38px; gap:8px; margin-top:8px;">
+                        <div class="question-row">
                             <select class="form-control question-type-select" name="rencana_evaluasi[<?= htmlspecialchars($sub['kode']) ?>][soal][<?= $qIndex ?>][jenis]" required data-current="<?= htmlspecialchars($question['jenis'] ?? '') ?>"><option value="">Pilih jenis penilaian</option><?php foreach ($jenisPenilaian as $komponen): $kodeJenis=$komponen['kode']; $labelJenis=$kodeJenis.' - '.($jenisPenilaianMaster[$kodeJenis] ?? $kodeJenis); ?><option value="<?= htmlspecialchars($kodeJenis) ?>" <?= ($question['jenis'] ?? '') === $kodeJenis ? 'selected' : '' ?>><?= htmlspecialchars($labelJenis) ?></option><?php endforeach; ?></select>
                             <textarea class="form-control" rows="2" name="rencana_evaluasi[<?= htmlspecialchars($sub['kode']) ?>][soal][<?= $qIndex ?>][pertanyaan]" placeholder="Tuliskan soal atau instrumen penilaian"><?= htmlspecialchars($question['pertanyaan'] ?? '') ?></textarea>
                             <button type="button" class="btn btn-sm btn-danger" onclick="this.closest('.question-row').remove()" title="Hapus soal"><i class="fa-solid fa-trash"></i></button>
@@ -2026,7 +2092,6 @@ foreach ($jenisPenilaian as $item) {
         const index = Date.now().toString() + Math.floor(Math.random() * 1000);
         const row = document.createElement('div');
         row.className = 'question-row';
-        row.style.cssText = 'display:grid;grid-template-columns:190px 1fr 38px;gap:8px;margin-top:8px;';
         const type = document.createElement('select');
         type.className = 'form-control question-type-select'; type.name = `rencana_evaluasi[${subCode}][soal][${index}][jenis]`; type.required = true;
         type.innerHTML = '<option value="">Pilih jenis penilaian</option>' + currentAssessmentChoices().map(item => `<option value="${item.code}">${item.label}</option>`).join('');

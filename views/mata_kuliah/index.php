@@ -100,8 +100,135 @@ $baseUrl = $config['base_url'] ?? '/obe/public';
     </form>
 </div>
 
-<div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+<style>
+    .mk-table-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .mk-table-wrap {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: var(--border) transparent;
+    }
+    .mk-table-wrap::-webkit-scrollbar {
+        height: 8px;
+    }
+    .mk-table-wrap::-webkit-scrollbar-track {
+        background: var(--bg-hover);
+    }
+    .mk-table-wrap::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 999px;
+    }
+    .mk-table {
+        width: 100%;
+        min-width: 820px;
+        border-collapse: collapse;
+        text-align: left;
+    }
+    .mk-scroll-hint {
+        display: none;
+        padding: 8px 14px;
+        font-size: 0.76rem;
+        color: var(--text-muted);
+        background: var(--bg-hover);
+        border-bottom: 1px solid var(--border);
+        align-items: center;
+        gap: 6px;
+    }
+    @media (max-width: 900px) {
+        .mk-scroll-hint {
+            display: flex;
+        }
+    }
+    .mk-pagination-wrap {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+    .mk-pagination-info {
+        font-size: 0.82rem;
+        color: var(--text-muted);
+    }
+    .mk-pagination {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        flex-wrap: wrap;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 4px;
+    }
+    .mk-page-btn {
+        min-width: 34px;
+        height: 34px;
+        padding: 0 10px;
+        border-radius: var(--radius-sm);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.84rem;
+        font-weight: 600;
+        text-decoration: none;
+        color: var(--text-main);
+        background: transparent;
+        border: 1px solid transparent;
+        transition: all 0.15s ease;
+    }
+    .mk-page-btn:hover:not(.active):not(.disabled) {
+        background: var(--bg-hover);
+        border-color: var(--border);
+    }
+    .mk-page-btn.active {
+        background: var(--primary);
+        color: #ffffff;
+        box-shadow: 0 2px 6px rgba(99, 102, 241, 0.3);
+    }
+    .mk-page-btn.disabled {
+        opacity: 0.4;
+        pointer-events: none;
+        cursor: default;
+    }
+    .mk-page-ellipsis {
+        min-width: 28px;
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        user-select: none;
+    }
+    @media (max-width: 640px) {
+        .mk-pagination-wrap {
+            flex-direction: column;
+            align-items: center;
+        }
+        .mk-page-btn {
+            min-width: 32px;
+            height: 32px;
+            padding: 0 8px;
+            font-size: 0.8rem;
+        }
+    }
+</style>
+
+<div class="mk-table-card">
+    <div class="mk-scroll-hint">
+        <i class="fa-solid fa-arrows-left-right"></i>
+        <span>Geser tabel ke kanan/kiri untuk melihat seluruh kolom.</span>
+    </div>
+    <div class="table-responsive mk-table-wrap">
+        <table class="mk-table">
         <thead>
             <tr style="border-bottom: 1px solid var(--border); background: var(--bg-hover);">
                 <th style="padding: 14px 18px; font-weight: 600; font-size: 0.82rem; color: var(--text-muted); width: 60px; text-align: center;">SMT</th>
@@ -182,29 +309,71 @@ $baseUrl = $config['base_url'] ?? '/obe/public';
                 <?php endforeach; ?>
             <?php endif; ?>
         </tbody>
-    </table>
+        </table>
+    </div>
 </div>
 
 <!-- Pagination -->
-<?php if ($totalPages > 1): ?>
-    <div style="display: flex; justify-content: center; gap: 6px; margin-top: 24px; align-items: center;">
-        <?php if ($page > 1): ?>
-            <a href="<?= $baseUrl ?>/mata-kuliah?page=<?= $page - 1 ?>&prodi_id=<?= urlencode($selectedProdiId) ?>&kurikulum_id=<?= urlencode($selectedKurikulumId) ?>&semester=<?= urlencode($_GET['semester'] ?? '') ?>&search=<?= urlencode($_GET['search'] ?? '') ?>" class="btn btn-sm btn-secondary">
+<?php if ($totalPages > 1):
+    $mkPageUrl = static function (int $targetPage) use ($baseUrl, $selectedProdiId, $selectedKurikulumId): string {
+        return $baseUrl . '/mata-kuliah?' . http_build_query([
+            'page' => $targetPage,
+            'prodi_id' => $selectedProdiId,
+            'kurikulum_id' => $selectedKurikulumId,
+            'semester' => $_GET['semester'] ?? '',
+            'search' => $_GET['search'] ?? '',
+        ]);
+    };
+
+    $currentPage = max(1, min((int)$page, (int)$totalPages));
+    $pagesToShow = [1];
+    for ($i = max(2, $currentPage - 1); $i <= min($totalPages - 1, $currentPage + 1); $i++) {
+        $pagesToShow[] = $i;
+    }
+    if ($totalPages > 1) {
+        $pagesToShow[] = (int)$totalPages;
+    }
+    $pagesToShow = array_values(array_unique($pagesToShow));
+    sort($pagesToShow);
+?>
+    <div class="mk-pagination-wrap">
+        <div class="mk-pagination-info">
+            Halaman <strong><?= $currentPage ?></strong> dari <strong><?= (int)$totalPages ?></strong>
+        </div>
+        <nav class="mk-pagination" aria-label="Navigasi halaman mata kuliah">
+            <a href="<?= $currentPage > 1 ? htmlspecialchars($mkPageUrl($currentPage - 1)) : '#' ?>"
+               class="mk-page-btn <?= $currentPage <= 1 ? 'disabled' : '' ?>"
+               aria-label="Halaman sebelumnya"
+               title="Sebelumnya">
                 <i class="fa-solid fa-chevron-left"></i>
             </a>
-        <?php endif; ?>
 
-        <?php for($p = 1; $p <= $totalPages; $p++): ?>
-            <a href="<?= $baseUrl ?>/mata-kuliah?page=<?= $p ?>&prodi_id=<?= urlencode($selectedProdiId) ?>&kurikulum_id=<?= urlencode($selectedKurikulumId) ?>&semester=<?= urlencode($_GET['semester'] ?? '') ?>&search=<?= urlencode($_GET['search'] ?? '') ?>" class="btn btn-sm <?= $p == $page ? 'btn-primary' : 'btn-secondary' ?>" style="min-width: 32px; text-align: center;">
-                <?= $p ?>
-            </a>
-        <?php endfor; ?>
+            <?php
+            $prevPageNum = 0;
+            foreach ($pagesToShow as $p):
+                if ($prevPageNum > 0 && $p - $prevPageNum > 1):
+            ?>
+                <span class="mk-page-ellipsis" aria-hidden="true">&hellip;</span>
+            <?php
+                endif;
+            ?>
+                <a href="<?= htmlspecialchars($mkPageUrl($p)) ?>"
+                   class="mk-page-btn <?= $p === $currentPage ? 'active' : '' ?>"
+                   <?= $p === $currentPage ? 'aria-current="page"' : '' ?>>
+                    <?= $p ?>
+                </a>
+            <?php
+                $prevPageNum = $p;
+            endforeach;
+            ?>
 
-        <?php if ($page < $totalPages): ?>
-            <a href="<?= $baseUrl ?>/mata-kuliah?page=<?= $page + 1 ?>&prodi_id=<?= urlencode($selectedProdiId) ?>&kurikulum_id=<?= urlencode($selectedKurikulumId) ?>&semester=<?= urlencode($_GET['semester'] ?? '') ?>&search=<?= urlencode($_GET['search'] ?? '') ?>" class="btn btn-sm btn-secondary">
+            <a href="<?= $currentPage < $totalPages ? htmlspecialchars($mkPageUrl($currentPage + 1)) : '#' ?>"
+               class="mk-page-btn <?= $currentPage >= $totalPages ? 'disabled' : '' ?>"
+               aria-label="Halaman berikutnya"
+               title="Berikutnya">
                 <i class="fa-solid fa-chevron-right"></i>
             </a>
-        <?php endif; ?>
+        </nav>
     </div>
 <?php endif; ?>
 
