@@ -28,7 +28,7 @@ if (($isMaintenanceActive && !$isSuperAdmin) || $isMaintPreview) {
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="<?= $config['base_url'] ?? '' ?>/assets/css/app.css?v=<?= filemtime(__DIR__ . '/../../public/assets/css/app.css') ?>">
+    <link rel="stylesheet" href="<?= $layoutBaseUrl ?>/assets/css/app.css?v=<?= filemtime(__DIR__ . '/../../public/assets/css/app.css') ?>">
     
     <!-- Script Anti-FOUC: Eksekusi tema & palet sebelum DOM selesai render -->
     <script>
