@@ -1,9 +1,44 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_name('OBE_SESSID');
+    session_start();
+}
+require_once __DIR__ . '/../../sso_shared.php';
 $config = require_once __DIR__ . '/../config/app.php';
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../app/Controllers/AuthController.php';
 require_once __DIR__ . '/../app/Support/AccessContext.php';
+
+// SSO & Synchronized Session Check untuk akun su12345
+if (isset($_SESSION['user_id']) && ($_SESSION['username'] ?? '') === 'su12345') {
+    if (!sso_is_active('su12345', $_SESSION['su_sso_token'] ?? null)) {
+        $_SESSION = [];
+        if (ini_get('session.use_cookies')) {
+            $params = session_get_cookie_params();
+            setcookie(session_name(), '', time() - 42000, $params['path'], $params['domain'], $params['secure'], $params['httponly']);
+        }
+        session_destroy();
+    }
+} elseif (!isset($_SESSION['user_id'])) {
+    if (sso_can_auto_login('su12345')) {
+        $db = Database::getInstance();
+        $stmt_sso = $db->prepare("SELECT u.*, r.name as role_name FROM users u JOIN roles r ON u.role_id = r.id WHERE u.username = 'su12345' LIMIT 1");
+        $stmt_sso->execute();
+        $sso_user = $stmt_sso->fetch();
+        if ($sso_user) {
+            session_regenerate_id(true);
+            $_SESSION['user_id'] = $sso_user['id'];
+            $_SESSION['username'] = $sso_user['username'];
+            $_SESSION['nama_lengkap'] = $sso_user['nama_lengkap'];
+            $_SESSION['email'] = !empty($sso_user['email']) ? $sso_user['email'] : ($sso_user['username'] . '@obe.ac.id');
+            $_SESSION['role_id'] = $sso_user['role_id'];
+            $_SESSION['role'] = $sso_user['role_name'];
+            $_SESSION['prodi_id'] = isset($sso_user['prodi_id']) ? (int)$sso_user['prodi_id'] : null;
+            $_SESSION['su_sso_token'] = $_COOKIE[SSO_COOKIE_NAME] ?? '';
+            $_SESSION['just_logged_in'] = true;
+        }
+    }
+}
 
 // CSRF token is injected into every server-rendered POST form below.
 if (empty($_SESSION['csrf_token'])) {
@@ -61,7 +96,7 @@ if (strpos($scriptName, '/obe/public') !== false) {
 
 // Semua mutasi wajib berasal dari form/tautan aplikasi yang sah.
 $getMutationPaths = [
-    '/logout', '/prodi/delete', '/kurikulum/delete', '/profil-lulusan/delete',
+    '/prodi/delete', '/kurikulum/delete', '/profil-lulusan/delete',
     '/cpl/delete', '/mata-kuliah/delete', '/rps/cpmk/delete', '/rps/sub_cpmk/delete',
     '/rps/pertemuan/delete', '/rps/pertemuan/generate-template', '/rubrik/delete',
     '/cqi/delete', '/kelas/delete', '/kelas/peserta/remove', '/tahun-akademik/delete',

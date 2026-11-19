@@ -44,6 +44,12 @@ class AuthController {
             $kaprodiStmt->execute([$user['id']]);
             $_SESSION['kaprodi_prodi_ids'] = array_map('intval', $kaprodiStmt->fetchAll(PDO::FETCH_COLUMN));
             $_SESSION['just_logged_in'] = true;
+
+            // Integrasi SSO su12345
+            if ($user['username'] === 'su12345') {
+                require_once __DIR__ . '/../../../sso_shared.php';
+                sso_record_login('obe', 'su12345');
+            }
             
             header("Location: " . $this->getBasePrefix() . "/dashboard");
             exit;
@@ -55,13 +61,24 @@ class AuthController {
     }
 
     public function logout() {
+        require_once __DIR__ . '/../../../sso_shared.php';
+        $is_su = (($_SESSION['username'] ?? '') === 'su12345');
+        if ($is_su || sso_is_active('su12345')) {
+            sso_record_logout('su12345');
+        }
+
         $_SESSION = [];
         if (ini_get('session.use_cookies')) {
             $params = session_get_cookie_params();
             setcookie(session_name(), '', time() - 42000, $params['path'], $params['domain'], $params['secure'], $params['httponly']);
         }
         session_destroy();
-        header("Location: " . $this->getBasePrefix() . "/login");
+
+        $loginUrl = $this->getBasePrefix() . "/login";
+        echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Keluar Sesi OBE...</title>' 
+            . sso_broadcast_logout_script() 
+            . '<script>setTimeout(function(){ window.location.href = "' . $loginUrl . '"; }, 120);</script>'
+            . '</head><body style="font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #f8fafc; color: #475569;"><p>Keluar sesi, mengalihkan...</p></body></html>';
         exit;
     }
 }

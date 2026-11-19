@@ -22,6 +22,8 @@ if (($isMaintenanceActive && !$isSuperAdmin) || $isMaintPreview) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $title ?? 'SIP-OKE : Sistem Informasi Pengukuran Outcome Kompetensi dan Evaluasi' ?></title>
+    <?php require_once __DIR__ . '/../../../sso_shared.php'; ?>
+    <?= (($_SESSION['username'] ?? '') === 'su12345') ? sso_render_client_sync_script($layoutBaseUrl . '/logout') : '' ?>
     <?php if ($layoutFaviconUrl): ?><link rel="icon" href="<?= htmlspecialchars($layoutFaviconUrl) ?>"><?php endif; ?>
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
